@@ -271,4 +271,540 @@ export async function handleTokenTool(
       if (hasAdvancedFilters || args?.keyword) {
         // Use advanced search
         const tokens = await advancedSearchTokens({
-          key
+          keyword: args?.keyword as string | undefined,
+          symbolStartsWith: args?.symbolStartsWith as string | undefined,
+          nameContains: args?.nameContains as string | undefined,
+          minMarketCap: args?.minMarketCap as number | undefined,
+          maxMarketCap: args?.maxMarketCap as number | undefined,
+          minLiquidity: args?.minLiquidity as number | undefined,
+          maxLiquidity: args?.maxLiquidity as number | undefined,
+          minVolume24h: args?.minVolume24h as number | undefined,
+          minHolders: args?.minHolders as number | undefined,
+          limit: (args?.limit as number) || 20,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  tokens: tokens.map((t) => ({
+                    symbol: t.symbol,
+                    name: t.name,
+                    address: t.address,
+                    price: t.price,
+                    priceFormatted: `$${t.price.toFixed(t.price < 0.01 ? 8 : 4)}`,
+                    priceChange24h: `${t.priceChange24h >= 0 ? "+" : ""}${t.priceChange24h.toFixed(2)}%`,
+                    volume24h: `$${(t.volume24h / 1000000).toFixed(2)}M`,
+                    liquidity: `$${(t.liquidity / 1000).toFixed(0)}K`,
+                    marketCap: `$${(t.marketCap / 1000000).toFixed(2)}M`,
+                    holders: t.holder,
+                  })),
+                  count: tokens.length,
+                  filters: {
+                    keyword: args?.keyword,
+                    symbolStartsWith: args?.symbolStartsWith,
+                    nameContains: args?.nameContains,
+                    minMarketCap: args?.minMarketCap,
+                    maxMarketCap: args?.maxMarketCap,
+                    minLiquidity: args?.minLiquidity,
+                    maxLiquidity: args?.maxLiquidity,
+                    minVolume24h: args?.minVolume24h,
+                    minHolders: args?.minHolders,
+                  },
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      // Fallback to basic DexScreener search
+      const query = (args?.keyword || args?.query) as string;
+      if (!query) {
+        return {
+          content: [{ type: "text", text: "Missing keyword or query parameter" }],
+          isError: true,
+        };
+      }
+
+      const results = await searchTokens(query);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                query,
+                count: results.length,
+                tokens: results.map((t) => ({
+                  symbol: t.symbol,
+                  name: t.name,
+                  address: t.address,
+                  price: `$${t.price.toFixed(t.price < 0.01 ? 8 : 4)}`,
+                  priceChange24h: `${t.priceChange24h >= 0 ? "+" : ""}${t.priceChange24h.toFixed(2)}%`,
+                  volume24h: `$${(t.volume24h / 1000000).toFixed(2)}M`,
+                  liquidity: `$${(t.liquidity / 1000).toFixed(0)}K`,
+                  marketCap: `$${(t.marketCap / 1000000).toFixed(2)}M`,
+                  dex: t.dex,
+                })),
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
+
+    case "claude_trade_token_info": {
+      const tokenArg = args?.token as string;
+      if (!tokenArg) {
+        return {
+          content: [{ type: "text", text: "Missing token parameter" }],
+          isError: true,
+        };
+      }
+
+      // Resolve token (symbol or address)
+      const address = isSolanaAddress(tokenArg) ? tokenArg : resolveToken(tokenArg);
+      const token = await getTokenInfo(address);
+
+      if (!token) {
+        return {
+          content: [{ type: "text", text: `Token not found: ${tokenArg}` }],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                symbol: token.symbol,
+                name: token.name,
+                address: token.address,
+                price: token.price,
+                priceFormatted: `$${token.price.toFixed(token.price < 0.01 ? 8 : 4)}`,
+                priceChange24h: `${token.priceChange24h >= 0 ? "+" : ""}${token.priceChange24h.toFixed(2)}%`,
+                volume24h: token.volume24h,
+                volume24hFormatted: `$${(token.volume24h / 1000000).toFixed(2)}M`,
+                liquidity: token.liquidity,
+                liquidityFormatted: `$${(token.liquidity / 1000).toFixed(0)}K`,
+                marketCap: token.marketCap,
+                marketCapFormatted: `$${(token.marketCap / 1000000).toFixed(2)}M`,
+                dex: token.dex,
+                chart: token.url,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
+
+    case "claude_trade_get_ohlcv": {
+      const tokenArg = args?.token as string;
+      if (!tokenArg) {
+        return {
+          content: [{ type: "text", text: "Missing token parameter" }],
+          isError: true,
+        };
+      }
+
+      const address = isSolanaAddress(tokenArg) ? tokenArg : resolveToken(tokenArg);
+      const timeframe = (args?.timeframe as TimeFrame) || "1H";
+      const limit = (args?.limit as number) || 100;
+
+      try {
+        const candles = await getOHLCV(address, timeframe, limit);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  token: address,
+                  timeframe,
+                  candles: candles.slice(-20).map((c) => ({
+                    timestamp: new Date(c.timestamp).toISOString(),
+                    open: c.open,
+                    high: c.high,
+                    low: c.low,
+                    close: c.close,
+                    volume: c.volume,
+                  })),
+                  count: candles.length,
+                  note: "Showing last 20 candles. Full data available for analysis.",
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to get OHLCV data: ${error instanceof Error ? error.message : "Unknown error"}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
+    case "claude_trade_calculate_ema": {
+      const tokenArg = args?.token as string;
+      const period = args?.period as number;
+
+      if (!tokenArg) {
+        return {
+          content: [{ type: "text", text: "Missing token parameter" }],
+          isError: true,
+        };
+      }
+
+      if (!period || period < 2) {
+        return {
+          content: [{ type: "text", text: "Missing or invalid period parameter (must be >= 2)" }],
+          isError: true,
+        };
+      }
+
+      const address = isSolanaAddress(tokenArg) ? tokenArg : resolveToken(tokenArg);
+      const timeframe = (args?.timeframe as TimeFrame) || "4H";
+
+      try {
+        const candles = await getOHLCV(address, timeframe, period + 50);
+        const closes = candles.map((c) => c.close);
+
+        if (closes.length < period) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Not enough data: got ${closes.length} candles, need at least ${period} for EMA(${period})`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const ema = calculateEMA(closes, period);
+        const currentEMA = ema[ema.length - 1];
+        const currentPrice = closes[closes.length - 1];
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  token: address,
+                  period,
+                  timeframe,
+                  currentEMA,
+                  currentPrice,
+                  priceAboveEMA: currentPrice > currentEMA,
+                  percentFromEMA: ((currentPrice - currentEMA) / currentEMA) * 100,
+                  signal:
+                    currentPrice > currentEMA
+                      ? "BULLISH - Price is above EMA"
+                      : "BEARISH - Price is below EMA",
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to calculate EMA: ${error instanceof Error ? error.message : "Unknown error"}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
+    case "claude_trade_get_new_pairs": {
+      const options = {
+        maxAgeMinutes: (args?.maxAgeMinutes as number) || 30,
+        minLiquidity: args?.minLiquidity as number | undefined,
+        maxLiquidity: args?.maxLiquidity as number | undefined,
+        minVolume: args?.minVolume as number | undefined,
+        minMarketCap: args?.minMarketCap as number | undefined,
+        maxMarketCap: args?.maxMarketCap as number | undefined,
+        limit: (args?.limit as number) || 20,
+      };
+
+      try {
+        const pairs = await getNewPairs(options);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  pairs: pairs.map((pair) => ({
+                    address: pair.address,
+                    symbol: pair.symbol,
+                    name: pair.name,
+                    logoURI: pair.logoURI,
+                    price: pair.price,
+                    priceFormatted: `$${pair.price.toFixed(pair.price < 0.01 ? 8 : 4)}`,
+                    liquidity: `$${(pair.liquidity / 1000).toFixed(0)}K`,
+                    volume24h: `$${(pair.volume24h / 1000).toFixed(0)}K`,
+                    marketCap: `$${(pair.marketCap / 1000).toFixed(0)}K`,
+                    ageMinutes: pair.ageMinutes,
+                    dex: pair.dex || "unknown",
+                  })),
+                  count: pairs.length,
+                  filters: {
+                    maxAgeMinutes: options.maxAgeMinutes,
+                    minLiquidity: options.minLiquidity || "any",
+                    maxLiquidity: options.maxLiquidity || "any",
+                    minVolume: options.minVolume || "any",
+                    minMarketCap: options.minMarketCap || "any",
+                    maxMarketCap: options.maxMarketCap || "any",
+                  },
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to get new pairs: ${error instanceof Error ? error.message : "Unknown error"}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
+    case "claude_trade_get_pair_details": {
+      const address = args?.address as string;
+      if (!address) {
+        return {
+          content: [{ type: "text", text: "Missing address parameter" }],
+          isError: true,
+        };
+      }
+
+      const overview = await getPairDetails(address);
+
+      if (!overview) {
+        // Try token info as fallback
+        const tokenInfo = await getTokenInfo(address);
+        if (tokenInfo) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    address,
+                    symbol: tokenInfo.symbol,
+                    name: tokenInfo.name,
+                    price: tokenInfo.price,
+                    priceFormatted: `$${tokenInfo.price.toFixed(tokenInfo.price < 0.01 ? 8 : 4)}`,
+                    volume24h: `$${(tokenInfo.volume24h / 1000).toFixed(0)}K`,
+                    liquidity: `$${(tokenInfo.liquidity / 1000).toFixed(0)}K`,
+                    marketCap: `$${(tokenInfo.marketCap / 1000).toFixed(0)}K`,
+                    note: "Detailed metrics unavailable, showing basic info",
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        }
+        return {
+          content: [{ type: "text", text: `Pair not found: ${address}` }],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                address,
+                price: overview.price,
+                priceFormatted: `$${overview.price.toFixed(overview.price < 0.01 ? 8 : 4)}`,
+                volume30m: `$${(overview.volume30m / 1000).toFixed(0)}K`,
+                volume1h: `$${(overview.volume1h / 1000).toFixed(0)}K`,
+                volume24h: `$${(overview.volume24h / 1000).toFixed(0)}K`,
+                liquidity: `$${(overview.liquidity / 1000).toFixed(0)}K`,
+                trades30m: overview.trades30m,
+                trades1h: overview.trades1h,
+                priceChange30m: `${overview.priceChange30m >= 0 ? "+" : ""}${overview.priceChange30m.toFixed(2)}%`,
+                priceChange1h: `${overview.priceChange1h >= 0 ? "+" : ""}${overview.priceChange1h.toFixed(2)}%`,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
+
+    case "claude_trade_token_trending": {
+      const limit = (args?.limit as number) || 10;
+
+      try {
+        const data = await getTrending();
+
+        // Use volumeTokens (high volume) or fallback to trendingPairs
+        const volumeData = data.volumeTokens || data.trendingPairs || [];
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                volumeData.slice(0, limit).map((token) => ({
+                  symbol: token.symbol,
+                  name: token.name,
+                  address: token.address,
+                  logoURI: token.logoURI,
+                  price: token.price,
+                  priceFormatted: `$${token.price.toFixed(token.price < 0.01 ? 8 : 4)}`,
+                  priceChange24h: `${token.priceChange24h >= 0 ? "+" : ""}${token.priceChange24h.toFixed(2)}%`,
+                  volume24h: `$${(token.volume24h / 1000000).toFixed(2)}M`,
+                  liquidity: `$${(token.liquidity / 1000).toFixed(0)}K`,
+                  marketCap: `$${(token.marketCap / 1000000).toFixed(2)}M`,
+                  rank: token.rank,
+                })),
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        // Fallback to DexScreener
+        const pairs = await searchTokens("solana");
+        const sorted = pairs
+          .sort((a, b) => b.volume24h - a.volume24h)
+          .slice(0, limit);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                sorted.map((pair) => ({
+                  symbol: pair.symbol,
+                  name: pair.name,
+                  address: pair.address,
+                  price: `$${pair.price.toFixed(pair.price < 0.01 ? 8 : 4)}`,
+                  priceChange24h: `${pair.priceChange24h >= 0 ? "+" : ""}${pair.priceChange24h.toFixed(2)}%`,
+                  volume24h: `$${(pair.volume24h / 1000000).toFixed(2)}M`,
+                  liquidity: `$${(pair.liquidity / 1000).toFixed(0)}K`,
+                })),
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+    }
+
+    case "claude_trade_token_price": {
+      const token = args?.token as string;
+      if (!token) {
+        return {
+          content: [{ type: "text", text: "Missing token parameter" }],
+          isError: true,
+        };
+      }
+
+      const price = await getTokenPrice(token);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                token: token.toUpperCase(),
+                priceUSD: price,
+                priceFormatted: `$${price.toFixed(price < 0.01 ? 8 : 4)}`,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
+
+    case "claude_trade_token_new_launches": {
+      const limit = Math.min((args?.limit as number) || 10, 50);
+      const tokens = await getNewLaunches(limit);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                count: tokens.length,
+                source: "pump.fun",
+                launches: tokens.map((t) => ({
+                  symbol: t.symbol,
+                  name: t.name,
+                  mint: t.mint,
+                  description:
+                    t.description?.slice(0, 100) +
+                    (t.description && t.description.length > 100 ? "..." : ""),
+                  marketCap: `$${(t.marketCap / 1000).toFixed(0)}K`,
+                  isComplete: t.isComplete,
+                  createdAt: t.createdAt,
+                  socials: {
+                    twitter: t.twitter,
+                    telegram: t.telegram,
+                    website: t.website,
+                  },
+                })),
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
+
+    default:
+      return {
+        content: [{ type: "text", text: `Unknown token tool: ${name}` }],
+        isError: true,
+      };
+  }
+}
