@@ -1,0 +1,21 @@
+{
+  "name": "claude-trade",
+  "version": "1.0.0",
+  "description": "Solana trading plugin for Claude Code - search tokens, execute swaps, create strategies",
+  "author": {
+    "name": "Claude Trade"
+  },
+  "repository": "https://github.com/0xgaut85/claude-trade",
+  "license": "MIT",
+  "keywords": [
+    "solana",
+    "trading",
+    "defi",
+    "jupiter",
+    "mcp",
+    "claude",
+    "crypto",
+    "swap"
+  ],
+  "mcpServers": "./.mcp.json"
+}
