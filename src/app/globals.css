@@ -1,0 +1,369 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #1A1A1A;
+  --ink-light: #6B6B6B;
+  --white: #FEFEFE;
+  --black: #050505;
+  --accent-pink: #F5D6E0;
+  --accent-blue: #B8D4E3;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background: var(--white);
+  color: var(--ink);
+}
+
+/* Narrative Glass - High Contrast */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  border: 2px solid var(--ink); /* Black border for contrast */
+  box-shadow: 8px 8px 0px 0px var(--ink); /* Retro-modern block shadow */
+  border-radius: 2rem;
+}
+
+.glass-card {
+  background: var(--white);
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0px 0px var(--ink);
+  border-radius: 1.5rem;
+}
+
+.glass-card-dark {
+  background: var(--black);
+  border: 2px solid var(--ink);
+  color: var(--white);
+  box-shadow: 4px 4px 0px 0px var(--ink);
+  border-radius: 1.5rem;
+}
+
+/* Noise Textures */
+.bg-noise::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.04;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  z-index: 0;
+}
+
+.bg-noise-pink {
+  background-color: var(--accent-pink);
+  position: relative;
+  border: 2px solid var(--ink);
+}
+
+.bg-noise-pink::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.3;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+.bg-noise-blue {
+  background-color: var(--accent-blue);
+  position: relative;
+  border: 2px solid var(--ink);
+}
+
+.bg-noise-blue::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.3;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* Wallet Adapter Overrides */
+.wallet-adapter-button {
+  background: var(--ink) !important;
+  border-radius: 9999px !important;
+  font-family: var(--font-quicksand), system-ui, sans-serif !important;
+  color: var(--white) !important;
+  font-weight: 700 !important;
+  padding: 14px 32px !important;
+  transition: all 0.2s ease !important;
+  border: 2px solid var(--ink) !important;
+  box-shadow: 4px 4px 0px 0px var(--ink) !important;
+  font-size: 14px !important;
+  text-transform: lowercase !important;
+}
+
+.wallet-adapter-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 6px 6px 0px 0px var(--ink) !important;
+  background: var(--black) !important;
+}
+
+.wallet-adapter-button-trigger {
+  background: var(--ink) !important;
+}
+
+.section-dark .wallet-adapter-button {
+  background: var(--white) !important;
+  color: var(--black) !important;
+  border-color: var(--white) !important;
+}
+
+/* Wallet Modal Container */
+.wallet-adapter-modal-overlay {
+  background: rgba(26, 26, 26, 0.5) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  background: var(--white) !important;
+  border: none !important;
+  border-radius: 2rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  font-family: var(--font-quicksand), system-ui, sans-serif !important;
+  max-width: 380px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.wallet-adapter-modal-container {
+  padding: 2rem !important;
+}
+
+/* Modal Title */
+.wallet-adapter-modal-title {
+  color: var(--ink) !important;
+  font-family: var(--font-fredoka), system-ui, sans-serif !important;
+  font-weight: 500 !important;
+  font-size: 1.25rem !important;
+  text-transform: lowercase !important;
+  margin-bottom: 1.5rem !important;
+  text-align: center !important;
+  line-height: 1.4 !important;
+}
+
+/* Close button */
+.wallet-adapter-modal-button-close {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  top: 1rem !important;
+  right: 1rem !important;
+}
+
+.wallet-adapter-modal-button-close:hover {
+  background: var(--accent-pink) !important;
+}
+
+.wallet-adapter-modal-button-close svg {
+  fill: var(--ink) !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Wallet list */
+.wallet-adapter-modal-list {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+
+.wallet-adapter-modal-list li {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Wallet list buttons */
+.wallet-adapter-modal-list .wallet-adapter-button {
+  background: var(--white) !important;
+  color: var(--ink) !important;
+  border: 1px solid rgba(26, 26, 26, 0.1) !important;
+  border-radius: 1rem !important;
+  padding: 0.875rem 1rem !important;
+  width: 100% !important;
+  justify-content: flex-start !important;
+  gap: 0.875rem !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  text-transform: lowercase !important;
+  transition: all 0.15s ease !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: var(--accent-blue) !important;
+  border-color: var(--accent-blue) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button img,
+.wallet-adapter-modal-list .wallet-adapter-button-start-icon {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 0.5rem !important;
+}
+
+/* Collapse button */
+.wallet-adapter-modal-collapse-button {
+  background: transparent !important;
+  color: var(--ink) !important;
+  border: none !important;
+  padding: 1rem !important;
+  font-family: var(--font-quicksand), system-ui, sans-serif !important;
+  font-weight: 600 !important;
+  text-transform: lowercase !important;
+  margin-top: 0.5rem !important;
+}
+
+.wallet-adapter-modal-collapse-button:hover {
+  color: var(--ink) !important;
+  text-decoration: underline !important;
+  text-decoration-color: var(--accent-pink) !important;
+  text-decoration-thickness: 2px !important;
+}
+
+.wallet-adapter-modal-collapse-button svg {
+  fill: var(--ink) !important;
+}
+
+/* "More options" text styling */
+.wallet-adapter-modal-list-more {
+  color: var(--ink) !important;
+  font-family: var(--font-quicksand), system-ui, sans-serif !important;
+  text-transform: lowercase !important;
+}
+
+/* Dropdown menu */
+.wallet-adapter-dropdown-list {
+  background: var(--white) !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 8px 8px 0px 0px var(--ink) !important;
+  padding: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+.wallet-adapter-dropdown-list li {
+  margin: 0 !important;
+}
+
+.wallet-adapter-dropdown-list-item {
+  background: transparent !important;
+  color: var(--ink) !important;
+  border-radius: 0.75rem !important;
+  padding: 0.75rem 1rem !important;
+  font-family: var(--font-quicksand), system-ui, sans-serif !important;
+  font-weight: 600 !important;
+  text-transform: lowercase !important;
+  transition: all 0.15s ease !important;
+}
+
+.wallet-adapter-dropdown-list-item:hover {
+  background: var(--accent-pink) !important;
+}
+
+/* Layout Utilities */
+.container-wide {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .container-wide {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ink);
+  border-radius: 4px;
+  border: 2px solid var(--white);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--black);
+}
+
+/* Accent underline */
+.underline-pink {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-pink);
+  text-decoration-thickness: 4px;
+  text-underline-offset: 4px;
+  text-decoration-skip-ink: none;
+}
+
+.underline-blue {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-blue);
+  text-decoration-thickness: 4px;
+  text-underline-offset: 4px;
+  text-decoration-skip-ink: none;
+}
+
+/* Selection */
+::selection {
+  background: var(--accent-pink);
+  color: var(--ink);
+}
+
+/* Docs Sidebar */
+.docs-sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink) transparent;
+}
+
+.docs-sidebar::-webkit-scrollbar {
+  width: 2px;
+}
+
+.docs-sidebar::-webkit-scrollbar-thumb {
+  background: var(--ink);
+}
