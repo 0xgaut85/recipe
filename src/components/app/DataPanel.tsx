@@ -9,10 +9,13 @@ interface TokenData {
   symbol: string;
   name: string;
   address: string;
+  logoURI?: string;
   price: number;
   priceChange24h: number;
   volume24h: number;
   liquidity: number;
+  marketCap?: number;
+  rank?: number;
 }
 
 interface WalletData {
@@ -141,7 +144,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
               trendingTokens.map((token, i) => (
                 <motion.a
                   key={token.address || i}
-                  href={`https://dexscreener.com/solana/${token.address}`}
+                  href={`https://birdeye.so/token/${token.address}?chain=solana`}
                   target="_blank"
                   rel="noopener noreferrer"
                   initial={{ opacity: 0, x: 10 }}
@@ -150,9 +153,29 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                   className="block bg-white/5 rounded-xl p-4 hover:bg-white/10 transition-colors"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-white font-bold">{token.symbol}</span>
-                      <ExternalLink size={12} className="text-white/30" />
+                    <div className="flex items-center gap-3">
+                      {/* Token Logo */}
+                      {token.logoURI ? (
+                        <img 
+                          src={token.logoURI} 
+                          alt={token.symbol}
+                          className="w-8 h-8 rounded-full bg-white/10"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-pink/50 to-accent-blue/50 flex items-center justify-center text-white text-xs font-bold">
+                          {token.symbol?.charAt(0) || "?"}
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-white font-bold">{token.symbol}</span>
+                          <ExternalLink size={10} className="text-white/30" />
+                        </div>
+                        <span className="text-white/40 text-xs">{token.name}</span>
+                      </div>
                     </div>
                     <span
                       className={`text-sm font-bold ${
@@ -165,13 +188,20 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                       {(token.priceChange24h || 0).toFixed(2)}%
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/60">
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-white font-medium">
                       {formatPrice(parseFloat(String(token.price)))}
                     </span>
-                    <span className="text-white/40">
-                      Vol: {formatNumber(token.volume24h || 0)}
-                    </span>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-white/50">
+                        Vol: {formatNumber(token.volume24h || 0)}
+                      </span>
+                      {token.marketCap && token.marketCap > 0 && (
+                        <span className="text-white/40">
+                          MC: {formatNumber(token.marketCap)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </motion.a>
               ))

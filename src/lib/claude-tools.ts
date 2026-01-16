@@ -361,7 +361,7 @@ export async function executeTool(
     case "get_trending_tokens": {
       const limit = (args.limit as number) || 10;
       
-      // Try Birdeye first (better data)
+      // Try Birdeye first (better data with logos)
       try {
         const tokens = await getBirdeyeTrending(limit);
         if (tokens.length > 0) {
@@ -369,10 +369,12 @@ export async function executeTool(
             symbol: token.symbol,
             name: token.name,
             address: token.address,
+            logoURI: token.logoURI,
             price: token.price,
             priceChange24h: token.priceChange24h,
             volume24h: token.volume24h,
             liquidity: token.liquidity,
+            marketCap: token.marketCap,
             rank: token.rank,
           }));
         }

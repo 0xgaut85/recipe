@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { getTrendingTokens, getNewListings } from "@/lib/birdeye";
+import { getTrendingTokens } from "@/lib/birdeye";
 import { getNewLaunches } from "@/lib/pumpfun";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /**
  * GET /api/data/trending
- * Get trending tokens from Birdeye and new launches from Pump.fun
+ * Get trending tokens from Birdeye with logos and accurate prices
  */
 export async function GET() {
   try {
@@ -15,14 +18,16 @@ export async function GET() {
       symbol: string;
       name: string;
       address: string;
-      price: string | number;
+      logoURI: string;
+      price: number;
       priceChange24h: number;
       volume24h: number;
       liquidity: number;
+      marketCap: number;
       rank?: number;
     }> = [];
 
-    // Fetch trending from Birdeye (preferred) or fallback message
+    // Fetch trending from Birdeye (preferred)
     if (hasBirdeyeKey) {
       try {
         const birdeyeTrending = await getTrendingTokens(15);
@@ -30,10 +35,12 @@ export async function GET() {
           symbol: token.symbol,
           name: token.name,
           address: token.address,
+          logoURI: token.logoURI,
           price: token.price,
           priceChange24h: token.priceChange24h,
           volume24h: token.volume24h,
           liquidity: token.liquidity,
+          marketCap: token.marketCap,
           rank: token.rank,
         }));
       } catch (error) {
@@ -46,6 +53,7 @@ export async function GET() {
       mint: string;
       symbol: string;
       name: string;
+      imageUri?: string;
       marketCap: number;
       liquidity: number;
       created: number;
@@ -58,6 +66,7 @@ export async function GET() {
         mint: coin.mint,
         symbol: coin.symbol,
         name: coin.name,
+        imageUri: coin.image_uri,
         marketCap: coin.usd_market_cap,
         liquidity: coin.virtual_sol_reserves,
         created: coin.created_timestamp,
