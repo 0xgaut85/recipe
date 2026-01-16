@@ -2,7 +2,7 @@
 
 import { FC, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check, QrCode, ExternalLink, Flame, Zap, Clock, TrendingUp, PieChart, RefreshCw, Play, Pause, Trash2, X, Activity } from "lucide-react";
+import { Copy, Check, QrCode, ExternalLink, Flame, Zap, Clock, TrendingUp, PieChart, RefreshCw, Play, Pause, Trash2, X, Activity, Radio, ArrowUpRight, ArrowDownRight, Search, AlertCircle, ShoppingCart, DollarSign } from "lucide-react";
 import type { CookingStep } from "@/app/app/page";
 import { toast } from "sonner";
 
@@ -102,6 +102,19 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
   // Fresh balance from positions API for wallet tab
   const [freshSolBalance, setFreshSolBalance] = useState<number | null>(null);
   const [isWalletBalanceLoading, setIsWalletBalanceLoading] = useState(false);
+  // Strategy activity log
+  const [activityLog, setActivityLog] = useState<Array<{
+    id: string;
+    type: "scan" | "check" | "buy" | "sell" | "error" | "info";
+    message: string;
+    timestamp: string;
+    details?: { token?: string; amount?: number; price?: number; signature?: string };
+  }>>([]);
+  const [isActivityLoading, setIsActivityLoading] = useState(false);
+  // Position trading
+  const [tradingPosition, setTradingPosition] = useState<string | null>(null);
+  const [tradeAmount, setTradeAmount] = useState<string>("");
+  const [isTrading, setIsTrading] = useState(false);
 
   // Update wallet loading state when walletData changes
   useEffect(() => {
@@ -210,6 +223,67 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
       return () => clearInterval(interval);
     }
   }, [activeTab]);
+
+  // Fetch activity log for selected strategy
+  const fetchActivityLog = async (strategyId: string) => {
+    setIsActivityLoading(true);
+    try {
+      const res = await fetch(`/api/strategies/${strategyId}/activity`);
+      if (res.ok) {
+        const data = await res.json();
+        setActivityLog(data.activities || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch activity:", error);
+    } finally {
+      setIsActivityLoading(false);
+    }
+  };
+
+  // Fetch activity when monitor opens
+  useEffect(() => {
+    if (showMonitor && selectedStrategy) {
+      fetchActivityLog(selectedStrategy.id);
+      // Poll for updates every 5 seconds
+      const interval = setInterval(() => fetchActivityLog(selectedStrategy.id), 5000);
+      return () => clearInterval(interval);
+    }
+  }, [showMonitor, selectedStrategy]);
+
+  // Execute quick trade
+  const executeQuickTrade = async (action: "buy" | "sell", tokenMint: string, amount: number) => {
+    setIsTrading(true);
+    try {
+      const res = await fetch("/api/trade/quick", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, tokenMint, amount, slippageBps: 100 }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        toast.success(`${action === "buy" ? "Bought" : "Sold"} successfully!`);
+        // Refresh positions
+        fetchPositions();
+        setTradingPosition(null);
+        setTradeAmount("");
+      } else {
+        toast.error(data.error || "Trade failed");
+      }
+    } catch (error) {
+      console.error("Trade error:", error);
+      toast.error("Trade failed");
+    } finally {
+      setIsTrading(false);
+    }
+  };
+
+  // Sell percentage of position
+  const sellPercentage = async (tokenMint: string, balance: number, percent: number) => {
+    const sellAmount = balance * (percent / 100);
+    await executeQuickTrade("sell", tokenMint, sellAmount);
+  };
 
   // Toggle strategy active state
   const toggleStrategy = async (strategyId: string) => {
@@ -826,19 +900,106 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                       </div>
                     </div>
 
-                    {/* Price */}
-                    <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between text-xs">
-                      <span className="text-white/40">
-                        Price: <span className="text-white/60">{formatPrice(pos.price)}</span>
-                      </span>
-                      <a
-                        href={`https://jup.ag/swap/${pos.mint}-SOL`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-accent-pink hover:text-accent-pink/80 font-medium"
-                      >
-                        sell
-                      </a>
+                    {/* Price & Trade Controls */}
+                    <div className="mt-2 pt-2 border-t border-white/5">
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span className="text-white/40">
+                          Price: <span className="text-white/60">{formatPrice(pos.price)}</span>
+                        </span>
+                        <button
+                          onClick={() => setTradingPosition(tradingPosition === pos.mint ? null : pos.mint)}
+                          className="text-accent-pink hover:text-accent-pink/80 font-medium"
+                        >
+                          {tradingPosition === pos.mint ? "close" : "trade"}
+                        </button>
+                      </div>
+
+                      {/* Expanded Trade Controls */}
+                      <AnimatePresence>
+                        {tradingPosition === pos.mint && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="pt-2 space-y-2">
+                              {/* Quick Sell Percentages */}
+                              {pos.symbol !== "SOL" && (
+                                <div className="flex gap-1">
+                                  {[25, 50, 75, 100].map((pct) => (
+                                    <button
+                                      key={pct}
+                                      onClick={() => sellPercentage(pos.mint, pos.balance, pct)}
+                                      disabled={isTrading}
+                                      className="flex-1 py-1.5 text-xs font-bold bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition-colors disabled:opacity-50"
+                                    >
+                                      {pct === 100 ? "sell all" : `${pct}%`}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Custom Amount */}
+                              <div className="flex gap-2">
+                                <input
+                                  type="number"
+                                  value={tradeAmount}
+                                  onChange={(e) => setTradeAmount(e.target.value)}
+                                  placeholder={pos.symbol === "SOL" ? "SOL amount to buy" : "Amount to sell"}
+                                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-accent-pink/50"
+                                />
+                                {pos.symbol === "SOL" ? (
+                                  <button
+                                    onClick={() => {
+                                      const amt = parseFloat(tradeAmount);
+                                      if (amt > 0) {
+                                        // For SOL, we'd need a token selector - for now show toast
+                                        toast.info("Use chat to buy tokens: 'buy 0.1 SOL of BONK'");
+                                      }
+                                    }}
+                                    disabled={isTrading || !tradeAmount}
+                                    className="px-3 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                                  >
+                                    <ShoppingCart size={14} />
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      const amt = parseFloat(tradeAmount);
+                                      if (amt > 0) executeQuickTrade("sell", pos.mint, amt);
+                                    }}
+                                    disabled={isTrading || !tradeAmount}
+                                    className="px-3 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                                  >
+                                    <DollarSign size={14} />
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* External Links */}
+                              <div className="flex gap-2 text-xs">
+                                <a
+                                  href={`https://birdeye.so/token/${pos.mint}?chain=solana`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 py-1.5 text-center bg-white/5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                >
+                                  chart
+                                </a>
+                                <a
+                                  href={`https://solscan.io/token/${pos.mint}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 py-1.5 text-center bg-white/5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                >
+                                  explorer
+                                </a>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </motion.div>
                 ))
@@ -851,16 +1012,13 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
               )}
             </div>
 
-            {/* Quick Trade */}
+            {/* Quick Trade Tip */}
             <div className="p-3 border-t border-white/10">
-              <a
-                href="https://jup.ag"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full py-3 bg-accent-pink/20 hover:bg-accent-pink/30 rounded-xl text-center text-accent-pink font-bold transition-colors"
-              >
-                trade on jupiter
-              </a>
+              <div className="bg-accent-blue/10 border border-accent-blue/20 rounded-xl p-3 text-center">
+                <p className="text-accent-blue text-xs">
+                  tip: use chat to buy tokens - &quot;buy 0.1 SOL of BONK&quot;
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -1008,114 +1166,164 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                 </button>
               </div>
 
-              {/* Modal Content */}
-              <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
-                {/* Strategy Info */}
-                <div>
-                  <h3 className="text-white font-bold text-xl lowercase mb-2">
-                    {selectedStrategy.name}
-                  </h3>
-                  <p className="text-white/50 text-sm">
-                    {selectedStrategy.description}
+              {/* Modal Content - Two Column Layout */}
+              <div className="flex h-[50vh]">
+                {/* Left: Config & Info */}
+                <div className="w-1/2 p-4 overflow-y-auto border-r border-white/10 space-y-4">
+                  {/* Strategy Info */}
+                  <div>
+                    <h3 className="text-white font-bold text-lg lowercase mb-1">
+                      {selectedStrategy.name}
+                    </h3>
+                    <p className="text-white/50 text-xs line-clamp-2">
+                      {selectedStrategy.description}
+                    </p>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                      selectedStrategy.isActive
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-white/10 text-white/60"
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        selectedStrategy.isActive
+                          ? "bg-green-400 animate-pulse"
+                          : "bg-white/40"
+                      }`} />
+                      {selectedStrategy.isActive ? "Running" : "Paused"}
+                    </span>
+                  </div>
+
+                  {/* Configuration */}
+                  <div className="bg-white/5 rounded-xl p-3 space-y-2">
+                    <h4 className="text-white/60 text-xs uppercase tracking-wider mb-2">
+                      Config
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-white/40">Type</span>
+                        <p className="text-white font-medium">{selectedStrategy.config?.type || "—"}</p>
+                      </div>
+                      {selectedStrategy.config?.amount && (
+                        <div>
+                          <span className="text-white/40">Amount</span>
+                          <p className="text-white font-medium">{selectedStrategy.config.amount} SOL</p>
+                        </div>
+                      )}
+                      {selectedStrategy.config?.maxAgeMinutes && (
+                        <div>
+                          <span className="text-white/40">Max Age</span>
+                          <p className="text-white font-medium">{selectedStrategy.config.maxAgeMinutes} min</p>
+                        </div>
+                      )}
+                      {selectedStrategy.config?.minLiquidity && (
+                        <div>
+                          <span className="text-white/40">Min Liq</span>
+                          <p className="text-white font-medium">${(selectedStrategy.config.minLiquidity / 1000).toFixed(0)}k</p>
+                        </div>
+                      )}
+                      {selectedStrategy.config?.minMarketCap && (
+                        <div>
+                          <span className="text-white/40">Min MC</span>
+                          <p className="text-white font-medium">${(selectedStrategy.config.minMarketCap / 1000).toFixed(0)}k</p>
+                        </div>
+                      )}
+                      {selectedStrategy.config?.stopLoss && (
+                        <div>
+                          <span className="text-white/40">Stop Loss</span>
+                          <p className="text-red-400 font-medium">-{selectedStrategy.config.stopLoss}%</p>
+                        </div>
+                      )}
+                      {selectedStrategy.config?.takeProfit && (
+                        <div>
+                          <span className="text-white/40">Take Profit</span>
+                          <p className="text-green-400 font-medium">+{selectedStrategy.config.takeProfit}%</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-white/20 text-[10px] text-center">
+                    ID: {selectedStrategy.id.slice(0, 16)}...
                   </p>
                 </div>
 
-                {/* Status Badge */}
-                <div className="flex items-center gap-3">
-                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-                    selectedStrategy.isActive
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-white/10 text-white/60"
-                  }`}>
-                    <span className={`w-2 h-2 rounded-full ${
-                      selectedStrategy.isActive
-                        ? "bg-green-400 animate-pulse"
-                        : "bg-white/40"
-                    }`} />
-                    {selectedStrategy.isActive ? "Running" : "Paused"}
-                  </span>
-                  <span className="text-white/30 text-xs">
-                    ID: {selectedStrategy.id.slice(0, 12)}...
-                  </span>
-                </div>
-
-                {/* Configuration */}
-                <div className="bg-white/5 rounded-xl p-4 space-y-3">
-                  <h4 className="text-white/60 text-xs uppercase tracking-wider mb-3">
-                    Configuration
-                  </h4>
-                  <div className="flex justify-between">
-                    <span className="text-white/40 text-sm">Type</span>
-                    <span className="text-white text-sm font-medium">
-                      {selectedStrategy.config?.type || "—"}
-                    </span>
+                {/* Right: Live Activity Log */}
+                <div className="w-1/2 flex flex-col">
+                  <div className="px-4 py-2 border-b border-white/10 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Radio size={14} className={selectedStrategy.isActive ? "text-green-400 animate-pulse" : "text-white/40"} />
+                      <span className="text-white/60 text-xs font-bold uppercase">live activity</span>
+                    </div>
+                    <button
+                      onClick={() => fetchActivityLog(selectedStrategy.id)}
+                      disabled={isActivityLoading}
+                      className="text-white/30 hover:text-white/60 transition-colors"
+                    >
+                      <RefreshCw size={12} className={isActivityLoading ? "animate-spin" : ""} />
+                    </button>
                   </div>
-                  {selectedStrategy.config?.amount && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Amount</span>
-                      <span className="text-white text-sm">{selectedStrategy.config.amount} SOL</span>
-                    </div>
-                  )}
-                  {selectedStrategy.config?.maxAgeMinutes && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Max Age</span>
-                      <span className="text-white text-sm">{selectedStrategy.config.maxAgeMinutes} min</span>
-                    </div>
-                  )}
-                  {selectedStrategy.config?.minLiquidity && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Min Liquidity</span>
-                      <span className="text-white text-sm">${selectedStrategy.config.minLiquidity.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {selectedStrategy.config?.minVolume && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Min Volume</span>
-                      <span className="text-white text-sm">${selectedStrategy.config.minVolume.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {selectedStrategy.config?.minMarketCap && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Min Market Cap</span>
-                      <span className="text-white text-sm">${selectedStrategy.config.minMarketCap.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {selectedStrategy.config?.maxMarketCap && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Max Market Cap</span>
-                      <span className="text-white text-sm">${selectedStrategy.config.maxMarketCap.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {selectedStrategy.config?.stopLoss && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Stop Loss</span>
-                      <span className="text-red-400 text-sm">-{selectedStrategy.config.stopLoss}%</span>
-                    </div>
-                  )}
-                  {selectedStrategy.config?.takeProfit && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Take Profit</span>
-                      <span className="text-green-400 text-sm">+{selectedStrategy.config.takeProfit}%</span>
-                    </div>
-                  )}
-                  {selectedStrategy.config?.nameFilter && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Name Filter</span>
-                      <span className="text-white text-sm">&quot;{selectedStrategy.config.nameFilter}&quot;</span>
-                    </div>
-                  )}
-                  {selectedStrategy.config?.slippageBps && (
-                    <div className="flex justify-between">
-                      <span className="text-white/40 text-sm">Slippage</span>
-                      <span className="text-white text-sm">{(selectedStrategy.config.slippageBps / 100).toFixed(1)}%</span>
-                    </div>
-                  )}
-                </div>
 
-                {/* Created Date */}
-                <p className="text-white/30 text-xs text-center">
-                  Created {new Date(selectedStrategy.createdAt).toLocaleString()}
-                </p>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                    {isActivityLoading && activityLog.length === 0 ? (
+                      <div className="space-y-2 p-2">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="bg-white/5 rounded-lg p-2 animate-pulse">
+                            <div className="h-3 bg-white/10 rounded w-3/4" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : activityLog.length > 0 ? (
+                      activityLog.map((log) => (
+                        <div
+                          key={log.id}
+                          className={`rounded-lg p-2 text-xs ${
+                            log.type === "buy" ? "bg-green-500/10 border-l-2 border-green-500" :
+                            log.type === "sell" ? "bg-red-500/10 border-l-2 border-red-500" :
+                            log.type === "scan" ? "bg-blue-500/10 border-l-2 border-blue-500" :
+                            log.type === "error" ? "bg-orange-500/10 border-l-2 border-orange-500" :
+                            "bg-white/5 border-l-2 border-white/20"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className="mt-0.5">
+                              {log.type === "buy" && <ArrowUpRight size={12} className="text-green-400" />}
+                              {log.type === "sell" && <ArrowDownRight size={12} className="text-red-400" />}
+                              {log.type === "scan" && <Search size={12} className="text-blue-400" />}
+                              {log.type === "error" && <AlertCircle size={12} className="text-orange-400" />}
+                              {log.type === "info" && <Activity size={12} className="text-white/40" />}
+                              {log.type === "check" && <Clock size={12} className="text-white/40" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white/80 truncate">{log.message}</p>
+                              <p className="text-white/30 text-[10px]">
+                                {new Date(log.timestamp).toLocaleTimeString()}
+                              </p>
+                            </div>
+                            {log.details?.signature && (
+                              <a
+                                href={`https://solscan.io/tx/${log.details.signature}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-accent-pink hover:text-accent-pink/80"
+                              >
+                                <ExternalLink size={10} />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-white/30 text-xs">
+                        <Radio size={24} className="mb-2 opacity-30" />
+                        <p>no activity yet</p>
+                        <p className="text-[10px]">waiting for opportunities...</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Modal Actions */}
