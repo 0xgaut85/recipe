@@ -398,8 +398,9 @@ async function fetchTrendingTokens(sortBy: "volume24hUSD" | "rank" | "liquidity"
 }
 
 /**
- * Get trending tokens sorted by 24h VOLUME (high volume plays)
- * Uses Birdeye's token_trending endpoint with sort_by=volume24hUSD
+ * Get tokens sorted by 24h VOLUME (high volume plays)
+ * Uses Birdeye's Token List V3 API to get tokens sorted by volume
+ * This is DIFFERENT from token_trending which getHotTokens uses
  */
 export async function getTrendingTokens(limit: number = 20): Promise<TrendingToken[]> {
   // Return cached data if available and fresh
@@ -408,27 +409,58 @@ export async function getTrendingTokens(limit: number = 20): Promise<TrendingTok
   }
 
   try {
-    const tokens = await fetchTrendingTokens("volume24hUSD");
+    const headers = getHeaders();
     
-    // Filter to ensure we have valid volume data
-    const validTokens = tokens.filter(t => t.volume24h > 0 && t.price > 0);
+    // Use Token List V3 API - different endpoint from token_trending
+    // This gives us tokens sorted purely by volume
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/v3/token/list`);
+    url.searchParams.set("sort_by", "v24hUSD");  // Sort by 24h volume
+    url.searchParams.set("sort_type", "desc");
+    url.searchParams.set("offset", "0");
+    url.searchParams.set("limit", Math.min(limit + 10, 50).toString());
     
-    console.log(`getTrendingTokens: fetched ${tokens.length} tokens, ${validTokens.length} with valid volume`);
+    const response = await fetch(url.toString(), { headers });
     
-    if (validTokens.length > 0) {
-      volumeCache = { data: validTokens, timestamp: Date.now() };
-      return validTokens.slice(0, limit);
+    if (response.ok) {
+      const data = await response.json();
+      
+      if (data.success && data.data?.items && data.data.items.length > 0) {
+        const tokens: TrendingToken[] = data.data.items
+          .filter((token: any) => token.v24hUSD > 0 && token.price > 0)
+          .map((token: any, index: number) => ({
+            address: token.address,
+            symbol: token.symbol || "???",
+            name: token.name || "Unknown",
+            logoURI: token.logoURI || token.logo || "",
+            price: token.price || 0,
+            priceChange24h: token.priceChange24hPercent || token.price24hChangePercent || 0,
+            volume24h: token.v24hUSD || 0,
+            liquidity: token.liquidity || 0,
+            marketCap: token.mc || token.realMc || token.fdv || 0,
+            rank: index + 1,
+          }));
+        
+        if (tokens.length > 0) {
+          console.log(`getTrendingTokens (v3/token/list): got ${tokens.length} tokens sorted by volume`);
+          volumeCache = { data: tokens, timestamp: Date.now() };
+          return tokens.slice(0, limit);
+        }
+      }
+    } else {
+      const errorText = await response.text();
+      console.error("Token List V3 volume error:", response.status, errorText);
     }
     
-    // If volume sort didn't work well, try liquidity sort as fallback
-    console.log("Volume sort returned no valid tokens, trying liquidity fallback");
+    // Fallback: Use token_trending with liquidity sort, then re-sort by volume
+    console.log("Token List V3 failed, falling back to token_trending liquidity");
     const liquidityTokens = await fetchTrendingTokens("liquidity");
-    const validLiquidityTokens = liquidityTokens
+    const sortedByVolume = liquidityTokens
       .filter(t => t.volume24h > 0 && t.price > 0)
-      .sort((a, b) => b.volume24h - a.volume24h); // Re-sort by volume client-side
+      .sort((a, b) => b.volume24h - a.volume24h)
+      .map((t, index) => ({ ...t, rank: index + 1 }));
     
-    volumeCache = { data: validLiquidityTokens, timestamp: Date.now() };
-    return validLiquidityTokens.slice(0, limit);
+    volumeCache = { data: sortedByVolume, timestamp: Date.now() };
+    return sortedByVolume.slice(0, limit);
   } catch (error) {
     console.error("getTrendingTokens error:", error);
     return [];
@@ -563,8 +595,9 @@ async function getHighVolumeNewPairsFallback(limit: number): Promise<TrendingTok
 }
 
 /**
- * Get HOT tokens - top gainers with real activity
- * Uses the trending endpoint sorted by rank (Birdeye's internal algo) then filters by price change
+ * Get HOT tokens - trending tokens from Birdeye's algorithm
+ * Uses /defi/token_trending endpoint with rank sort (Birdeye's trending algorithm)
+ * Shows tokens that are currently "hot" based on activity, social, and price action
  */
 export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]> {
   // Return cached data if available and fresh
@@ -573,18 +606,18 @@ export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]>
   }
 
   try {
-    // Get tokens sorted by Birdeye's rank algorithm
+    // Get tokens from Birdeye's trending algorithm (rank = their internal hot algo)
     const trendingByRank = await fetchTrendingTokens("rank");
     
-    // Filter for quality and sort by absolute price change (biggest movers)
+    console.log(`getHotTokens (token_trending rank): got ${trendingByRank.length} trending tokens`);
+    
+    // Filter for quality tokens with real activity
     const hotTokens = trendingByRank
       .filter(t => 
         t.price > 0 && 
         t.volume24h > 0 && 
-        t.liquidity > 0 &&
-        Math.abs(t.priceChange24h) > 0 // Must have price movement
+        t.liquidity > 0
       )
-      .sort((a, b) => Math.abs(b.priceChange24h) - Math.abs(a.priceChange24h))
       .map((t, index) => ({ ...t, rank: index + 1 }));
 
     // If we got tokens, cache and return
@@ -593,17 +626,16 @@ export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]>
       return hotTokens.slice(0, limit);
     }
 
-    // Fallback: use volume-based trending
-    console.log("No hot tokens from rank, trying volume fallback");
-    const volumeTokens = await fetchTrendingTokens("volume24hUSD");
+    // Fallback: use liquidity-based trending
+    console.log("No hot tokens from rank, trying liquidity fallback");
+    const liquidityTokens = await fetchTrendingTokens("liquidity");
     
-    const filteredVolume = volumeTokens
+    const filtered = liquidityTokens
       .filter(t => t.price > 0 && t.volume24h > 0)
-      .sort((a, b) => Math.abs(b.priceChange24h) - Math.abs(a.priceChange24h))
       .map((t, index) => ({ ...t, rank: index + 1 }));
 
-    gainersCache = { data: filteredVolume, timestamp: Date.now() };
-    return filteredVolume.slice(0, limit);
+    gainersCache = { data: filtered, timestamp: Date.now() };
+    return filtered.slice(0, limit);
   } catch (error) {
     console.error("Birdeye hot tokens error:", error);
     
