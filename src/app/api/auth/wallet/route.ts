@@ -4,7 +4,8 @@ import prisma from "@/lib/prisma";
 import { generateWallet, getBalance, getTokenAccounts } from "@/lib/wallet";
 import {
   createSession,
-  validateSession,
+  validateSessionWithWallet,
+  invalidateSession,
   getSessionCookieName,
   getSessionCookieOptions,
 } from "@/lib/session";
@@ -12,99 +13,208 @@ import {
 const SESSION_COOKIE = getSessionCookieName();
 
 /**
+ * POST /api/auth/wallet
+ * Authenticate with connected wallet address
+ * This ties the session to the specific wallet that's connected
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const connectedWallet = body.connectedWallet as string;
+
+    if (!connectedWallet || connectedWallet.length < 32) {
+      return NextResponse.json(
+        { error: "Connected wallet address required" },
+        { status: 400 }
+      );
+    }
+
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
+
+    // Check if we have a valid session for THIS wallet
+    if (sessionToken) {
+      const { userId, walletMatch } = await validateSessionWithWallet(
+        sessionToken,
+        connectedWallet
+      );
+
+      if (userId && walletMatch) {
+        // Session is valid and matches this wallet - return existing user
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          include: { wallet: true },
+        });
+
+        if (user?.wallet) {
+          let solBalance = 0;
+          let tokens: Array<{ mint: string; balance: number; decimals: number }> = [];
+          try {
+            solBalance = await getBalance(user.wallet.publicKey);
+            tokens = await getTokenAccounts(user.wallet.publicKey);
+          } catch (error) {
+            console.error("Error fetching balance:", error);
+          }
+
+          return NextResponse.json({
+            userId: user.id,
+            publicKey: user.wallet.publicKey,
+            solBalance,
+            tokens,
+            profile: {
+              name: user.name,
+              avatar: user.avatar,
+              bio: user.bio,
+              xHandle: user.xHandle,
+              showOnLeaderboard: user.showOnLeaderboard,
+            },
+            isNew: false,
+          });
+        }
+      }
+
+      // Session exists but wallet doesn't match - invalidate it
+      if (userId && !walletMatch) {
+        await invalidateSession(sessionToken);
+      }
+    }
+
+    // Check if this wallet has been used before (find existing user)
+    const existingWalletUser = await prisma.session.findFirst({
+      where: {
+        connectedWallet,
+        expiresAt: { gt: new Date() },
+      },
+      select: { userId: true },
+      orderBy: { lastUsedAt: "desc" },
+    });
+
+    let userId: string;
+    let isNew = false;
+
+    if (existingWalletUser) {
+      // User has connected with this wallet before
+      userId = existingWalletUser.userId;
+    } else {
+      // New wallet - create new user
+      const user = await prisma.user.create({
+        data: {
+          name: `chef_${Date.now().toString(36)}`,
+        },
+      });
+      userId = user.id;
+      isNew = true;
+
+      // Generate internal custodial wallet
+      const { publicKey, encryptedPrivateKey } = generateWallet();
+      await prisma.wallet.create({
+        data: {
+          userId: user.id,
+          publicKey,
+          encryptedPrivateKey,
+        },
+      });
+    }
+
+    // Create new session tied to this wallet
+    const userAgent = req.headers.get("user-agent") || undefined;
+    const ipAddress =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      undefined;
+    const newToken = await createSession(userId, userAgent, ipAddress, connectedWallet);
+
+    // Get user with wallet
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { wallet: true },
+    });
+
+    if (!user?.wallet) {
+      return NextResponse.json({ error: "Wallet not found" }, { status: 500 });
+    }
+
+    // Get balance
+    let solBalance = 0;
+    let tokens: Array<{ mint: string; balance: number; decimals: number }> = [];
+    try {
+      solBalance = await getBalance(user.wallet.publicKey);
+      tokens = await getTokenAccounts(user.wallet.publicKey);
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+    }
+
+    const response = NextResponse.json({
+      userId: user.id,
+      publicKey: user.wallet.publicKey,
+      solBalance,
+      tokens,
+      profile: {
+        name: user.name,
+        avatar: user.avatar,
+        bio: user.bio,
+        xHandle: user.xHandle,
+        showOnLeaderboard: user.showOnLeaderboard,
+      },
+      isNew,
+    });
+
+    response.cookies.set(SESSION_COOKIE, newToken, getSessionCookieOptions());
+    return response;
+  } catch (error) {
+    console.error("Wallet auth error:", error);
+    return NextResponse.json(
+      { error: "Failed to authenticate wallet" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * GET /api/auth/wallet
- * Get or create wallet for the current user
+ * Get current wallet (requires valid session)
+ * @deprecated Use POST with connectedWallet instead
  */
 export async function GET(req: NextRequest) {
   try {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
 
-    // Validate existing session
-    let userId: string | null = null;
-    if (sessionToken) {
-      userId = await validateSession(sessionToken);
+    if (!sessionToken) {
+      return NextResponse.json(
+        { error: "Not authenticated. Please connect your wallet." },
+        { status: 401 }
+      );
     }
 
-    // If no valid session, create a new user and wallet
-    if (!userId) {
-      // Create new user
-      const user = await prisma.user.create({
-        data: {
-          name: `chef_${Date.now().toString(36)}`,
-        },
-      });
-
-      // Generate wallet
-      const { publicKey, encryptedPrivateKey } = generateWallet();
-
-      // Store wallet
-      await prisma.wallet.create({
-        data: {
-          userId: user.id,
-          publicKey,
-          encryptedPrivateKey,
-        },
-      });
-
-      // Create secure session
-      const userAgent = req.headers.get("user-agent") || undefined;
-      const ipAddress =
-        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        req.headers.get("x-real-ip") ||
-        undefined;
-      const newToken = await createSession(user.id, userAgent, ipAddress);
-
-      // Set session cookie
-      const response = NextResponse.json({
-        userId: user.id,
-        publicKey,
-        isNew: true,
-      });
-
-      response.cookies.set(SESSION_COOKIE, newToken, getSessionCookieOptions());
-
-      return response;
-    }
-
-    // Get existing user and wallet
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { wallet: true },
+    // Find session
+    const session = await prisma.session.findUnique({
+      where: { token: sessionToken },
+      select: { userId: true, expiresAt: true, connectedWallet: true },
     });
 
-    if (!user) {
-      // Invalid user (shouldn't happen but handle gracefully)
+    if (!session || new Date() > session.expiresAt) {
       const response = NextResponse.json(
-        { error: "Invalid session" },
+        { error: "Session expired. Please reconnect your wallet." },
         { status: 401 }
       );
       response.cookies.delete(SESSION_COOKIE);
       return response;
     }
 
-    // If user exists but no wallet, create one
-    if (!user.wallet) {
-      const { publicKey, encryptedPrivateKey } = generateWallet();
-      await prisma.wallet.create({
-        data: {
-          userId: user.id,
-          publicKey,
-          encryptedPrivateKey,
-        },
-      });
+    // Get user and wallet
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      include: { wallet: true },
+    });
 
-      return NextResponse.json({
-        userId: user.id,
-        publicKey,
-        isNew: true,
-      });
+    if (!user?.wallet) {
+      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
     }
 
-    // Get wallet balance
+    // Get balance
     let solBalance = 0;
     let tokens: Array<{ mint: string; balance: number; decimals: number }> = [];
-
     try {
       solBalance = await getBalance(user.wallet.publicKey);
       tokens = await getTokenAccounts(user.wallet.publicKey);
@@ -115,6 +225,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       userId: user.id,
       publicKey: user.wallet.publicKey,
+      connectedWallet: session.connectedWallet,
       solBalance,
       tokens,
       profile: {
@@ -129,52 +240,9 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Wallet API error:", error);
     return NextResponse.json(
-      { error: "Failed to get or create wallet" },
+      { error: "Failed to get wallet" },
       { status: 500 }
     );
   }
 }
 
-/**
- * POST /api/auth/wallet/refresh
- * Force refresh wallet balance
- */
-export async function POST(req: NextRequest) {
-  try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const userId = await validateSession(sessionToken);
-    if (!userId) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { wallet: true },
-    });
-
-    if (!user || !user.wallet) {
-      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
-    }
-
-    const solBalance = await getBalance(user.wallet.publicKey);
-    const tokens = await getTokenAccounts(user.wallet.publicKey);
-
-    return NextResponse.json({
-      publicKey: user.wallet.publicKey,
-      solBalance,
-      tokens,
-    });
-  } catch (error) {
-    console.error("Wallet refresh error:", error);
-    return NextResponse.json(
-      { error: "Failed to refresh wallet" },
-      { status: 500 }
-    );
-  }
-}

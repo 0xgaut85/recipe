@@ -33,7 +33,8 @@ export function getSessionExpiry(): Date {
 export async function createSession(
   userId: string,
   userAgent?: string,
-  ipAddress?: string
+  ipAddress?: string,
+  connectedWallet?: string
 ): Promise<string> {
   const token = generateSessionToken();
   const expiresAt = getSessionExpiry();
@@ -45,6 +46,7 @@ export async function createSession(
       expiresAt,
       userAgent,
       ipAddress,
+      connectedWallet,
     },
   });
 
@@ -122,6 +124,62 @@ export async function getCurrentUser() {
  */
 export async function invalidateSession(token: string): Promise<void> {
   await prisma.session.delete({ where: { token } }).catch(() => {});
+}
+
+/**
+ * Find user by connected wallet address
+ */
+export async function findUserByConnectedWallet(connectedWallet: string): Promise<string | null> {
+  const session = await prisma.session.findFirst({
+    where: {
+      connectedWallet,
+      expiresAt: { gt: new Date() },
+    },
+    select: { userId: true },
+    orderBy: { lastUsedAt: "desc" },
+  });
+
+  return session?.userId || null;
+}
+
+/**
+ * Validate session and check connected wallet matches
+ */
+export async function validateSessionWithWallet(
+  token: string,
+  connectedWallet: string
+): Promise<{ userId: string | null; walletMatch: boolean }> {
+  if (!token || token.length !== TOKEN_LENGTH * 2) {
+    return { userId: null, walletMatch: false };
+  }
+
+  const session = await prisma.session.findUnique({
+    where: { token },
+    select: { userId: true, expiresAt: true, connectedWallet: true, id: true },
+  });
+
+  if (!session) {
+    return { userId: null, walletMatch: false };
+  }
+
+  // Check if session has expired
+  if (new Date() > session.expiresAt) {
+    await prisma.session.delete({ where: { id: session.id } }).catch(() => {});
+    return { userId: null, walletMatch: false };
+  }
+
+  // Check if connected wallet matches
+  const walletMatch = session.connectedWallet === connectedWallet;
+
+  // Update last used time
+  prisma.session
+    .update({
+      where: { id: session.id },
+      data: { lastUsedAt: new Date() },
+    })
+    .catch(() => {});
+
+  return { userId: session.userId, walletMatch };
 }
 
 /**

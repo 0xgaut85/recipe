@@ -33,21 +33,25 @@ model User {
 }
 
 model Session {
-  id            String    @id @default(cuid())
-  token         String    @unique
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String    @id @default(cuid())
+  token           String    @unique
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime  @default(now())
-  expiresAt     DateTime
-  lastUsedAt    DateTime  @default(now())
+  // Connected external wallet (Phantom/Solflare) - ties session to specific wallet
+  connectedWallet String?
 
-  userAgent     String?
-  ipAddress     String?
+  createdAt       DateTime  @default(now())
+  expiresAt       DateTime
+  lastUsedAt      DateTime  @default(now())
+
+  userAgent       String?
+  ipAddress       String?
 
   @@index([token])
   @@index([userId])
   @@index([expiresAt])
+  @@index([connectedWallet])
 }
 
 model Wallet {

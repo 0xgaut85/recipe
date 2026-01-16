@@ -48,7 +48,7 @@ const nextStep: Record<CookingStep, CookingStep | null> = {
 };
 
 export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
-  const { disconnect } = useWallet();
+  const { disconnect, publicKey } = useWallet();
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
@@ -57,28 +57,102 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [addressCopied, setAddressCopied] = useState(false);
+  const [activeStrategies, setActiveStrategies] = useState(0);
+  const [lastTradeNotification, setLastTradeNotification] = useState<string | null>(null);
 
-  // Fetch wallet data on mount
+  // Fetch wallet data when connected wallet changes
   useEffect(() => {
-    fetchWalletData();
-  }, []);
+    if (publicKey) {
+      authenticateWallet(publicKey.toBase58());
+    }
+  }, [publicKey]);
 
-  const fetchWalletData = async () => {
+  // Poll for strategy execution when there are active strategies
+  useEffect(() => {
+    if (activeStrategies === 0) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch("/api/strategies/execute");
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Update active strategies count
+          setActiveStrategies(data.status?.activeCount || 0);
+          
+          // Show notification for executed trades
+          if (data.executed && data.results) {
+            for (const result of data.results) {
+              if (result.action === "TRADE_EXECUTED" && result.trade) {
+                const tradeKey = result.trade.signature;
+                if (tradeKey !== lastTradeNotification) {
+                  toast.success(
+                    `🚀 Bought ${result.trade.tokenSymbol} for ${result.trade.inputAmount} SOL`,
+                    { duration: 5000 }
+                  );
+                  setLastTradeNotification(tradeKey);
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Strategy polling error:", error);
+      }
+    }, 15000); // Poll every 15 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [activeStrategies, lastTradeNotification]);
+
+  // Fetch initial strategy count
+  useEffect(() => {
+    if (!walletData) return;
+
+    const fetchStrategyStatus = async () => {
+      try {
+        const response = await fetch("/api/strategies");
+        if (response.ok) {
+          const data = await response.json();
+          const activeCount = data.strategies?.filter((s: any) => s.isActive)?.length || 0;
+          setActiveStrategies(activeCount);
+        }
+      } catch (error) {
+        console.error("Failed to fetch strategy status:", error);
+      }
+    };
+
+    fetchStrategyStatus();
+  }, [walletData]);
+
+  // Authenticate with the connected wallet address
+  const authenticateWallet = async (connectedWallet: string) => {
     try {
-      const response = await fetch("/api/auth/wallet");
+      const response = await fetch("/api/auth/wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connectedWallet }),
+      });
       if (response.ok) {
         const data = await response.json();
         setWalletData(data);
+      } else {
+        console.error("Failed to authenticate wallet");
       }
     } catch (error) {
-      console.error("Failed to fetch wallet data:", error);
+      console.error("Failed to authenticate wallet:", error);
     }
   };
 
   const refreshBalance = async () => {
+    if (!publicKey) return;
+    
     setIsRefreshing(true);
     try {
-      const response = await fetch("/api/auth/wallet", { method: "POST" });
+      const response = await fetch("/api/auth/wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connectedWallet: publicKey.toBase58() }),
+      });
       if (response.ok) {
         const data = await response.json();
         setWalletData((prev) =>
