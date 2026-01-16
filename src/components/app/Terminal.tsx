@@ -1,11 +1,11 @@
 "use client";
 
 import { FC, useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { User, Trophy, ArrowDownToLine, RefreshCw, BarChart3 } from "lucide-react";
+import { User, Trophy, ArrowDownToLine, RefreshCw, BarChart3, LogOut, Copy, Check, ExternalLink, X } from "lucide-react";
 import { StepIndicator } from "./StepIndicator";
 import { ChatPanel } from "./ChatPanel";
 import { DataPanel } from "./DataPanel";
@@ -14,6 +14,7 @@ import { LeaderboardPanel } from "./LeaderboardPanel";
 import { WithdrawModal } from "./WithdrawModal";
 import { StrategyPanel } from "./StrategyPanel";
 import type { CookingStep } from "@/app/app/page";
+import { toast } from "sonner";
 
 const WalletMultiButtonDynamic = dynamic(
   async () =>
@@ -51,7 +52,9 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [isStrategyOpen, setIsStrategyOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [addressCopied, setAddressCopied] = useState(false);
 
   // Fetch wallet data on mount
   useEffect(() => {
@@ -91,6 +94,27 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
     const next = nextStep[step];
     if (next) {
       onStepChange(next);
+    }
+  };
+
+  const copyAddress = () => {
+    if (walletData?.publicKey) {
+      navigator.clipboard.writeText(walletData.publicKey);
+      setAddressCopied(true);
+      toast.success("Address copied!");
+      setTimeout(() => setAddressCopied(false), 2000);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      // Clear session cookie
+      document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      // Redirect to landing
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Failed to disconnect:", error);
+      toast.error("Failed to disconnect");
     }
   };
 
@@ -177,15 +201,18 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
             </button>
           </div>
 
-          {/* Wallet Address */}
+          {/* Wallet Address - Clickable */}
           {walletData && (
-            <div className="hidden md:flex items-center gap-2 text-white/40 text-xs font-mono">
+            <button
+              onClick={() => setIsWalletModalOpen(true)}
+              className="hidden md:flex items-center gap-2 text-white/40 hover:text-white/60 text-xs font-mono px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
               <span>
                 {walletData.publicKey.slice(0, 4)}...
                 {walletData.publicKey.slice(-4)}
               </span>
-            </div>
+            </button>
           )}
         </div>
       </motion.header>
@@ -268,6 +295,89 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
         isOpen={isStrategyOpen}
         onClose={() => setIsStrategyOpen(false)}
       />
+
+      {/* Wallet Modal */}
+      <AnimatePresence>
+        {isWalletModalOpen && walletData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setIsWalletModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-gradient-to-b from-ink/90 to-black/90 border border-white/10 rounded-2xl p-6 w-full max-w-sm"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white lowercase">wallet</h2>
+                <button
+                  onClick={() => setIsWalletModalOpen(false)}
+                  className="text-white/40 hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Connected Status */}
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-2 h-2 rounded-full bg-green-400" />
+                <span className="text-green-400 text-sm font-medium">connected</span>
+              </div>
+
+              {/* Address */}
+              <div className="bg-white/5 rounded-xl p-4 mb-4">
+                <p className="text-white/40 text-xs mb-2 uppercase tracking-wider">address</p>
+                <p className="text-white font-mono text-sm break-all">
+                  {walletData.publicKey}
+                </p>
+              </div>
+
+              {/* Balance */}
+              <div className="bg-white/5 rounded-xl p-4 mb-6">
+                <p className="text-white/40 text-xs mb-2 uppercase tracking-wider">balance</p>
+                <p className="text-white font-bold text-2xl">
+                  {walletData.solBalance.toFixed(4)} <span className="text-white/60 text-lg">SOL</span>
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-2">
+                <button
+                  onClick={copyAddress}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/80 hover:text-white transition-colors"
+                >
+                  {addressCopied ? <Check size={18} /> : <Copy size={18} />}
+                  <span>{addressCopied ? "copied!" : "copy address"}</span>
+                </button>
+
+                <a
+                  href={`https://solscan.io/account/${walletData.publicKey}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/80 hover:text-white transition-colors"
+                >
+                  <ExternalLink size={18} />
+                  <span>view on solscan</span>
+                </a>
+
+                <button
+                  onClick={handleDisconnect}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 hover:bg-red-500/20 rounded-xl text-red-400 hover:text-red-300 transition-colors"
+                >
+                  <LogOut size={18} />
+                  <span>disconnect wallet</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

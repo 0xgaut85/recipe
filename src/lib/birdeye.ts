@@ -411,8 +411,8 @@ export async function getTrendingTokens(limit: number = 20): Promise<TrendingTok
 }
 
 /**
- * Get HOT tokens - trending by rank (Birdeye's algorithm for hot/trending)
- * Then sorted by absolute price change to show biggest movers
+ * Get HOT tokens - top gainers with real activity
+ * Uses Token List V3 API with quality filters to avoid dead tokens
  */
 export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]> {
   // Return cached data if available and fresh
@@ -420,16 +420,63 @@ export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]>
     return gainersCache.data.slice(0, limit);
   }
 
-  // Fetch by rank (Birdeye's trending algorithm)
-  const tokens = await fetchTrendingTokens("rank");
-  
-  // Sort by absolute price change to show biggest movers (pumps & dumps)
-  const sorted = [...tokens].sort((a, b) => 
-    Math.abs(b.priceChange24h) - Math.abs(a.priceChange24h)
-  );
-  
-  gainersCache = { data: sorted, timestamp: Date.now() };
-  return sorted.slice(0, limit);
+  try {
+    const headers = getHeaders();
+
+    // Use Token List V3 for better filtering
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/v3/token/list`);
+    url.searchParams.set("sort_by", "price_change_24h_percent");
+    url.searchParams.set("sort_type", "desc");
+    url.searchParams.set("min_liquidity", "10000"); // Min $10k liquidity
+    url.searchParams.set("min_volume_24h_usd", "50000"); // Min $50k 24h volume
+    url.searchParams.set("offset", "0");
+    url.searchParams.set("limit", "20");
+
+    const response = await fetch(url.toString(), { headers });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      if (data.success && data.data?.items) {
+        const tokens = data.data.items
+          .filter((token: any) => token.price > 0 && token.v24hUSD > 0)
+          .map((token: any, index: number) => ({
+            address: token.address,
+            symbol: token.symbol || "???",
+            name: token.name || "Unknown",
+            logoURI: token.logoURI || token.logo || "",
+            price: token.price || 0,
+            priceChange24h: token.priceChange24hPercent || token.price24hChangePercent || 0,
+            volume24h: token.v24hUSD || token.volume24hUSD || 0,
+            liquidity: token.liquidity || 0,
+            marketCap: token.mc || token.marketCap || token.fdv || 0,
+            rank: index + 1,
+          }));
+
+        gainersCache = { data: tokens, timestamp: Date.now() };
+        return tokens.slice(0, limit);
+      }
+    }
+
+    // Fallback: use regular trending but filter for quality
+    console.log("Token List V3 failed, falling back to trending");
+    const fallbackTokens = await fetchTrendingTokens("volume24hUSD");
+    
+    // Filter out dead tokens: must have price, volume, and liquidity
+    const qualityTokens = fallbackTokens
+      .filter(t => t.price > 0 && t.volume24h > 10000 && t.liquidity > 5000)
+      .sort((a, b) => b.priceChange24h - a.priceChange24h);
+
+    gainersCache = { data: qualityTokens, timestamp: Date.now() };
+    return qualityTokens.slice(0, limit);
+  } catch (error) {
+    console.error("Birdeye hot tokens error:", error);
+    
+    // Ultimate fallback
+    const fallbackTokens = await fetchTrendingTokens("volume24hUSD");
+    const filtered = fallbackTokens.filter(t => t.price > 0 && t.volume24h > 0);
+    return filtered.slice(0, limit);
+  }
 }
 
 // Cache for new listings
