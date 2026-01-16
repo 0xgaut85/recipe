@@ -4,9 +4,17 @@
  */
 
 import { getTokenInfo, searchPairs } from "./dexscreener";
-import { getOHLCV, getTokenOverview, TimeFrame, getTrendingTokens as getBirdeyeTrending } from "./birdeye";
+import { 
+  getOHLCV, 
+  getTokenOverview, 
+  TimeFrame, 
+  getTrendingTokens as getBirdeyeTrending,
+  getNewListings,
+  getNewPairsFiltered,
+  getPairOverview,
+  NewPairData
+} from "./birdeye";
 import { calculateEMA, calculateRSI, getLatestIndicators } from "./indicators";
-import { getNewLaunches, getCoinByMint, filterCoins } from "./pumpfun";
 import { getBalance, getTokenAccounts, isValidPublicKey } from "./wallet";
 import { getSwapQuote, executeSwap, TOKEN_MINTS, getTokenDecimals, toSmallestUnit, fromSmallestUnit } from "./jupiter";
 import { getDriftMarketData, getAllDriftMarkets, placeDriftOrder, DriftMarket, DRIFT_MARKETS } from "./drift";
@@ -78,28 +86,42 @@ export const toolDefinitions = [
     },
   },
   {
-    name: "get_new_launches",
-    description: "Get recent token launches from Pump.fun with optional filters",
+    name: "get_new_pairs",
+    description: "Get newly launched token pairs on Solana (Pump.fun, Raydium, Meteora, etc). Use this for sniping new launches.",
     input_schema: {
       type: "object",
       properties: {
+        maxAgeMinutes: {
+          type: "number",
+          description: "Maximum age of pair in minutes (default: 30). Use 30 for pairs launched in last 30 mins.",
+        },
         minLiquidity: {
           type: "number",
-          description: "Minimum liquidity in SOL",
+          description: "Minimum liquidity in USD (default: 1000)",
         },
-        minAge: {
+        minVolume: {
           type: "number",
-          description: "Minimum age in seconds",
-        },
-        maxAge: {
-          type: "number",
-          description: "Maximum age in seconds",
+          description: "Minimum 24h volume in USD (default: 0)",
         },
         limit: {
           type: "number",
           description: "Number of results to return (default: 20)",
         },
       },
+    },
+  },
+  {
+    name: "get_pair_details",
+    description: "Get detailed metrics for a specific trading pair including 30min/1h volume, trades, and price changes.",
+    input_schema: {
+      type: "object",
+      properties: {
+        address: {
+          type: "string",
+          description: "Token or pair address to get details for",
+        },
+      },
+      required: ["address"],
     },
   },
   {
@@ -262,7 +284,7 @@ export const toolDefinitions = [
   },
   {
     name: "create_strategy",
-    description: "Create and save a trading strategy for the user. Call this when the user confirms they want to save/deploy a strategy.",
+    description: "Create and save a trading strategy for the user. Supports spot trades, perp trades, and new pair sniping. Call this when the user confirms they want to save/deploy a strategy.",
     input_schema: {
       type: "object",
       properties: {
@@ -276,8 +298,8 @@ export const toolDefinitions = [
         },
         type: {
           type: "string",
-          enum: ["SPOT", "PERP"],
-          description: "Type of trade: SPOT for swaps, PERP for perpetuals",
+          enum: ["SPOT", "PERP", "SNIPER"],
+          description: "Type of trade: SPOT for swaps, PERP for perpetuals, SNIPER for new pair sniping",
         },
         inputToken: {
           type: "string",
@@ -289,7 +311,7 @@ export const toolDefinitions = [
         },
         amount: {
           type: "number",
-          description: "Amount to trade",
+          description: "Amount to trade (in SOL for SNIPER strategies)",
         },
         direction: {
           type: "string",
@@ -302,11 +324,27 @@ export const toolDefinitions = [
         },
         stopLoss: {
           type: "number",
-          description: "Stop loss percentage",
+          description: "Stop loss percentage (optional)",
         },
         takeProfit: {
           type: "number",
-          description: "Take profit percentage",
+          description: "Take profit percentage (optional, set to 0 or omit for manual exit)",
+        },
+        maxAgeMinutes: {
+          type: "number",
+          description: "For SNIPER: Maximum pair age in minutes (e.g., 30)",
+        },
+        minLiquidity: {
+          type: "number",
+          description: "For SNIPER: Minimum liquidity in USD",
+        },
+        minVolume: {
+          type: "number",
+          description: "For SNIPER: Minimum 24h volume in USD",
+        },
+        slippageBps: {
+          type: "number",
+          description: "Slippage tolerance in basis points (default: 300 for 3%)",
         },
       },
       required: ["name", "description", "type"],
@@ -381,27 +419,60 @@ export async function executeTool(
       };
     }
 
-    case "get_new_launches": {
-      const limit = (args.limit as number) || 20;
-      const coins = await getNewLaunches(50);
+    case "get_new_pairs": {
+      const options = {
+        maxAgeMinutes: (args.maxAgeMinutes as number) || 30,
+        minLiquidity: (args.minLiquidity as number) || 1000,
+        minVolume: (args.minVolume as number) || 0,
+        limit: (args.limit as number) || 20,
+      };
       
-      const filtered = filterCoins(coins, {
-        minLiquidity: args.minLiquidity as number,
-        minAge: args.minAge as number,
-        maxAge: args.maxAge as number,
-      });
+      const pairs = await getNewPairsFiltered(options);
       
-      return filtered.slice(0, limit).map((coin) => ({
-        mint: coin.mint,
-        name: coin.name,
-        symbol: coin.symbol,
-        marketCap: coin.usd_market_cap,
-        liquidity: coin.virtual_sol_reserves,
-        created: new Date(coin.created_timestamp).toISOString(),
-        complete: coin.complete,
-        twitter: coin.twitter,
-        website: coin.website,
-      }));
+      return {
+        pairs: pairs.map((pair) => ({
+          address: pair.address,
+          symbol: pair.symbol,
+          name: pair.name,
+          logoURI: pair.logoURI,
+          price: pair.price,
+          liquidity: pair.liquidity,
+          volume24h: pair.volume24h,
+          marketCap: pair.marketCap,
+          ageMinutes: pair.ageMinutes,
+          dex: pair.dex || "unknown",
+        })),
+        count: pairs.length,
+        filters: options,
+      };
+    }
+
+    case "get_pair_details": {
+      const address = args.address as string;
+      const overview = await getPairOverview(address);
+      
+      if (!overview) {
+        // Try token overview as fallback
+        const tokenOverview = await getTokenOverview(address);
+        if (tokenOverview) {
+          return {
+            address,
+            symbol: tokenOverview.symbol,
+            name: tokenOverview.name,
+            price: tokenOverview.price,
+            volume24h: tokenOverview.volume24h,
+            liquidity: tokenOverview.liquidity,
+            marketCap: tokenOverview.marketCap,
+            holders: tokenOverview.holder,
+          };
+        }
+        return { error: "Pair not found" };
+      }
+      
+      return {
+        address,
+        ...overview,
+      };
     }
 
     case "search_tokens": {
@@ -612,30 +683,76 @@ export async function executeTool(
         return { error: "Authentication required" };
       }
 
+      const strategyType = args.type as string;
+      
+      // Build config based on strategy type
+      let config: {
+        type: string;
+        amount?: number;
+        slippageBps: number;
+        inputToken?: string;
+        outputToken?: string;
+        direction?: string;
+        stopLoss?: number;
+        takeProfit?: number;
+        leverage?: number;
+        maxAgeMinutes?: number;
+        minLiquidity?: number;
+        minVolume?: number;
+      } = {
+        type: strategyType,
+        amount: args.amount as number | undefined,
+        slippageBps: (args.slippageBps as number) || (strategyType === "SNIPER" ? 300 : 50),
+      };
+
+      if (strategyType === "SPOT") {
+        config = {
+          ...config,
+          inputToken: args.inputToken as string,
+          outputToken: args.outputToken as string,
+          direction: args.direction as string,
+          stopLoss: args.stopLoss as number | undefined,
+          takeProfit: args.takeProfit as number | undefined,
+        };
+      } else if (strategyType === "PERP") {
+        config = {
+          ...config,
+          inputToken: args.inputToken as string,
+          direction: args.direction as string,
+          leverage: args.leverage as number,
+          stopLoss: args.stopLoss as number | undefined,
+          takeProfit: args.takeProfit as number | undefined,
+        };
+      } else if (strategyType === "SNIPER") {
+        config = {
+          ...config,
+          maxAgeMinutes: (args.maxAgeMinutes as number) || 30,
+          minLiquidity: (args.minLiquidity as number) || 10000,
+          minVolume: (args.minVolume as number) || 100000,
+          takeProfit: args.takeProfit as number | undefined, // undefined = manual exit
+          stopLoss: args.stopLoss as number | undefined,
+        };
+      }
+
       const strategy = await prisma.strategy.create({
         data: {
           userId,
           name: args.name as string,
           description: args.description as string,
-          config: {
-            type: args.type as string,
-            inputToken: args.inputToken as string | undefined,
-            outputToken: args.outputToken as string | undefined,
-            amount: args.amount as number | undefined,
-            direction: args.direction as string | undefined,
-            leverage: args.leverage as number | undefined,
-            stopLoss: args.stopLoss as number | undefined,
-            takeProfit: args.takeProfit as number | undefined,
-          },
+          config: config as object,
           isActive: false,
         },
       });
 
+      const typeEmoji = strategyType === "SNIPER" ? "🎯" : strategyType === "PERP" ? "📈" : "💱";
+      
       return {
         success: true,
         strategyId: strategy.id,
         name: strategy.name,
-        message: `Strategy "${strategy.name}" created successfully! You can view and manage it in the Strategies panel (chart icon in the header).`,
+        type: strategyType,
+        config,
+        message: `${typeEmoji} Strategy "${strategy.name}" created successfully! You can view and manage it in the Strategies panel (chart icon in the header).`,
       };
     }
 

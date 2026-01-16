@@ -61,7 +61,7 @@
             position: absolute;
             border-radius: 50%;
             filter: blur(80px);
-            opacity: 0.8;
+            opacity: 1;
             z-index: 1;
         }
 
@@ -71,8 +71,8 @@
             width: 500px;
             height: 500px;
             transform: translate(-50%, -50%);
-            background: #FFB6C1; /* Stronger pink color (LightPink) for visibility */
-            mix-blend-mode: multiply; /* Helps it show through grain better */
+            background: #ff91a4; /* Denser pink */
+            mix-blend-mode: multiply;
         }
 
         .blob-blue {
@@ -81,7 +81,7 @@
             width: 500px;
             height: 500px;
             transform: translate(-50%, -50%);
-            background: #87CEEB; /* Stronger blue color (SkyBlue) for visibility */
+            background: #6fbce0; /* Denser blue */
             mix-blend-mode: multiply;
         }
 
@@ -110,8 +110,8 @@
         h1 {
             font-family: var(--font-body);
             font-weight: 700;
-            font-size: 32px; /* Twice smaller (was 64px) */
-            color: var(--ink);
+            font-size: 32px;
+            color: var(--white);
             letter-spacing: -0.01em;
             text-transform: lowercase;
             margin: 0;

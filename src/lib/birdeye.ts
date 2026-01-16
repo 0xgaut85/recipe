@@ -313,17 +313,23 @@ export async function getTrendingTokens(
 
 // Cache for new listings
 let newListingsCache: {
-  data: Array<{
-    address: string;
-    symbol: string;
-    name: string;
-    logoURI: string;
-    price: number;
-    liquidity: number;
-    listedAt: number;
-  }>;
+  data: NewPairData[];
   timestamp: number;
 } | null = null;
+
+export interface NewPairData {
+  address: string;
+  symbol: string;
+  name: string;
+  logoURI: string;
+  price: number;
+  liquidity: number;
+  volume24h: number;
+  marketCap: number;
+  listedAt: number;
+  ageMinutes: number;
+  dex?: string;
+}
 
 /**
  * Get new token listings from Birdeye
@@ -331,18 +337,10 @@ let newListingsCache: {
  */
 export async function getNewListings(
   limit: number = 20
-): Promise<Array<{
-  address: string;
-  symbol: string;
-  name: string;
-  logoURI: string;
-  price: number;
-  liquidity: number;
-  listedAt: number;
-}>> {
+): Promise<NewPairData[]> {
   // Return cached data if fresh (30 seconds)
   if (newListingsCache && Date.now() - newListingsCache.timestamp < CACHE_TTL_MS) {
-    return newListingsCache.data.slice(0, limit);
+    return newListingsCache.data.slice(0, limit).map(addAgeMinutes);
   }
 
   try {
@@ -373,7 +371,11 @@ export async function getNewListings(
       logoURI: token.logoURI || token.logo || "",
       price: token.price || 0,
       liquidity: token.liquidity || 0,
+      volume24h: token.v24hUSD || token.volume24h || 0,
+      marketCap: token.mc || token.marketCap || 0,
       listedAt: token.listingTime || token.createdAt || Date.now(),
+      ageMinutes: 0,
+      dex: token.source || token.dex || undefined,
     }));
 
     // Update cache
@@ -382,10 +384,105 @@ export async function getNewListings(
       timestamp: Date.now(),
     };
 
-    return listings;
+    return listings.map(addAgeMinutes);
   } catch (error) {
     console.error("Birdeye new listings error:", error);
     return [];
+  }
+}
+
+/**
+ * Add age in minutes to token data
+ */
+function addAgeMinutes(token: any): NewPairData {
+  const ageMs = Date.now() - (token.listedAt || Date.now());
+  return {
+    ...token,
+    ageMinutes: Math.floor(ageMs / 60000),
+  };
+}
+
+/**
+ * Get new pairs with filters - for sniping strategies
+ * @param maxAgeMinutes Maximum age of pair in minutes (default 30)
+ * @param minLiquidity Minimum liquidity in USD (default 1000)
+ * @param minVolume Minimum 24h volume in USD (default 0)
+ */
+export async function getNewPairsFiltered(options: {
+  maxAgeMinutes?: number;
+  minLiquidity?: number;
+  minVolume?: number;
+  limit?: number;
+} = {}): Promise<NewPairData[]> {
+  const {
+    maxAgeMinutes = 30,
+    minLiquidity = 1000,
+    minVolume = 0,
+    limit = 20,
+  } = options;
+
+  const allPairs = await getNewListings(20);
+
+  return allPairs
+    .filter((pair) => {
+      // Filter by age
+      if (pair.ageMinutes > maxAgeMinutes) return false;
+      // Filter by liquidity
+      if (pair.liquidity < minLiquidity) return false;
+      // Filter by volume
+      if (minVolume > 0 && pair.volume24h < minVolume) return false;
+      return true;
+    })
+    .slice(0, limit);
+}
+
+/**
+ * Get pair overview with detailed metrics
+ */
+export async function getPairOverview(pairAddress: string): Promise<{
+  price: number;
+  volume30m: number;
+  volume1h: number;
+  volume24h: number;
+  liquidity: number;
+  trades30m: number;
+  trades1h: number;
+  priceChange30m: number;
+  priceChange1h: number;
+} | null> {
+  try {
+    const headers = getHeaders();
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/v3/pair/overview/single`);
+    url.searchParams.set("address", pairAddress);
+
+    const response = await fetch(url.toString(), { headers });
+
+    if (!response.ok) {
+      console.error("Birdeye pair overview error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.success || !data.data) {
+      return null;
+    }
+
+    const pair = data.data;
+    return {
+      price: pair.price || 0,
+      volume30m: pair.v30mUSD || 0,
+      volume1h: pair.v1hUSD || 0,
+      volume24h: pair.v24hUSD || 0,
+      liquidity: pair.liquidity || 0,
+      trades30m: pair.trade30m || 0,
+      trades1h: pair.trade1h || 0,
+      priceChange30m: pair.priceChange30mPercent || 0,
+      priceChange1h: pair.priceChange1hPercent || 0,
+    };
+  } catch (error) {
+    console.error("Birdeye pair overview error:", error);
+    return null;
   }
 }
 
