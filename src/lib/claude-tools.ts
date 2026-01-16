@@ -334,7 +334,7 @@ export const toolDefinitions = [
   },
   {
     name: "create_strategy",
-    description: "Create and save a trading strategy for the user. Supports spot trades, perp trades, and new pair sniping. Call this when the user confirms they want to save/deploy a strategy.",
+    description: "Create and save a trading strategy for the user. Supports spot trades, perp trades, new pair sniping, and conditional/indicator-based strategies. Call this when the user confirms they want to save/deploy a strategy.",
     input_schema: {
       type: "object",
       properties: {
@@ -348,20 +348,20 @@ export const toolDefinitions = [
         },
         type: {
           type: "string",
-          enum: ["SPOT", "PERP", "SNIPER"],
-          description: "Type of trade: SPOT for swaps, PERP for perpetuals, SNIPER for new pair sniping",
+          enum: ["SPOT", "PERP", "SNIPER", "CONDITIONAL"],
+          description: "Type of strategy: SPOT for swaps, PERP for perpetuals, SNIPER for new pair sniping, CONDITIONAL for indicator-based triggers",
         },
         inputToken: {
           type: "string",
-          description: "Input token mint address (for spot) or base token",
+          description: "Input token symbol or address (e.g., 'SOL', 'BONK')",
         },
         outputToken: {
           type: "string",
-          description: "Output token mint address (for spot)",
+          description: "Output token symbol or address (for SPOT trades)",
         },
         amount: {
           type: "number",
-          description: "Amount to trade (in SOL for SNIPER strategies)",
+          description: "Amount to trade (in input token units, e.g., SOL amount)",
         },
         direction: {
           type: "string",
@@ -411,6 +411,35 @@ export const toolDefinitions = [
         slippageBps: {
           type: "number",
           description: "Slippage tolerance in basis points (default: 300 for 3%)",
+        },
+        condition: {
+          type: "object",
+          description: "For CONDITIONAL: Indicator-based trigger conditions",
+          properties: {
+            indicator: {
+              type: "string",
+              enum: ["EMA", "RSI", "SMA", "PRICE"],
+              description: "Indicator to use (EMA, RSI, SMA, or PRICE for specific price level)",
+            },
+            period: {
+              type: "number",
+              description: "Indicator period (e.g., 20, 50, 200 for EMA/SMA)",
+            },
+            timeframe: {
+              type: "string",
+              enum: ["1m", "5m", "15m", "1H", "4H", "1D"],
+              description: "Candle timeframe for the indicator",
+            },
+            trigger: {
+              type: "string",
+              enum: ["price_above", "price_below", "price_touches", "crosses_above", "crosses_below"],
+              description: "When to trigger the trade",
+            },
+            value: {
+              type: "number",
+              description: "For PRICE indicator: specific price level to trigger at",
+            },
+          },
         },
       },
       required: ["name", "description", "type"],
@@ -917,6 +946,13 @@ export async function executeTool(
         minMarketCap?: number;
         maxMarketCap?: number;
         nameFilter?: string;
+        condition?: {
+          indicator: string;
+          period?: number;
+          timeframe?: string;
+          trigger: string;
+          value?: number;
+        };
       } = {
         type: strategyType,
         amount: args.amount as number | undefined,
@@ -954,6 +990,30 @@ export async function executeTool(
           takeProfit: args.takeProfit as number | undefined, // undefined = manual exit
           stopLoss: args.stopLoss as number | undefined,
         };
+      } else if (strategyType === "CONDITIONAL") {
+        const conditionArg = args.condition as {
+          indicator?: string;
+          period?: number;
+          timeframe?: string;
+          trigger?: string;
+          value?: number;
+        } | undefined;
+        
+        config = {
+          ...config,
+          inputToken: args.inputToken as string,
+          outputToken: args.outputToken as string | undefined,
+          direction: args.direction as string || "buy",
+          stopLoss: args.stopLoss as number | undefined,
+          takeProfit: args.takeProfit as number | undefined,
+          condition: conditionArg ? {
+            indicator: conditionArg.indicator || "EMA",
+            period: conditionArg.period,
+            timeframe: conditionArg.timeframe || "1H",
+            trigger: conditionArg.trigger || "price_touches",
+            value: conditionArg.value,
+          } : undefined,
+        };
       }
 
       const strategy = await prisma.strategy.create({
@@ -966,7 +1026,7 @@ export async function executeTool(
         },
       });
 
-      const typeEmoji = strategyType === "SNIPER" ? "🎯" : strategyType === "PERP" ? "📈" : "💱";
+      const typeEmoji = strategyType === "SNIPER" ? "🎯" : strategyType === "PERP" ? "📈" : strategyType === "CONDITIONAL" ? "📊" : "💱";
       
       return {
         success: true,

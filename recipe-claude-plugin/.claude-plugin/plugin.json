@@ -1,0 +1,28 @@
+{
+  "name": "recipe",
+  "version": "1.0.0",
+  "description": "Solana trading plugin for Claude Code. Search tokens, analyze wallets, execute swaps, and create trading strategies - all from your terminal.",
+  "author": {
+    "name": "Recipe.money",
+    "email": "hello@recipe.money",
+    "url": "https://recipe.money"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/recipedotmoney/recipe-claude-plugin",
+  "keywords": [
+    "solana",
+    "trading",
+    "defi",
+    "jupiter",
+    "mcp",
+    "claude",
+    "crypto",
+    "swap"
+  ],
+  "mcpServers": {
+    "recipe": {
+      "command": "node",
+      "args": ["${pluginPath}/dist/index.js"]
+    }
+  }
+}

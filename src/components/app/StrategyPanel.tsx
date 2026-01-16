@@ -16,8 +16,16 @@ import {
   BarChart3,
 } from "lucide-react";
 
+interface ConditionConfig {
+  indicator: "EMA" | "RSI" | "SMA" | "PRICE";
+  period?: number;
+  timeframe?: string;
+  trigger: string;
+  value?: number;
+}
+
 interface StrategyConfig {
-  type: "SPOT" | "PERP" | "SNIPER";
+  type: "SPOT" | "PERP" | "SNIPER" | "CONDITIONAL";
   token?: string;
   inputToken?: string;
   outputToken?: string;
@@ -36,6 +44,8 @@ interface StrategyConfig {
   maxMarketCap?: number;
   slippageBps?: number;
   nameFilter?: string;
+  // CONDITIONAL specific
+  condition?: ConditionConfig;
 }
 
 interface Strategy {
@@ -258,6 +268,8 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                               ? "bg-blue-500/20 text-blue-400"
                               : strategy.config.type === "SNIPER"
                               ? "bg-green-500/20 text-green-400"
+                              : strategy.config.type === "CONDITIONAL"
+                              ? "bg-amber-500/20 text-amber-400"
                               : "bg-purple-500/20 text-purple-400"
                           }`}
                         >
@@ -504,6 +516,41 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                             {(selectedStrategy.config.slippageBps / 100).toFixed(1)}%
                           </span>
                         </div>
+                      )}
+                      {/* CONDITIONAL specific fields */}
+                      {selectedStrategy.config.condition && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-white/40 text-sm">Indicator</span>
+                            <span className="text-amber-400 text-sm font-medium">
+                              {selectedStrategy.config.condition.indicator}
+                              {selectedStrategy.config.condition.period && 
+                                `(${selectedStrategy.config.condition.period})`}
+                            </span>
+                          </div>
+                          {selectedStrategy.config.condition.timeframe && (
+                            <div className="flex justify-between">
+                              <span className="text-white/40 text-sm">Timeframe</span>
+                              <span className="text-white text-sm">
+                                {selectedStrategy.config.condition.timeframe}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-white/40 text-sm">Trigger</span>
+                            <span className="text-white text-sm">
+                              {selectedStrategy.config.condition.trigger.replace(/_/g, " ")}
+                            </span>
+                          </div>
+                          {selectedStrategy.config.condition.value && (
+                            <div className="flex justify-between">
+                              <span className="text-white/40 text-sm">Target Price</span>
+                              <span className="text-white text-sm">
+                                ${selectedStrategy.config.condition.value.toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

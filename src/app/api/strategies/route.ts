@@ -5,12 +5,21 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+// Condition schema for CONDITIONAL strategies
+const conditionSchema = z.object({
+  indicator: z.enum(["EMA", "RSI", "SMA", "PRICE"]),
+  period: z.number().optional(),
+  timeframe: z.enum(["1m", "5m", "15m", "1H", "4H", "1D"]).optional(),
+  trigger: z.enum(["price_above", "price_below", "price_touches", "crosses_above", "crosses_below"]),
+  value: z.number().optional(),
+});
+
 // Strategy creation schema
 const createStrategySchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().min(1).max(1000),
   config: z.object({
-    type: z.enum(["SPOT", "PERP", "SNIPER"]),
+    type: z.enum(["SPOT", "PERP", "SNIPER", "CONDITIONAL"]),
     token: z.string().optional(),
     inputToken: z.string().optional(),
     outputToken: z.string().optional(),
@@ -32,6 +41,8 @@ const createStrategySchema = z.object({
     maxMarketCap: z.number().optional(),
     slippageBps: z.number().optional(),
     nameFilter: z.string().optional(),
+    // CONDITIONAL specific config
+    condition: conditionSchema.optional(),
   }),
 });
 
