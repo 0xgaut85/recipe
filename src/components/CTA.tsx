@@ -8,7 +8,7 @@ import { GlassCard } from "@/components/ui";
 
 const socialLinks = [
   { label: "x", href: "https://x.com/recipedotmoney" },
-  { label: "github", href: "#" },
+  { label: "github", href: "https://github.com/0xLaylo/recipe-plugin" },
 ];
 
 // Smooth easing curve
