@@ -26,8 +26,8 @@
         }
 
         body {
-            width: 1920px;
-            height: 1080px;
+            width: 1600px;
+            height: 1900px;
             overflow: hidden;
             background: #f4f4f5;
             font-family: var(--font-body);
@@ -38,8 +38,8 @@
         }
 
         .post-container {
-            width: 1920px;
-            height: 1080px;
+            width: 1600px;
+            height: 1900px;
             position: relative;
             background: var(--white);
             overflow: hidden;
@@ -56,20 +56,22 @@
             height: 800px;
             border-radius: 50%;
             filter: blur(100px);
-            opacity: 0.6;
+            opacity: 1;
             z-index: 0;
         }
 
         .blob-pink {
             bottom: -200px;
             left: -200px;
-            background: radial-gradient(circle, #F5D6E0, transparent 70%);
+            background: #ff91a4; /* Denser pink */
+            mix-blend-mode: multiply;
         }
 
         .blob-blue {
             top: -200px;
             right: -200px;
-            background: radial-gradient(circle, #B8D4E3, transparent 70%);
+            background: #6fbce0; /* Denser blue */
+            mix-blend-mode: multiply;
         }
 
         /* Liquid Glass Box */
@@ -136,7 +138,7 @@
         }
 
         .claude-logo {
-            width: 50px;
+            width: 120px;
             height: auto;
             opacity: 0.9;
         }

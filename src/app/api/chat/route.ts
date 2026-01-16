@@ -28,130 +28,52 @@ interface ChatRequest {
 }
 
 const systemPrompts: Record<string, string> = {
-  describe: `you are recipe, an ai trading assistant on solana. this is the DESCRIBE phase.
+  describe: `you are recipe, an ai trading assistant on solana.
 
-YOUR ROLE: receive and understand what the user wants to build.
+the user is describing what they want. acknowledge their request and summarize what you understood.
 
-AFTER RECEIVING THEIR REQUEST:
-1. Acknowledge what they want
-2. If they gave ALL the key params (amount, filters, tp/sl), say "perfect, let me verify everything..."
-3. If they're missing key info, say "got it! let me gather a few more details..."
+IMMEDIATE TRADES: if user says "buy X" or "sell X" directly, use execute_spot_trade tool.
 
-KEY PARAMS TO CHECK FOR:
-- trade amount (how much SOL)
-- at least one filter (liquidity, volume, mcap, or name)
-- optionally: take profit, stop loss
+be concise, lowercase. after you respond, system moves to cook phase.`,
 
-IMMEDIATE TRADES: if user says "buy X" or "sell X" (not a strategy), confirm and execute the trade directly.
+  cook: `you are recipe, an ai trading assistant on solana.
 
-be concise, lowercase.`,
-
-  cook: `you are recipe, an ai trading assistant on solana. this is the COOK phase.
-
-YOUR ROLE: gather any missing parameters for the strategy.
-
-CHECK WHAT'S ALREADY PROVIDED and only ask for what's missing:
-- trade amount (how much SOL per trade) - REQUIRED
-- max age (how fresh? default 30 min)
-- min liquidity (default $5k)
+gather any missing strategy parameters. check what user already provided:
+- trade amount (SOL) - REQUIRED
+- max age (default 30 min)
+- min liquidity (default $5k)  
 - min volume (default $10k)
-- min market cap (default $10k)
-- name filter (optional - word to look for)
+- min mcap (default $10k)
+- name filter (optional)
 - take profit % (optional)
 - stop loss % (optional)
 
-RULES:
-- don't repeat info the user already gave
-- ask 1-2 questions max at a time
-- use sensible defaults for unspecified params
-
-WHEN YOU HAVE ENOUGH INFO (at least amount + one filter):
-say "got everything! here's your strategy config..." and summarize it.
+if user gave everything, summarize and say "ready to deploy? confirm to launch!"
+if missing info, ask 1-2 questions max.
 
 be concise, lowercase.`,
 
-  taste: `you are recipe, an ai trading assistant on solana. this is the TASTE phase.
+  taste: `you are recipe, an ai trading assistant on solana.
 
-YOUR ROLE: present the final strategy config and get confirmation.
+show the final config and ask for confirmation:
+"🎯 [strategy name]
+- [all params listed]
+ready? say yes to deploy!"
 
-SHOW THE FULL CONFIG:
-"🎯 **[strategy name]**
-- target: [what it's looking for]
-- amount: [X] SOL per trade
-- filters: [list all filters]
-- take profit: [X%] / stop loss: [X%]
-
-ready to deploy? say 'yes' to launch it!"
-
-WHEN USER CONFIRMS:
-say "deploying..." and the system will create it.
+WHEN USER CONFIRMS (yes, do it, deploy, etc):
+IMMEDIATELY call create_strategy tool with all the params.
 
 be concise, lowercase.`,
 
-  serve: `you are recipe, an ai trading assistant on solana. this is the SERVE phase.
+  serve: `you are recipe, an ai trading assistant on solana.
 
-CRITICAL INSTRUCTION: YOU MUST CALL create_strategy TOOL FIRST.
-Before saying ANYTHING about the strategy being live or deployed, you MUST call create_strategy.
-DO NOT say "strategy is live" or "deployed" until AFTER the tool returns success.
+the strategy was just created! confirm it's live:
+"🚀 your strategy is now live! it will automatically [describe what it does]."
 
-Look at the conversation history and extract ALL parameters the user specified:
-- strategy type (SPOT, SNIPER, or CONDITIONAL)
-- trade amount
-- tokens involved
-- conditions/filters
-- take profit / stop loss
-
-Then call create_strategy with those parameters.
-
-STRATEGY TYPES:
-1. SNIPER - for new pair sniping with filters (name, age, liquidity, mcap)
-2. SPOT - for token swaps (buy/sell specific tokens)
-3. CONDITIONAL - for indicator-based triggers (buy when EMA crosses, RSI levels, price targets)
-
-Example SNIPER call:
-{
-  "name": "claude sniper",
-  "description": "Snipe new pairs with claude in name",
-  "type": "SNIPER",
-  "amount": 0.1,
-  "maxAgeMinutes": 15,
-  "minLiquidity": 5000,
-  "minVolume": 20000,
-  "minMarketCap": 15000,
-  "nameFilter": "claude",
-  "takeProfit": 100,
-  "stopLoss": 30,
-  "slippageBps": 300
-}
-
-Example CONDITIONAL call:
-{
-  "name": "SOL EMA buy",
-  "description": "Buy SOL when price touches 20 EMA on 1H",
-  "type": "CONDITIONAL",
-  "inputToken": "SOL",
-  "amount": 1,
-  "condition": {
-    "indicator": "EMA",
-    "period": 20,
-    "timeframe": "1H",
-    "trigger": "price_touches"
-  }
-}
-
-Example SPOT call:
-{
-  "name": "Buy BONK",
-  "description": "Buy 0.5 SOL worth of BONK",
-  "type": "SPOT",
-  "inputToken": "SOL",
-  "outputToken": "BONK",
-  "amount": 0.5,
-  "direction": "buy"
-}
-
-ONLY after create_strategy returns success, tell user the strategy is live.
-If it fails, tell user the error and offer to fix it.
+tell user they can:
+- check it in the strategies panel (chart icon)
+- pause/stop it anytime
+- ask you about its status
 
 be concise, lowercase.`,
 };
@@ -219,22 +141,19 @@ export async function POST(request: NextRequest) {
     const userId = await getCurrentUserId();
     const systemPrompt = systemPrompts[step] || systemPrompts.describe;
 
-    // Convert simple messages to Anthropic format
-    let conversationMessages: Message[] = inputMessages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
-
-    // Get the last user message to detect confirmations
-    const lastUserMessage = inputMessages
-      .filter((m) => m.role === "user")
-      .pop();
-    const lastUserText = typeof lastUserMessage?.content === "string" 
-      ? lastUserMessage.content.toLowerCase() 
-      : "";
-    
-    // Check if user is confirming (for phase advancement)
-    const isConfirmation = /^(y|yes|yup|yeah|yep|yh|ok|okay|k|sure|do it|let'?s go|sounds good|perfect|confirmed?|deploy|go ahead|start|launch|ready|ship it|lfg)/i.test(lastUserText.trim());
+    // Convert simple messages to Anthropic format, filtering out empty messages
+    let conversationMessages: Message[] = inputMessages
+      .filter((m) => {
+        // Filter out messages with empty content
+        if (!m.content) return false;
+        if (typeof m.content === "string" && m.content.trim() === "") return false;
+        if (Array.isArray(m.content) && m.content.length === 0) return false;
+        return true;
+      })
+      .map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
     const encoder = new TextEncoder();
 
@@ -322,10 +241,12 @@ export async function POST(request: NextRequest) {
                     )
                   );
 
+                  // Ensure tool result content is never empty
+                  const resultContent = result ? JSON.stringify(result) : JSON.stringify({ success: true });
                   toolResults.push({
                     type: "tool_result",
                     tool_use_id: toolUse.id,
-                    content: JSON.stringify(result),
+                    content: resultContent,
                   });
                 } catch (toolError) {
                   console.error(`Tool ${toolUse.name} error:`, toolError);
@@ -380,35 +301,18 @@ export async function POST(request: NextRequest) {
             }
 
             // Check stop reason
-            if (response.stop_reason === "end_turn" && !shouldAdvanceStep) {
+            if (response.stop_reason === "end_turn") {
               continueLoop = false;
               
-              // Auto-advance phases based on current step
-              // Only if we haven't already advanced due to tool execution
-              if (step === "describe") {
-                // describe -> cook: after first AI response
+              // Only auto-advance from describe -> cook
+              // All other advances happen via create_strategy tool
+              if (step === "describe" && !shouldAdvanceStep) {
                 controller.enqueue(
                   encoder.encode(
                     `data: ${JSON.stringify({ advanceToStep: "cook" })}\n\n`
                   )
                 );
-              } else if (step === "cook" && isConfirmation) {
-                // cook -> taste: when user confirms params are complete
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ advanceToStep: "taste" })}\n\n`
-                  )
-                );
-              } else if (step === "taste" && isConfirmation) {
-                // taste -> serve: when user confirms final config
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ advanceToStep: "serve" })}\n\n`
-                  )
-                );
               }
-            } else if (response.stop_reason === "end_turn") {
-              continueLoop = false;
             }
           }
 
