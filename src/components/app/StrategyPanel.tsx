@@ -76,6 +76,9 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       fetchStrategies();
+      // Poll for new strategies every 5 seconds when panel is open
+      const interval = setInterval(fetchStrategies, 5000);
+      return () => clearInterval(interval);
     }
   }, [isOpen]);
 

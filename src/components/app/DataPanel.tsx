@@ -1,9 +1,10 @@
 "use client";
 
 import { FC, useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Copy, Check, QrCode, ExternalLink, Flame, Zap, Clock, TrendingUp, PieChart, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Copy, Check, QrCode, ExternalLink, Flame, Zap, Clock, TrendingUp, PieChart, RefreshCw, Play, Pause, Trash2, X, Activity } from "lucide-react";
 import type { CookingStep } from "@/app/app/page";
+import { toast } from "sonner";
 
 interface TokenData {
   symbol: string;
@@ -87,6 +88,8 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
   const [isStrategyLoading, setIsStrategyLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [solPrice, setSolPrice] = useState<number>(0);
+  const [showMonitor, setShowMonitor] = useState(false);
+  const [isUpdatingStrategy, setIsUpdatingStrategy] = useState(false);
 
   // Update wallet loading state when walletData changes
   useEffect(() => {
@@ -155,6 +158,8 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
         const data = await res.json();
         if (data.strategies?.length > 0) {
           setLatestStrategy(data.strategies[0]); // Most recent first
+        } else {
+          setLatestStrategy(null); // Clear if no strategies
         }
       }
     } catch (error) {
@@ -167,8 +172,59 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
   useEffect(() => {
     if (activeTab === "strategy") {
       fetchLatestStrategy();
+      // Poll for new strategies every 5 seconds when on strategy tab
+      const interval = setInterval(fetchLatestStrategy, 5000);
+      return () => clearInterval(interval);
     }
   }, [activeTab, currentStep]); // Refetch when step changes too
+
+  // Toggle strategy active state
+  const toggleStrategy = async () => {
+    if (!latestStrategy) return;
+    setIsUpdatingStrategy(true);
+    try {
+      const res = await fetch(`/api/strategies/${latestStrategy.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !latestStrategy.isActive }),
+      });
+      if (res.ok) {
+        setLatestStrategy(prev => prev ? { ...prev, isActive: !prev.isActive } : null);
+        toast.success(latestStrategy.isActive ? "Strategy paused" : "Strategy resumed");
+      } else {
+        toast.error("Failed to update strategy");
+      }
+    } catch (error) {
+      console.error("Failed to toggle strategy:", error);
+      toast.error("Failed to update strategy");
+    } finally {
+      setIsUpdatingStrategy(false);
+    }
+  };
+
+  // Delete strategy
+  const deleteStrategy = async () => {
+    if (!latestStrategy) return;
+    if (!confirm("Are you sure you want to delete this strategy?")) return;
+    setIsUpdatingStrategy(true);
+    try {
+      const res = await fetch(`/api/strategies/${latestStrategy.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setLatestStrategy(null);
+        setShowMonitor(false);
+        toast.success("Strategy deleted");
+      } else {
+        toast.error("Failed to delete strategy");
+      }
+    } catch (error) {
+      console.error("Failed to delete strategy:", error);
+      toast.error("Failed to delete strategy");
+    } finally {
+      setIsUpdatingStrategy(false);
+    }
+  };
 
   // Fetch market data
   useEffect(() => {
@@ -778,10 +834,16 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
               </div>
             ) : latestStrategy ? (
               <>
-                {/* Strategy Display */}
-                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                {/* Strategy Display - Clickable */}
+                <button
+                  onClick={() => setShowMonitor(true)}
+                  className="w-full bg-white/5 rounded-xl p-4 border border-white/10 hover:border-accent-pink/50 hover:bg-white/10 transition-all text-left group"
+                >
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-white font-bold lowercase">{latestStrategy.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <Activity size={16} className={latestStrategy.isActive ? "text-green-400 animate-pulse" : "text-white/40"} />
+                      <h3 className="text-white font-bold lowercase">{latestStrategy.name}</h3>
+                    </div>
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       latestStrategy.isActive 
                         ? "bg-green-500/20 text-green-400" 
@@ -790,7 +852,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                       {latestStrategy.isActive ? "active" : "inactive"}
                     </span>
                   </div>
-                  <p className="text-white/50 text-sm mb-4">{latestStrategy.description}</p>
+                  <p className="text-white/50 text-sm mb-4 line-clamp-2">{latestStrategy.description}</p>
                   
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -803,38 +865,12 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                         <span className="text-white font-mono">{latestStrategy.config.amount} SOL</span>
                       </div>
                     )}
-                    {latestStrategy.config?.maxAgeMinutes && (
-                      <div className="flex justify-between">
-                        <span className="text-white/40">max age</span>
-                        <span className="text-white font-mono">{latestStrategy.config.maxAgeMinutes} min</span>
-                      </div>
-                    )}
-                    {latestStrategy.config?.minLiquidity && (
-                      <div className="flex justify-between">
-                        <span className="text-white/40">min liquidity</span>
-                        <span className="text-white font-mono">${latestStrategy.config.minLiquidity.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {latestStrategy.config?.minMarketCap && (
-                      <div className="flex justify-between">
-                        <span className="text-white/40">min mcap</span>
-                        <span className="text-white font-mono">${latestStrategy.config.minMarketCap.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {latestStrategy.config?.stopLoss && (
-                      <div className="flex justify-between">
-                        <span className="text-white/40">stop loss</span>
-                        <span className="text-red-400 font-mono">{latestStrategy.config.stopLoss}%</span>
-                      </div>
-                    )}
-                    {latestStrategy.config?.takeProfit && (
-                      <div className="flex justify-between">
-                        <span className="text-white/40">take profit</span>
-                        <span className="text-green-400 font-mono">{latestStrategy.config.takeProfit}%</span>
-                      </div>
-                    )}
                   </div>
-                </div>
+                  
+                  <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-center gap-2 text-white/40 group-hover:text-accent-pink transition-colors">
+                    <span className="text-xs">click to monitor</span>
+                  </div>
+                </button>
 
                 <p className="text-white/30 text-xs text-center">
                   created {new Date(latestStrategy.createdAt).toLocaleDateString()}
@@ -868,6 +904,197 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
           <span>connected</span>
         </div>
       </div>
+
+      {/* Strategy Monitor Modal */}
+      <AnimatePresence>
+        {showMonitor && latestStrategy && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowMonitor(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    latestStrategy.isActive 
+                      ? "bg-gradient-to-br from-green-500 to-emerald-600" 
+                      : "bg-white/10"
+                  }`}>
+                    <Activity size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-white font-bold text-lg lowercase">
+                      monitor
+                    </h2>
+                    <p className="text-white/40 text-sm">
+                      {latestStrategy.isActive ? "strategy running" : "strategy paused"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMonitor(false)}
+                  className="text-white/40 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Strategy Info */}
+                <div>
+                  <h3 className="text-white font-bold text-xl lowercase mb-2">
+                    {latestStrategy.name}
+                  </h3>
+                  <p className="text-white/50 text-sm">
+                    {latestStrategy.description}
+                  </p>
+                </div>
+
+                {/* Status Badge */}
+                <div className="flex items-center gap-3">
+                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+                    latestStrategy.isActive
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-white/10 text-white/60"
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${
+                      latestStrategy.isActive
+                        ? "bg-green-400 animate-pulse"
+                        : "bg-white/40"
+                    }`} />
+                    {latestStrategy.isActive ? "Running" : "Paused"}
+                  </span>
+                  <span className="text-white/30 text-xs">
+                    ID: {latestStrategy.id.slice(0, 12)}...
+                  </span>
+                </div>
+
+                {/* Configuration */}
+                <div className="bg-white/5 rounded-xl p-4 space-y-3">
+                  <h4 className="text-white/60 text-xs uppercase tracking-wider mb-3">
+                    Configuration
+                  </h4>
+                  <div className="flex justify-between">
+                    <span className="text-white/40 text-sm">Type</span>
+                    <span className="text-white text-sm font-medium">
+                      {latestStrategy.config?.type || "—"}
+                    </span>
+                  </div>
+                  {latestStrategy.config?.amount && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Amount</span>
+                      <span className="text-white text-sm">{latestStrategy.config.amount} SOL</span>
+                    </div>
+                  )}
+                  {latestStrategy.config?.maxAgeMinutes && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Max Age</span>
+                      <span className="text-white text-sm">{latestStrategy.config.maxAgeMinutes} min</span>
+                    </div>
+                  )}
+                  {latestStrategy.config?.minLiquidity && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Min Liquidity</span>
+                      <span className="text-white text-sm">${latestStrategy.config.minLiquidity.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {latestStrategy.config?.minVolume && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Min Volume</span>
+                      <span className="text-white text-sm">${latestStrategy.config.minVolume.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {latestStrategy.config?.minMarketCap && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Min Market Cap</span>
+                      <span className="text-white text-sm">${latestStrategy.config.minMarketCap.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {latestStrategy.config?.maxMarketCap && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Max Market Cap</span>
+                      <span className="text-white text-sm">${latestStrategy.config.maxMarketCap.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {latestStrategy.config?.stopLoss && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Stop Loss</span>
+                      <span className="text-red-400 text-sm">-{latestStrategy.config.stopLoss}%</span>
+                    </div>
+                  )}
+                  {latestStrategy.config?.takeProfit && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Take Profit</span>
+                      <span className="text-green-400 text-sm">+{latestStrategy.config.takeProfit}%</span>
+                    </div>
+                  )}
+                  {latestStrategy.config?.nameFilter && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Name Filter</span>
+                      <span className="text-white text-sm">&quot;{latestStrategy.config.nameFilter}&quot;</span>
+                    </div>
+                  )}
+                  {latestStrategy.config?.slippageBps && (
+                    <div className="flex justify-between">
+                      <span className="text-white/40 text-sm">Slippage</span>
+                      <span className="text-white text-sm">{(latestStrategy.config.slippageBps / 100).toFixed(1)}%</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Created Date */}
+                <p className="text-white/30 text-xs text-center">
+                  Created {new Date(latestStrategy.createdAt).toLocaleString()}
+                </p>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="px-6 py-4 border-t border-white/10 flex items-center gap-3">
+                <button
+                  onClick={toggleStrategy}
+                  disabled={isUpdatingStrategy}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition-colors disabled:opacity-50 ${
+                    latestStrategy.isActive
+                      ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30"
+                      : "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                  }`}
+                >
+                  {latestStrategy.isActive ? (
+                    <>
+                      <Pause size={18} />
+                      pause
+                    </>
+                  ) : (
+                    <>
+                      <Play size={18} />
+                      resume
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={deleteStrategy}
+                  disabled={isUpdatingStrategy}
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={18} />
+                  delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
