@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Profile
+  name          String?
+  avatar        String?
+  bio           String?
+  xHandle       String?
+  showOnLeaderboard Boolean @default(true)
+
+  // Relations
+  wallet        Wallet?
+  trades        Trade[]
+  strategies    Strategy[]
+  withdrawals   Withdrawal[]
+  sessions      Session[]
+
+  @@index([createdAt])
+}
+
+model Session {
+  id            String    @id @default(cuid())
+  token         String    @unique
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  lastUsedAt    DateTime  @default(now())
+
+  userAgent     String?
+  ipAddress     String?
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Wallet {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  publicKey           String    @unique
+  encryptedPrivateKey String    // AES-256 encrypted
+
+  createdAt           DateTime  @default(now())
+
+  @@index([publicKey])
+}
+
+model Trade {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  signature     String    @unique
+  type          String    // "SPOT" | "PERP"
+  direction     String    // "BUY" | "SELL" | "LONG" | "SHORT"
+  inputToken    String
+  outputToken   String
+  inputAmount   Float
+  outputAmount  Float
+  priceUsd      Float
+  pnlUsd        Float?    // Realized PnL when closed
+  status        String    // "PENDING" | "CONFIRMED" | "FAILED"
+
+  createdAt     DateTime  @default(now())
+  closedAt      DateTime?
+
+  @@index([userId])
+  @@index([signature])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model Strategy {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String
+  config        Json
+  isActive      Boolean   @default(false)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model Withdrawal {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  signature       String?   @unique
+  amount          Float     // SOL amount
+  fee             Float     // Network + platform fee
+  destination     String    // Destination wallet address
+  status          String    // "PENDING" | "CONFIRMED" | "FAILED"
+
+  createdAt       DateTime  @default(now())
+  confirmedAt     DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}

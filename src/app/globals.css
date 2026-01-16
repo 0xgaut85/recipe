@@ -367,3 +367,38 @@ body {
 .docs-sidebar::-webkit-scrollbar-thumb {
   background: var(--ink);
 }
+
+/* Dark Mode Wallet Button (for app terminal) */
+.wallet-dark .wallet-adapter-button {
+  background: var(--white) !important;
+  color: var(--black) !important;
+  border-color: var(--white) !important;
+}
+
+.wallet-dark .wallet-adapter-button:hover {
+  background: var(--accent-pink) !important;
+  border-color: var(--accent-pink) !important;
+}
+
+/* Terminal Scrollbar */
+.terminal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.terminal-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminal-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.terminal-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

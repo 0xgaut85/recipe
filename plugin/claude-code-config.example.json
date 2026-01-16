@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "recipe": {
+      "command": "npx",
+      "args": ["-y", "recipe-mcp-server"],
+      "env": {
+        "HELIUS_API_KEY": "your-helius-api-key-here"
+      }
+    }
+  }
+}
