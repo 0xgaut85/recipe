@@ -76,6 +76,15 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
   const [isWalletLoading, setIsWalletLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [latestStrategy, setLatestStrategy] = useState<{
+    id: string;
+    name: string;
+    description: string;
+    config: any;
+    isActive: boolean;
+    createdAt: string;
+  } | null>(null);
+  const [isStrategyLoading, setIsStrategyLoading] = useState(true);
 
   // Update wallet loading state when walletData changes
   useEffect(() => {
@@ -107,6 +116,30 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
       return () => clearInterval(interval);
     }
   }, [activeTab]);
+
+  // Fetch latest strategy when strategy tab is active
+  const fetchLatestStrategy = async () => {
+    setIsStrategyLoading(true);
+    try {
+      const res = await fetch("/api/strategies");
+      if (res.ok) {
+        const strategies = await res.json();
+        if (strategies.length > 0) {
+          setLatestStrategy(strategies[0]); // Most recent first
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch strategies:", error);
+    } finally {
+      setIsStrategyLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "strategy") {
+      fetchLatestStrategy();
+    }
+  }, [activeTab, currentStep]); // Refetch when step changes too
 
   // Fetch market data
   useEffect(() => {
@@ -639,56 +672,102 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
         {/* Strategy Tab */}
         {activeTab === "strategy" && (
           <div className="p-4 space-y-4">
-            <div className="mb-4">
-              <h3 className="text-white/60 text-xs font-bold uppercase tracking-wider mb-2">
-                current strategy
-              </h3>
-              <p className="text-white/40 text-sm">
-                {currentStep === "describe"
-                  ? "no strategy defined yet. describe what you want to do in the chat."
-                  : currentStep === "cook"
-                  ? "refining strategy parameters..."
-                  : currentStep === "taste"
-                  ? "testing strategy against live data..."
-                  : "strategy ready for execution."}
-              </p>
+            {/* Step Indicator */}
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-2 h-2 rounded-full ${currentStep === "describe" ? "bg-accent-pink animate-pulse" : "bg-green-400"}`} />
+              <span className="text-white/60 text-xs uppercase tracking-wider">
+                step: {currentStep}
+              </span>
             </div>
 
-            {/* Strategy Preview */}
-            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-accent-pink" />
-                <span className="text-white/60 text-xs uppercase tracking-wider">
-                  step: {currentStep}
-                </span>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-white/40">type</span>
-                  <span className="text-white">—</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/40">token</span>
-                  <span className="text-white">—</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/40">amount</span>
-                  <span className="text-white">—</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/40">condition</span>
-                  <span className="text-white">—</span>
+            {isStrategyLoading ? (
+              <div className="space-y-4 animate-pulse">
+                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                  <div className="h-4 bg-white/10 rounded w-1/3 mb-3" />
+                  <div className="h-3 bg-white/10 rounded w-full mb-2" />
+                  <div className="h-3 bg-white/10 rounded w-2/3" />
                 </div>
               </div>
-            </div>
+            ) : latestStrategy ? (
+              <>
+                {/* Strategy Display */}
+                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-white font-bold lowercase">{latestStrategy.name}</h3>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      latestStrategy.isActive 
+                        ? "bg-green-500/20 text-green-400" 
+                        : "bg-white/10 text-white/60"
+                    }`}>
+                      {latestStrategy.isActive ? "active" : "inactive"}
+                    </span>
+                  </div>
+                  <p className="text-white/50 text-sm mb-4">{latestStrategy.description}</p>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-white/40">type</span>
+                      <span className="text-white font-mono">{latestStrategy.config?.type || "—"}</span>
+                    </div>
+                    {latestStrategy.config?.amount && (
+                      <div className="flex justify-between">
+                        <span className="text-white/40">amount</span>
+                        <span className="text-white font-mono">{latestStrategy.config.amount} SOL</span>
+                      </div>
+                    )}
+                    {latestStrategy.config?.maxAgeMinutes && (
+                      <div className="flex justify-between">
+                        <span className="text-white/40">max age</span>
+                        <span className="text-white font-mono">{latestStrategy.config.maxAgeMinutes} min</span>
+                      </div>
+                    )}
+                    {latestStrategy.config?.minLiquidity && (
+                      <div className="flex justify-between">
+                        <span className="text-white/40">min liquidity</span>
+                        <span className="text-white font-mono">${latestStrategy.config.minLiquidity.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {latestStrategy.config?.minMarketCap && (
+                      <div className="flex justify-between">
+                        <span className="text-white/40">min mcap</span>
+                        <span className="text-white font-mono">${latestStrategy.config.minMarketCap.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {latestStrategy.config?.stopLoss && (
+                      <div className="flex justify-between">
+                        <span className="text-white/40">stop loss</span>
+                        <span className="text-red-400 font-mono">{latestStrategy.config.stopLoss}%</span>
+                      </div>
+                    )}
+                    {latestStrategy.config?.takeProfit && (
+                      <div className="flex justify-between">
+                        <span className="text-white/40">take profit</span>
+                        <span className="text-green-400 font-mono">{latestStrategy.config.takeProfit}%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-            {/* Help Text */}
-            <div className="bg-accent-blue/10 border border-accent-blue/20 rounded-xl p-4">
-              <p className="text-accent-blue text-sm">
-                tip: tell the AI what you want to trade and under what conditions.
-                for example: &quot;ape into the next pump.fun launch with 0.1 SOL&quot;
-              </p>
-            </div>
+                <p className="text-white/30 text-xs text-center">
+                  created {new Date(latestStrategy.createdAt).toLocaleDateString()}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="text-center py-8">
+                  <p className="text-white/40 text-sm mb-2">no strategy yet</p>
+                  <p className="text-white/30 text-xs">describe what you want to trade in the chat</p>
+                </div>
+
+                {/* Help Text */}
+                <div className="bg-accent-blue/10 border border-accent-blue/20 rounded-xl p-4">
+                  <p className="text-accent-blue text-sm">
+                    tip: tell the AI what you want to trade and under what conditions.
+                    for example: &quot;snipe new pairs under 15min, min 10k liquidity, 0.01 SOL&quot;
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
