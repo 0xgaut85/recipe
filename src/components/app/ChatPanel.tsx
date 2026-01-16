@@ -6,7 +6,7 @@ import type { CookingStep } from "@/app/app/page";
 
 interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
 }
@@ -20,8 +20,15 @@ interface ChatPanelProps {
 const stepPrompts: Record<CookingStep, string> = {
   describe: "describe your trading strategy or what you want to achieve...",
   cook: "refining your strategy...",
-  taste: "testing your strategy with live data...",
-  serve: "ready to execute. confirm to proceed...",
+  taste: "verifying your strategy...",
+  serve: "your strategy is live!",
+};
+
+const stepNames: Record<CookingStep, string> = {
+  describe: "describe",
+  cook: "cook",
+  taste: "taste",
+  serve: "serve",
 };
 
 export const ChatPanel: FC<ChatPanelProps> = ({
@@ -34,6 +41,12 @@ export const ChatPanel: FC<ChatPanelProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Use a ref to always have the latest step value for API calls
+  const effectiveStepRef = useRef<CookingStep>(currentStep);
+  
+  // Track the previous step to show transition messages
+  const prevStepRef = useRef<CookingStep>(currentStep);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -43,10 +56,23 @@ export const ChatPanel: FC<ChatPanelProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  // Update the ref whenever currentStep changes from props
   useEffect(() => {
-    // Focus input when step changes
+    effectiveStepRef.current = currentStep;
     inputRef.current?.focus();
-  }, [currentStep]);
+    
+    // Show phase transition message (but not on initial render)
+    if (prevStepRef.current !== currentStep && messages.length > 0) {
+      const transitionMessage: Message = {
+        id: `transition-${Date.now()}`,
+        role: "system",
+        content: `— moving to ${stepNames[currentStep]} phase —`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, transitionMessage]);
+    }
+    prevStepRef.current = currentStep;
+  }, [currentStep, messages.length]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -63,16 +89,24 @@ export const ChatPanel: FC<ChatPanelProps> = ({
     setInput("");
     setIsLoading(true);
 
+    // Use the ref to get the current step (most up-to-date value)
+    const stepToUse = effectiveStepRef.current;
+
     try {
+      // Filter out system messages for the API call
+      const apiMessages = [...messages, userMessage]
+        .filter((m) => m.role !== "system")
+        .map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          step: currentStep,
+          messages: apiMessages,
+          step: stepToUse,
         }),
       });
 
@@ -116,15 +150,20 @@ export const ChatPanel: FC<ChatPanelProps> = ({
                   });
                 }
                 // Handle specific step advancement (jump directly to a step)
-                if (parsed.advanceToStep && onJumpToStep) {
-                  onJumpToStep(parsed.advanceToStep as CookingStep);
-                } else if (parsed.advanceToStep) {
-                  // Fallback if onJumpToStep not provided
-                  onStepComplete(currentStep);
+                if (parsed.advanceToStep) {
+                  const newStep = parsed.advanceToStep as CookingStep;
+                  // Update the ref immediately so next API call uses new step
+                  effectiveStepRef.current = newStep;
+                  
+                  if (onJumpToStep) {
+                    onJumpToStep(newStep);
+                  } else {
+                    onStepComplete(stepToUse);
+                  }
                 }
                 // Legacy support for generic step complete
                 if (parsed.stepComplete) {
-                  onStepComplete(currentStep);
+                  onStepComplete(stepToUse);
                 }
               } catch {
                 // Skip invalid JSON
@@ -198,30 +237,42 @@ export const ChatPanel: FC<ChatPanelProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               className={`flex ${
-                message.role === "user" ? "justify-end" : "justify-start"
+                message.role === "user" 
+                  ? "justify-end" 
+                  : message.role === "system" 
+                  ? "justify-center" 
+                  : "justify-start"
               }`}
             >
-              <div
-                className={`max-w-[80%] rounded-2xl px-5 py-3 ${
-                  message.role === "user"
-                    ? "bg-accent-pink text-black"
-                    : "bg-white/10 text-white"
-                }`}
-              >
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {message.content}
-                </p>
+              {message.role === "system" ? (
+                <div className="text-center py-2 px-4">
+                  <span className="text-xs text-accent-pink/70 font-mono uppercase tracking-wider">
+                    {message.content}
+                  </span>
+                </div>
+              ) : (
                 <div
-                  className={`text-xs mt-2 ${
-                    message.role === "user" ? "text-black/40" : "text-white/30"
+                  className={`max-w-[80%] rounded-2xl px-5 py-3 ${
+                    message.role === "user"
+                      ? "bg-accent-pink text-black"
+                      : "bg-white/10 text-white"
                   }`}
                 >
-                  {message.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {message.content}
+                  </p>
+                  <div
+                    className={`text-xs mt-2 ${
+                      message.role === "user" ? "text-black/40" : "text-white/30"
+                    }`}
+                  >
+                    {message.timestamp.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>

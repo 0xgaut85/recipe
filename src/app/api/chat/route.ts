@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
       : "";
     
     // Check if user is confirming (for phase advancement)
-    const isConfirmation = /^(yes|yup|yeah|yep|ok|okay|sure|do it|let'?s go|sounds good|perfect|confirmed?|deploy|go ahead|start|launch)/i.test(lastUserText.trim());
+    const isConfirmation = /^(y|yes|yup|yeah|yep|yh|ok|okay|k|sure|do it|let'?s go|sounds good|perfect|confirmed?|deploy|go ahead|start|launch|ready|ship it|lfg)/i.test(lastUserText.trim());
 
     const encoder = new TextEncoder();
 
