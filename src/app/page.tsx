@@ -6,7 +6,7 @@ import { CTA } from "@/components/CTA";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white selection:bg-accent-pink selection:text-ink">
+    <main className="min-h-screen bg-white">
       <Header />
       <Hero />
       <CoreValue />

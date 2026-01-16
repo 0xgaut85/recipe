@@ -2,44 +2,40 @@
 
 import { FC } from "react";
 import { motion } from "framer-motion";
+import { Zap, Shield, TrendingUp, Layers } from "lucide-react";
 
 const features = [
   {
-    title: "instant strategies",
-    desc: "ship in minutes, not days. no api wiring required.",
+    icon: Zap,
+    title: "Instant Strategies",
+    desc: "Deploy in seconds, not days. No API wiring required.",
     size: "col-span-1 md:col-span-2",
-    bg: "bg-white glass-panel",
-    text: "text-ink",
   },
   {
-    title: "connectors",
-    desc: "pre-wired to axiom, dexscreener, pump.fun.",
+    icon: Layers,
+    title: "Pre-wired Connectors",
+    desc: "Integrated with Jupiter, DexScreener, Pump.fun, and more.",
     size: "col-span-1",
-    bg: "bg-accent-pink bg-noise-pink shadow-[8px_8px_0px_0px_#1A1A1A]",
-    text: "text-ink",
   },
   {
-    title: "marketplace",
-    desc: "monetize access. earn royalties on forks.",
+    icon: TrendingUp,
+    title: "Strategy Marketplace",
+    desc: "Share strategies. Earn from forks and subscriptions.",
     size: "col-span-1",
-    bg: "bg-white glass-panel",
-    text: "text-ink",
   },
   {
-    title: "safety first",
-    desc: "risk limits, slippage protection, simulation.",
+    icon: Shield,
+    title: "Safety First",
+    desc: "Risk limits, slippage protection, and simulation before live.",
     size: "col-span-1 md:col-span-2",
-    bg: "bg-black bg-noise border-2 border-ink shadow-[8px_8px_0px_0px_#1A1A1A]",
-    text: "text-white",
   },
 ];
 
-// Smooth easing curve
 const smoothEase = [0.22, 1, 0.36, 1];
 
 export const Features: FC = () => {
   return (
-    <section className="py-24 relative">
+    <section className="py-24 relative bg-ink">
       <div className="container-wide">
         <motion.div
           initial={{ opacity: 0, y: 25 }}
@@ -48,15 +44,15 @@ export const Features: FC = () => {
           transition={{ duration: 0.6, ease: smoothEase }}
           className="mb-12"
         >
-          <h2 className="font-display text-4xl font-bold text-ink mb-4 lowercase">
-            everything you need.
+          <h2 className="font-display text-3xl md:text-4xl font-semibold text-white mb-4">
+            Everything You Need
           </h2>
-          <p className="text-xl text-ink-light lowercase">
-            batteries included. chef&apos;s kiss.
+          <p className="text-lg text-white/60">
+            Batteries included. Ready to trade.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[240px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[200px]">
           {features.map((feature, i) => (
             <motion.div
               key={feature.title}
@@ -68,17 +64,16 @@ export const Features: FC = () => {
                 duration: 0.6,
                 ease: smoothEase,
               }}
-              whileHover={{
-                y: -6,
-                transition: { duration: 0.25, ease: "easeOut" },
-              }}
-              className={`${feature.size} ${feature.bg} ${feature.text} rounded-[2rem] p-10 flex flex-col justify-between group overflow-hidden relative cursor-default`}
+              className={`${feature.size} tech-card p-8 flex flex-col justify-between group cursor-default`}
             >
-              <div className="relative z-10 h-full flex flex-col justify-between">
-                <h3 className="font-display text-2xl font-bold">
+              <div className="w-10 h-10 rounded-lg bg-claude-orange/10 flex items-center justify-center mb-4 group-hover:bg-claude-orange/20 transition-colors">
+                <feature.icon className="w-5 h-5 text-claude-orange" />
+              </div>
+              <div>
+                <h3 className="font-display text-xl font-semibold text-white mb-2">
                   {feature.title}
                 </h3>
-                <p className="font-medium leading-relaxed opacity-90 max-w-[90%]">
+                <p className="text-white/60 leading-relaxed">
                   {feature.desc}
                 </p>
               </div>

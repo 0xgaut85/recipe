@@ -21,36 +21,36 @@ import {
 
 const docGroups: DocGroup[] = [
   {
-    title: "introduction",
+    title: "Introduction",
     items: [
-      { id: "abstract", title: "abstract" },
-      { id: "problem", title: "the problem" },
-      { id: "insight", title: "the insight" },
+      { id: "abstract", title: "Abstract" },
+      { id: "problem", title: "The Problem" },
+      { id: "insight", title: "The Insight" },
     ],
   },
   {
-    title: "platform",
+    title: "Platform",
     items: [
-      { id: "what-is-recipe", title: "what is recipe?" },
-      { id: "claude-code", title: "customized claude" },
-      { id: "instant-strategy", title: "instant strategy" },
-      { id: "product-loop", title: "core loop" },
+      { id: "what-is-recipe", title: "What is Claude Trade?" },
+      { id: "claude-code", title: "Customized Claude" },
+      { id: "instant-strategy", title: "Instant Strategy" },
+      { id: "product-loop", title: "Core Loop" },
     ],
   },
   {
-    title: "features",
+    title: "Features",
     items: [
-      { id: "plugin", title: "claude plugin" },
-      { id: "primitive", title: "recipes primitive" },
-      { id: "marketplace", title: "marketplace" },
-      { id: "safety", title: "safety" },
+      { id: "plugin", title: "Claude Plugin" },
+      { id: "primitive", title: "Strategy Primitive" },
+      { id: "marketplace", title: "Marketplace" },
+      { id: "safety", title: "Safety" },
     ],
   },
   {
-    title: "ecosystem",
+    title: "Ecosystem",
     items: [
-      { id: "why-solana", title: "why solana" },
-      { id: "vision", title: "vision" },
+      { id: "why-solana", title: "Why Solana" },
+      { id: "vision", title: "Vision" },
     ],
   },
 ];
@@ -95,15 +95,15 @@ export default function DocsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-ink">
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-ink/10 px-6 py-4">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-ink/90 backdrop-blur-xl border-b border-white/10 px-6 py-4">
         <a
           href="/"
-          className="flex items-center gap-2 text-ink font-bold text-sm lowercase"
+          className="flex items-center gap-2 text-white/60 font-medium text-sm"
         >
           <span>←</span>
-          <span>back to home</span>
+          <span>Back to Home</span>
         </a>
       </div>
 
@@ -122,27 +122,26 @@ export default function DocsPage() {
           >
             {/* Header */}
             <div className="mb-24 text-center">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-white border-2 border-ink text-ink text-xs font-bold uppercase tracking-wider mb-6 shadow-[4px_4px_0px_0px_#1A1A1A]">
-                documentation
+              <span className="inline-block px-4 py-1.5 rounded-full bg-claude-orange/10 text-claude-orange text-xs font-medium uppercase tracking-wider mb-6">
+                Documentation
               </span>
-              <h1 className="font-display text-5xl md:text-7xl font-bold text-ink mb-6 lowercase">
-                recipe
+              <h1 className="font-display text-5xl md:text-6xl font-semibold text-white mb-6">
+                CLAUDE TRADE
               </h1>
-              <p className="text-xl text-ink max-w-lg mx-auto font-medium lowercase">
-                turn intent into execution. the first vibetrading platform on
-                solana.
+              <p className="text-lg text-white/60 max-w-lg mx-auto font-normal">
+                Turn intent into execution. The first AI-powered trading platform on Solana.
               </p>
             </div>
 
             {/* Introduction Group */}
-            <div className="relative border-l-2 border-ink pl-8 md:pl-12 space-y-32 mb-32">
+            <div className="relative border-l border-white/10 pl-8 md:pl-12 space-y-24 mb-24">
               <DocsAbstract />
               <DocsProblem />
               <DocsInsight />
             </div>
 
             {/* Platform Group */}
-            <div className="relative border-l-2 border-ink pl-8 md:pl-12 space-y-32 mb-32">
+            <div className="relative border-l border-white/10 pl-8 md:pl-12 space-y-24 mb-24">
               <DocsWhatIsRecipe />
               <DocsClaudeCode />
               <DocsInstantStrategy />
@@ -150,7 +149,7 @@ export default function DocsPage() {
             </div>
 
             {/* Features & Ecosystem Group */}
-            <div className="relative border-l-2 border-ink pl-8 md:pl-12 space-y-32 mb-32">
+            <div className="relative border-l border-white/10 pl-8 md:pl-12 space-y-24 mb-24">
               <DocsPlugin />
               <DocsPrimitive />
               <DocsMarketplace />

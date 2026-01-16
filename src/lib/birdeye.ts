@@ -39,6 +39,7 @@ export interface TokenOverview {
   symbol: string;
   name: string;
   decimals: number;
+  logoURI?: string;
   price: number;
   priceChange24h: number;
   volume24h: number;
@@ -161,6 +162,7 @@ export async function getTokenOverview(tokenAddress: string): Promise<TokenOverv
       symbol: token.symbol,
       name: token.name,
       decimals: token.decimals,
+      logoURI: token.logoURI || token.logo || undefined,
       price: token.price || 0,
       priceChange24h: token.priceChange24hPercent || 0,
       volume24h: token.v24hUSD || token.volume24hUSD || 0,
@@ -210,6 +212,7 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
         symbol: token.symbol || "???",
         name: token.name || "Unknown",
         decimals: token.decimals || 9,
+        logoURI: token.logoURI || token.logo || undefined,
         price: token.price || 0,
         priceChange24h: token.priceChange24hPercent || 0,
         volume24h: token.v24hUSD || token.volume24hUSD || 0,
@@ -231,6 +234,7 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
       symbol: token.symbol || "???",
       name: token.name || "Unknown",
       decimals: token.decimals || 9,
+      logoURI: token.logoURI || token.logo || undefined,
       price: token.price || 0,
       priceChange24h: token.priceChange24hPercent || token.price24hChangePercent || 0,
       volume24h: token.v24hUSD || token.volume24hUSD || 0,
@@ -675,6 +679,11 @@ export async function getNewListings(
       return [];
     }
 
+    console.log(`[getNewListings] Raw API response items: ${data.data.items.length}`);
+    if (data.data.items.length > 0) {
+      console.log(`[getNewListings] First raw item:`, JSON.stringify(data.data.items[0]).slice(0, 500));
+    }
+
     const listings = data.data.items.map((token: any) => ({
       address: token.address,
       symbol: token.symbol || "???",
@@ -696,7 +705,10 @@ export async function getNewListings(
       timestamp: Date.now(),
     };
 
-    return listings.map(addAgeMinutes);
+    const result = listings.map(addAgeMinutes);
+    console.log(`[getNewListings] Processed ${result.length} listings, ages: ${result.slice(0, 3).map((l: NewPairData) => l.ageMinutes + 'min').join(', ')}`);
+    
+    return result;
   } catch (error) {
     console.error("Birdeye new listings error:", error);
     return [];
@@ -738,26 +750,49 @@ export async function getNewPairsFiltered(options: {
   } = options;
 
   const allPairs = await getNewListings(20);
+  
+  console.log(`[getNewPairsFiltered] Raw pairs from Birdeye: ${allPairs.length}`);
+  if (allPairs.length > 0) {
+    console.log(`[getNewPairsFiltered] Sample pair:`, {
+      symbol: allPairs[0].symbol,
+      age: allPairs[0].ageMinutes,
+      liq: allPairs[0].liquidity,
+      vol: allPairs[0].volume24h,
+      mc: allPairs[0].marketCap,
+    });
+  }
 
-  return allPairs
+  const filtered = allPairs
     .filter((pair) => {
       // Filter by age (max age in minutes)
-      if (maxAgeMinutes > 0 && pair.ageMinutes > maxAgeMinutes) return false;
+      if (maxAgeMinutes > 0 && pair.ageMinutes > maxAgeMinutes) {
+        return false;
+      }
       
       // Filter by liquidity (min/max)
-      if (minLiquidity > 0 && pair.liquidity < minLiquidity) return false;
+      if (minLiquidity > 0 && pair.liquidity < minLiquidity) {
+        return false;
+      }
       if (maxLiquidity && pair.liquidity > maxLiquidity) return false;
       
       // Filter by volume
-      if (minVolume > 0 && pair.volume24h < minVolume) return false;
+      if (minVolume > 0 && pair.volume24h < minVolume) {
+        return false;
+      }
       
       // Filter by market cap (min/max)
-      if (minMarketCap > 0 && pair.marketCap < minMarketCap) return false;
+      if (minMarketCap > 0 && pair.marketCap < minMarketCap) {
+        return false;
+      }
       if (maxMarketCap && pair.marketCap > maxMarketCap) return false;
       
       return true;
     })
     .slice(0, limit);
+    
+  console.log(`[getNewPairsFiltered] After filtering: ${filtered.length} pairs`);
+  
+  return filtered;
 }
 
 /**

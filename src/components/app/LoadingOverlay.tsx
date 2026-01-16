@@ -3,25 +3,25 @@
 import { FC } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import type { CookingStep } from "@/app/app/page";
+import type { TradingStep } from "@/app/app/page";
 
-const stepLabels: Record<CookingStep, string> = {
-  describe: "describing...",
-  cook: "cooking...",
-  taste: "tasting...",
-  serve: "serving...",
+const stepLabels: Record<TradingStep, string> = {
+  describe: "Processing...",
+  configure: "Configuring...",
+  review: "Reviewing...",
+  deploy: "Deploying...",
 };
 
-const stepEmojis: Record<CookingStep, string> = {
+const stepNumbers: Record<TradingStep, string> = {
   describe: "01",
-  cook: "02",
-  taste: "03",
-  serve: "04",
+  configure: "02",
+  review: "03",
+  deploy: "04",
 };
 
 interface LoadingOverlayProps {
   isVisible: boolean;
-  step: CookingStep;
+  step: TradingStep;
 }
 
 export const LoadingOverlay: FC<LoadingOverlayProps> = ({
@@ -36,38 +36,38 @@ export const LoadingOverlay: FC<LoadingOverlayProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-white flex items-center justify-center"
         >
-          {/* Background Animation */}
+          {/* Background gradient */}
           <div className="absolute inset-0 overflow-hidden">
             <motion.div
               animate={{
                 scale: [1, 1.2, 1],
-                opacity: [0.1, 0.2, 0.1],
+                opacity: [0.05, 0.1, 0.05],
               }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent-pink/20 rounded-full blur-[200px]"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-claude-orange/20 rounded-full blur-[150px]"
             />
           </div>
 
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center">
-            {/* Rotating Logo */}
+            {/* Logo with spinner */}
             <div className="relative mb-8">
               {/* Outer Ring */}
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="absolute -inset-6 border-2 border-dashed border-white/20 rounded-full"
+                className="absolute -inset-6 border border-ink/10 rounded-full"
               />
               
-              {/* Inner Ring */}
+              {/* Inner Ring with dot */}
               <motion.div
                 animate={{ rotate: -360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="absolute -inset-3 border-2 border-white/10 rounded-full"
+                className="absolute -inset-3 border border-ink/5 rounded-full"
               >
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-accent-pink rounded-full" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-claude-orange rounded-full" />
               </motion.div>
 
               {/* Logo */}
@@ -76,11 +76,11 @@ export const LoadingOverlay: FC<LoadingOverlayProps> = ({
                 transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
               >
                 <Image
-                  src="/logo.jpg"
-                  alt="recipe.money"
-                  width={64}
-                  height={64}
-                  className="rounded-xl border-2 border-white/20"
+                  src="/claude.png"
+                  alt="Claude Trade"
+                  width={56}
+                  height={56}
+                  className="rounded-xl"
                 />
               </motion.div>
             </div>
@@ -90,9 +90,9 @@ export const LoadingOverlay: FC<LoadingOverlayProps> = ({
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="font-mono text-white/40 text-sm mb-2"
+              className="font-mono text-ink/40 text-sm mb-2"
             >
-              step {stepEmojis[step]}
+              Step {stepNumbers[step]}
             </motion.div>
 
             {/* Step Label */}
@@ -100,7 +100,7 @@ export const LoadingOverlay: FC<LoadingOverlayProps> = ({
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="font-display text-3xl font-bold text-white lowercase"
+              className="font-display text-2xl font-semibold text-ink"
             >
               {stepLabels[step]}
             </motion.h2>
@@ -125,7 +125,7 @@ export const LoadingOverlay: FC<LoadingOverlayProps> = ({
                     delay: i * 0.2,
                     ease: "easeInOut",
                   }}
-                  className="w-2 h-2 bg-accent-blue rounded-full"
+                  className="w-2 h-2 bg-claude-orange rounded-full"
                 />
               ))}
             </motion.div>

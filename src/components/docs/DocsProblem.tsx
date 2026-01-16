@@ -2,31 +2,31 @@ import { FC } from "react";
 import { GlassCard, TagList } from "@/components/ui";
 
 const signalTags = [
-  "volume spikes",
-  "wallet behavior",
-  "fresh mints",
-  "liquidity changes",
-  "social momentum",
+  "Volume Spikes",
+  "Wallet Behavior",
+  "Fresh Mints",
+  "Liquidity Changes",
+  "Social Momentum",
 ];
 
 export const DocsProblem: FC = () => {
   return (
     <section id="problem" className="scroll-mt-32">
-      <h2 className="font-display text-3xl font-bold text-ink mb-8 lowercase">
-        the problem
+      <h2 className="font-display text-2xl font-semibold text-white mb-6">
+        The Problem
       </h2>
-      <GlassCard variant="pink" className="p-8 md:p-12">
-        <p className="text-ink mb-6 font-bold text-lg lowercase">
-          traders move on signals like:
+      <GlassCard variant="accent" className="p-8 md:p-10">
+        <p className="text-white mb-6 font-medium text-lg">
+          Traders move on signals like:
         </p>
         <TagList tags={signalTags} className="mb-8" />
-        <p className="text-ink mb-4 font-medium lowercase">
-          but converting those signals into a working strategy usually means
+        <p className="text-white/80 mb-4">
+          But converting those signals into a working strategy usually means
           manually integrating data sources, building pipelines, handling edge
-          cases, and maintaining infra.
+          cases, and maintaining infrastructure.
         </p>
-        <p className="font-display text-2xl font-bold text-ink lowercase border-l-4 border-ink pl-4">
-          good ideas die before they ship. manual trading happens too late.
+        <p className="font-display text-xl font-semibold text-white border-l-4 border-claude-orange pl-4">
+          Good ideas die before they ship. Manual trading happens too late.
         </p>
       </GlassCard>
     </section>

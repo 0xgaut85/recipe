@@ -1,12 +1,14 @@
 /**
  * Jupiter API Integration
  * Direct Jupiter calls for swaps - no API key needed
+ * Uses Jupiter Swap API v1 (same as main app)
  */
 
-import { VersionedTransaction } from "@solana/web3.js";
+import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { getKeypair, getConnection } from "./wallet.js";
 
-const JUPITER_API = "https://quote-api.jup.ag/v6";
+// Jupiter Swap API v1 - matches main app
+const JUPITER_API = "https://api.jup.ag/swap/v1";
 
 // Common token mints - matches main app's src/lib/jupiter.ts
 export const TOKEN_MINTS: Record<string, string> = {
@@ -222,18 +224,17 @@ export async function executeSwap(
 
   // Send transaction
   const connection = getConnection();
+  
+  // Get blockhash before sending
+  const latestBlockhash = await connection.getLatestBlockhash();
+  
   const signature = await connection.sendTransaction(transaction, {
     skipPreflight: false,
     maxRetries: 3,
   });
 
-  // Confirm
-  const latestBlockhash = await connection.getLatestBlockhash();
-  await connection.confirmTransaction({
-    signature,
-    blockhash: latestBlockhash.blockhash,
-    lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-  });
+  // Confirm using polling (avoids WebSocket issues) - matches main app
+  await confirmTransactionPolling(connection, signature, latestBlockhash);
 
   const inputAmount = fromSmallestUnit(parseInt(quote.inAmount), inputDecimals);
   const outputAmount = fromSmallestUnit(parseInt(quote.outAmount), outputDecimals);
@@ -246,6 +247,41 @@ export async function executeSwap(
     priceImpact: parseFloat(quote.priceImpactPct),
     explorerUrl: `https://solscan.io/tx/${signature}`,
   };
+}
+
+/**
+ * Confirm transaction using polling instead of WebSocket subscription
+ * This avoids WebSocket issues and matches the main app's implementation
+ */
+async function confirmTransactionPolling(
+  connection: Connection,
+  signature: string,
+  blockhash: { blockhash: string; lastValidBlockHeight: number },
+  maxRetries: number = 30,
+  retryDelayMs: number = 1000
+): Promise<void> {
+  for (let i = 0; i < maxRetries; i++) {
+    const status = await connection.getSignatureStatus(signature);
+    
+    if (status?.value?.confirmationStatus === "confirmed" || 
+        status?.value?.confirmationStatus === "finalized") {
+      if (status.value.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+      }
+      return; // Transaction confirmed successfully
+    }
+
+    // Check if blockhash expired
+    const currentBlockHeight = await connection.getBlockHeight();
+    if (currentBlockHeight > blockhash.lastValidBlockHeight) {
+      throw new Error("Transaction expired: blockhash no longer valid");
+    }
+
+    // Wait before next poll
+    await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+  }
+
+  throw new Error(`Transaction confirmation timeout after ${maxRetries} attempts`);
 }
 
 /**

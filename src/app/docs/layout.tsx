@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "What's Recipe? | Documentation",
-  description: "Learn about Recipe - The Vibetrading Platform on Solana",
+  title: "Documentation | CLAUDE TRADE",
+  description:
+    "Learn how to use Claude Trade - the AI-powered trading platform on Solana.",
 };
 
 export default function DocsLayout({

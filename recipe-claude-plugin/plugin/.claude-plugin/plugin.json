@@ -1,0 +1,21 @@
+{
+  "name": "recipe",
+  "version": "1.0.0",
+  "description": "Solana trading plugin for Claude Code - search tokens, execute swaps, create strategies",
+  "author": {
+    "name": "Recipe.money"
+  },
+  "repository": "https://github.com/0xLaylo/recipe-plugin",
+  "license": "MIT",
+  "keywords": [
+    "solana",
+    "trading",
+    "defi",
+    "jupiter",
+    "mcp",
+    "claude",
+    "crypto",
+    "swap"
+  ],
+  "mcpServers": "./.mcp.json"
+}

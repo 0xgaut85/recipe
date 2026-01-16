@@ -1,19 +1,29 @@
 import type { Metadata } from "next";
-import { AppErrorBoundaryWrapper } from "./error-boundary-wrapper";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "recipe.money | terminal",
-  description: "AI-powered vibetrading terminal on Solana",
+  title: "Trade | CLAUDE TRADE",
+  description: "AI-powered trading terminal on Solana",
 };
 
 export default function AppLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-      <AppErrorBoundaryWrapper>{children}</AppErrorBoundaryWrapper>
-    </div>
+    <>
+      <Toaster 
+        position="top-right" 
+        toastOptions={{
+          style: {
+            background: '#0A0A0A',
+            color: '#FFFFFF',
+            border: '1px solid rgba(255,255,255,0.1)',
+          },
+        }}
+      />
+      {children}
+    </>
   );
 }

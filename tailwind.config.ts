@@ -9,19 +9,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#1A1A1A",
-        "ink-light": "#6B6B6B",
-        "ink-muted": "#A3A3A3",
-        white: "#FEFEFE",
-        black: "#050505",
-        accent: {
-          pink: "#F5D6E0",
-          blue: "#B8D4E3",
+        ink: "#0A0A0A",
+        "ink-light": "#525252",
+        "ink-muted": "#737373",
+        white: "#FFFFFF",
+        black: "#000000",
+        claude: {
+          orange: "#E57B3A",
+          "orange-light": "#F59E5E",
+          "orange-dark": "#CC6A2E",
         },
       },
       fontFamily: {
-        display: ["var(--font-fredoka)", "system-ui", "sans-serif"],
-        body: ["var(--font-quicksand)", "system-ui", "sans-serif"],
+        display: ["var(--font-space-grotesk)", "system-ui", "sans-serif"],
+        body: ["var(--font-inter)", "system-ui", "sans-serif"],
         mono: ["var(--font-jetbrains-mono)", "monospace"],
       },
     },

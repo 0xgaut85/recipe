@@ -14,7 +14,7 @@ import { ProfileModal } from "./ProfileModal";
 import { LeaderboardPanel } from "./LeaderboardPanel";
 import { WithdrawModal } from "./WithdrawModal";
 import { StrategyPanel } from "./StrategyPanel";
-import type { CookingStep } from "@/app/app/page";
+import type { TradingStep } from "@/app/app/page";
 import { toast } from "sonner";
 
 const WalletMultiButtonDynamic = dynamic(
@@ -36,8 +36,8 @@ interface WalletData {
 }
 
 interface TerminalProps {
-  currentStep: CookingStep;
-  onStepChange: (step: CookingStep) => void;
+  currentStep: TradingStep;
+  onStepChange: (step: TradingStep) => void;
 }
 
 
@@ -54,38 +54,33 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
   const [activeStrategies, setActiveStrategies] = useState(0);
   const [lastTradeNotification, setLastTradeNotification] = useState<string | null>(null);
 
-  // Fetch wallet data when connected wallet changes
   useEffect(() => {
     if (publicKey) {
       authenticateWallet(publicKey.toBase58());
     }
   }, [publicKey]);
 
-  // Poll for strategy execution - always poll when logged in to catch new strategies
   useEffect(() => {
     if (!walletData) return;
 
-    // Initial check for active strategies
     const checkAndExecute = async () => {
       try {
         const response = await fetch("/api/strategies/execute");
         if (response.ok) {
           const data = await response.json();
           
-          // Update active strategies count
           const newCount = data.status?.activeCount || 0;
           if (newCount !== activeStrategies) {
             setActiveStrategies(newCount);
           }
           
-          // Show notification for executed trades
           if (data.executed && data.results) {
             for (const result of data.results) {
               if (result.action === "TRADE_EXECUTED" && result.trade) {
                 const tradeKey = result.trade.signature;
                 if (tradeKey !== lastTradeNotification) {
                   toast.success(
-                    `🚀 Bought ${result.trade.tokenSymbol} for ${result.trade.inputAmount} SOL`,
+                    `Bought ${result.trade.tokenSymbol} for ${result.trade.inputAmount} SOL`,
                     { duration: 5000 }
                   );
                   setLastTradeNotification(tradeKey);
@@ -94,7 +89,6 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
             }
           }
           
-          // Log for debugging
           if (data.status?.activeCount > 0) {
             console.log("Strategy poll:", data.message, data.results?.length || 0, "results");
           }
@@ -104,16 +98,11 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
       }
     };
 
-    // Run immediately on mount
     checkAndExecute();
-
-    // Poll every 10 seconds (faster for better responsiveness)
     const pollInterval = setInterval(checkAndExecute, 10000);
-
     return () => clearInterval(pollInterval);
   }, [walletData, lastTradeNotification, activeStrategies]);
 
-  // Authenticate with the connected wallet address
   const authenticateWallet = async (connectedWallet: string) => {
     try {
       const response = await fetch("/api/auth/wallet", {
@@ -167,16 +156,9 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
 
   const handleDisconnect = async () => {
     try {
-      // Clear session cookie - must match the name in src/lib/session.ts
       document.cookie = "recipe_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      
-      // Disconnect the Solana wallet adapter
       await disconnect();
-      
-      // Show success message
-      toast.success("Disconnected! Connect a new wallet to continue.");
-      
-      // Clear wallet data state
+      toast.success("Disconnected successfully");
       setWalletData(null);
     } catch (error) {
       console.error("Failed to disconnect:", error);
@@ -185,27 +167,24 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-black">
+    <div className="h-full w-full flex flex-col bg-white">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-white/10"
+        className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-ink/10 bg-white"
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 sm:gap-3 group">
           <Image
-            src="/logo.jpg"
-            alt="recipe.money"
-            width={32}
-            height={32}
-            className="rounded-lg border border-white/20"
+            src="/claude.png"
+            alt="Claude Trade"
+            width={28}
+            height={28}
+            className="rounded-lg"
           />
-          <span className="font-display font-bold text-white text-base sm:text-lg lowercase group-hover:text-white/70 transition-colors">
-            recipe
-          </span>
-          <span className="hidden sm:inline text-white/30 text-sm font-mono">
-            /terminal
+          <span className="font-display font-semibold text-ink text-base sm:text-lg group-hover:text-ink/70 transition-colors">
+            CLAUDE TRADE
           </span>
         </Link>
 
@@ -218,14 +197,14 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Balance Display */}
           {walletData && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-              <span className="text-white font-mono text-sm">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-ink/5 border border-ink/10">
+              <span className="text-ink font-mono text-sm">
                 {walletData.solBalance.toFixed(4)} SOL
               </span>
               <button
                 onClick={refreshBalance}
                 disabled={isRefreshing}
-                className="text-white/40 hover:text-white transition-colors"
+                className="text-ink/40 hover:text-ink transition-colors"
               >
                 <RefreshCw
                   size={14}
@@ -239,28 +218,28 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsStrategyOpen(true)}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+              className="p-2 rounded-lg hover:bg-ink/5 transition-colors text-ink/50 hover:text-ink"
               title="My Strategies"
             >
               <BarChart3 size={18} />
             </button>
             <button
               onClick={() => setIsWithdrawOpen(true)}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+              className="p-2 rounded-lg hover:bg-ink/5 transition-colors text-ink/50 hover:text-ink"
               title="Withdraw"
             >
               <ArrowDownToLine size={18} />
             </button>
             <button
               onClick={() => setIsLeaderboardOpen(true)}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+              className="p-2 rounded-lg hover:bg-ink/5 transition-colors text-ink/50 hover:text-ink"
               title="Leaderboard"
             >
               <Trophy size={18} />
             </button>
             <button
               onClick={() => setIsProfileOpen(true)}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+              className="p-2 rounded-lg hover:bg-ink/5 transition-colors text-ink/50 hover:text-ink"
               title="Profile"
             >
               <User size={18} />
@@ -271,9 +250,9 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
           {walletData && (
             <button
               onClick={() => setIsWalletModalOpen(true)}
-              className="hidden md:flex items-center gap-2 text-white/40 hover:text-white/60 text-xs font-mono px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
+              className="hidden md:flex items-center gap-2 text-ink/40 hover:text-ink/60 text-xs font-mono px-2 py-1 rounded-lg hover:bg-ink/5 transition-colors"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
               <span>
                 {walletData.publicKey.slice(0, 4)}...
                 {walletData.publicKey.slice(-4)}
@@ -284,22 +263,22 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
       </motion.header>
 
       {/* Mobile Step Indicator */}
-      <div className="lg:hidden px-4 py-2 border-b border-white/10 overflow-x-auto">
+      <div className="lg:hidden px-4 py-2 border-b border-ink/10 overflow-x-auto bg-white">
         <StepIndicator currentStep={currentStep} />
       </div>
 
       {/* Mobile Balance */}
       {walletData && (
-        <div className="sm:hidden px-4 py-2 border-b border-white/10 flex items-center justify-between">
-          <span className="text-white/60 text-sm">balance:</span>
+        <div className="sm:hidden px-4 py-2 border-b border-ink/10 flex items-center justify-between bg-white">
+          <span className="text-ink/50 text-sm">Balance</span>
           <div className="flex items-center gap-2">
-            <span className="text-white font-mono text-sm">
+            <span className="text-ink font-mono text-sm">
               {walletData.solBalance.toFixed(4)} SOL
             </span>
             <button
               onClick={refreshBalance}
               disabled={isRefreshing}
-              className="text-white/40 hover:text-white transition-colors"
+              className="text-ink/40 hover:text-ink transition-colors"
             >
               <RefreshCw
                 size={14}
@@ -311,7 +290,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden bg-ink/[0.02]">
         {/* Chat Panel - Left Side */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -330,7 +309,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="hidden lg:block w-[400px]"
+          className="hidden lg:block w-[480px]"
         >
           <DataPanel currentStep={currentStep} walletData={walletData} />
         </motion.div>
@@ -369,7 +348,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
             onClick={() => setIsWalletModalOpen(false)}
           >
             <motion.div
@@ -377,14 +356,14 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-b from-ink/90 to-black/90 border border-white/10 rounded-2xl p-6 w-full max-w-sm"
+              className="bg-white border border-ink/10 rounded-xl p-6 w-full max-w-sm"
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white lowercase">wallet</h2>
+                <h2 className="text-xl font-semibold text-ink">Wallet</h2>
                 <button
                   onClick={() => setIsWalletModalOpen(false)}
-                  className="text-white/40 hover:text-white transition-colors"
+                  className="text-ink/40 hover:text-ink transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -392,23 +371,23 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
 
               {/* Connected Status */}
               <div className="flex items-center gap-2 mb-4">
-                <span className="w-2 h-2 rounded-full bg-green-400" />
-                <span className="text-green-400 text-sm font-medium">connected</span>
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-green-600 text-sm font-medium">Connected</span>
               </div>
 
               {/* Address */}
-              <div className="bg-white/5 rounded-xl p-4 mb-4">
-                <p className="text-white/40 text-xs mb-2 uppercase tracking-wider">address</p>
-                <p className="text-white font-mono text-sm break-all">
+              <div className="bg-ink/5 rounded-lg p-4 mb-4">
+                <p className="text-ink/40 text-xs mb-2 uppercase tracking-wider">Address</p>
+                <p className="text-ink font-mono text-sm break-all">
                   {walletData.publicKey}
                 </p>
               </div>
 
               {/* Balance */}
-              <div className="bg-white/5 rounded-xl p-4 mb-6">
-                <p className="text-white/40 text-xs mb-2 uppercase tracking-wider">balance</p>
-                <p className="text-white font-bold text-2xl">
-                  {walletData.solBalance.toFixed(4)} <span className="text-white/60 text-lg">SOL</span>
+              <div className="bg-ink/5 rounded-lg p-4 mb-6">
+                <p className="text-ink/40 text-xs mb-2 uppercase tracking-wider">Balance</p>
+                <p className="text-ink font-semibold text-2xl">
+                  {walletData.solBalance.toFixed(4)} <span className="text-ink/50 text-lg">SOL</span>
                 </p>
               </div>
 
@@ -416,28 +395,28 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
               <div className="space-y-2">
                 <button
                   onClick={copyAddress}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/80 hover:text-white transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-ink/5 hover:bg-ink/10 rounded-lg text-ink/70 hover:text-ink transition-colors"
                 >
                   {addressCopied ? <Check size={18} /> : <Copy size={18} />}
-                  <span>{addressCopied ? "copied!" : "copy address"}</span>
+                  <span>{addressCopied ? "Copied!" : "Copy Address"}</span>
                 </button>
 
                 <a
                   href={`https://solscan.io/account/${walletData.publicKey}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/80 hover:text-white transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-ink/5 hover:bg-ink/10 rounded-lg text-ink/70 hover:text-ink transition-colors"
                 >
                   <ExternalLink size={18} />
-                  <span>view on solscan</span>
+                  <span>View on Solscan</span>
                 </a>
 
                 <button
                   onClick={handleDisconnect}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 hover:bg-red-500/20 rounded-xl text-red-400 hover:text-red-300 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 hover:bg-red-100 rounded-lg text-red-600 hover:text-red-700 transition-colors"
                 >
                   <LogOut size={18} />
-                  <span>disconnect wallet</span>
+                  <span>Disconnect</span>
                 </button>
               </div>
             </motion.div>

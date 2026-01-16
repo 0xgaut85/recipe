@@ -4,21 +4,21 @@ import { GlassCard } from "@/components/ui";
 export const DocsInsight: FC = () => {
   return (
     <section id="insight" className="scroll-mt-32">
-      <h2 className="font-display text-3xl font-bold text-ink mb-8 lowercase">
-        the insight
+      <h2 className="font-display text-2xl font-semibold text-white mb-6">
+        The Insight
       </h2>
-      <GlassCard variant="light" className="p-12 text-center">
-        <p className="text-3xl font-display font-bold text-ink mb-6 lowercase">
-          alpha isn&apos;t scarce. <br />
-          <span className="bg-accent-blue px-2">execution speed is.</span>
+      <GlassCard variant="default" className="p-10 text-center">
+        <p className="text-2xl font-display font-semibold text-white mb-6">
+          Alpha isn&apos;t scarce. <br />
+          <span className="bg-claude-orange/15 text-claude-orange px-2 rounded">Execution speed is.</span>
         </p>
-        <p className="text-ink font-medium lowercase mb-4">
-          in the trenches, the difference between printing and coping is often
-          how fast you can go from &quot;i think this will happen&quot; to
+        <p className="text-white/70 mb-4">
+          The difference between profit and loss is often
+          how fast you can go from &quot;I think this will happen&quot; to
           &quot;this is running live&quot;.
         </p>
-        <p className="text-ink font-bold lowercase">
-          time-to-strategy must be minutes, not days.
+        <p className="text-white font-semibold">
+          Time-to-strategy must be seconds, not days.
         </p>
       </GlassCard>
     </section>

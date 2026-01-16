@@ -2,7 +2,7 @@
 
 import { FC, useState, useRef, useEffect, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { CookingStep } from "@/app/app/page";
+import type { TradingStep } from "@/app/app/page";
 
 interface Message {
   id: string;
@@ -12,8 +12,8 @@ interface Message {
 }
 
 interface ChatPanelProps {
-  currentStep: CookingStep;
-  onProgressUpdate: (step: CookingStep) => void;
+  currentStep: TradingStep;
+  onProgressUpdate: (step: TradingStep) => void;
 }
 
 export const ChatPanel: FC<ChatPanelProps> = ({
@@ -39,7 +39,6 @@ export const ChatPanel: FC<ChatPanelProps> = ({
     inputRef.current?.focus();
   }, []);
 
-  // Reset chat for new strategy
   const startNewStrategy = () => {
     setMessages([]);
     setLastCreatedStrategy(null);
@@ -62,7 +61,6 @@ export const ChatPanel: FC<ChatPanelProps> = ({
     setIsLoading(true);
 
     try {
-      // Send all messages to the API (single continuous chat)
       const apiMessages = [...messages, userMessage].map((m) => ({
         role: m.role as "user" | "assistant",
         content: m.content,
@@ -104,7 +102,6 @@ export const ChatPanel: FC<ChatPanelProps> = ({
               try {
                 const parsed = JSON.parse(data);
                 
-                // Append content to the assistant message
                 if (parsed.content) {
                   setMessages((prev) => {
                     const updated = [...prev];
@@ -116,12 +113,10 @@ export const ChatPanel: FC<ChatPanelProps> = ({
                   });
                 }
                 
-                // Update progress indicator based on signals from backend
                 if (parsed.progress) {
-                  onProgressUpdate(parsed.progress as CookingStep);
+                  onProgressUpdate(parsed.progress as TradingStep);
                   
-                  // When strategy is deployed (serve phase), track it
-                  if (parsed.progress === "serve") {
+                  if (parsed.progress === "deploy") {
                     setLastCreatedStrategy("Strategy deployed!");
                   }
                 }
@@ -139,7 +134,7 @@ export const ChatPanel: FC<ChatPanelProps> = ({
         {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: "sorry, something went wrong. please try again.",
+          content: "Sorry, something went wrong. Please try again.",
           timestamp: new Date(),
         },
       ]);
@@ -156,9 +151,9 @@ export const ChatPanel: FC<ChatPanelProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto terminal-scroll p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {/* Welcome Message */}
         {messages.length === 0 && (
           <motion.div
@@ -166,18 +161,22 @@ export const ChatPanel: FC<ChatPanelProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-12"
           >
-            <div className="text-4xl mb-4">🍳</div>
-            <h3 className="font-display text-2xl font-bold text-white mb-3 lowercase">
-              what do you want to cook?
+            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-claude-orange/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-claude-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 className="font-display text-2xl font-semibold text-ink mb-3">
+              What would you like to trade?
             </h3>
-            <p className="text-white/50 max-w-md mx-auto lowercase">
-              describe your trading strategy in natural language. i&apos;ll help you set it up and deploy it on solana.
+            <p className="text-ink/50 max-w-md mx-auto">
+              Describe your trading strategy in natural language. I&apos;ll help you configure and deploy it on Solana.
             </p>
-            <div className="mt-6 text-white/30 text-sm space-y-1">
-              <p>examples:</p>
-              <p className="text-white/50">snipe new pairs with &apos;ai&apos; in the name, 0.1 SOL each</p>
-              <p className="text-white/50">buy 0.5 SOL of BONK</p>
-              <p className="text-white/50">create a strategy to buy when RSI drops below 30</p>
+            <div className="mt-8 text-ink/40 text-sm space-y-2">
+              <p className="font-medium text-ink/50">Examples:</p>
+              <p>Snipe new pairs with &apos;AI&apos; in the name, 0.1 SOL each</p>
+              <p>Buy 0.5 SOL of BONK</p>
+              <p>Create a strategy to buy when RSI drops below 30</p>
             </div>
           </motion.div>
         )}
@@ -193,10 +192,10 @@ export const ChatPanel: FC<ChatPanelProps> = ({
               className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-5 py-3 ${
+                className={`max-w-[80%] rounded-xl px-5 py-3 ${
                   message.role === "user"
-                    ? "bg-accent-pink text-black"
-                    : "bg-white/10 text-white"
+                    ? "bg-ink text-white"
+                    : "bg-ink/5 text-ink border border-ink/10"
                 }`}
               >
                 <p className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -204,7 +203,7 @@ export const ChatPanel: FC<ChatPanelProps> = ({
                 </p>
                 <div
                   className={`text-xs mt-2 ${
-                    message.role === "user" ? "text-black/40" : "text-white/30"
+                    message.role === "user" ? "text-white/50" : "text-ink/30"
                   }`}
                 >
                   {message.timestamp.toLocaleTimeString([], {
@@ -224,7 +223,7 @@ export const ChatPanel: FC<ChatPanelProps> = ({
             animate={{ opacity: 1 }}
             className="flex justify-start"
           >
-            <div className="bg-white/10 rounded-2xl px-5 py-3">
+            <div className="bg-ink/5 border border-ink/10 rounded-xl px-5 py-3">
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <motion.div
@@ -235,7 +234,7 @@ export const ChatPanel: FC<ChatPanelProps> = ({
                       repeat: Infinity,
                       delay: i * 0.2,
                     }}
-                    className="w-2 h-2 bg-white/50 rounded-full"
+                    className="w-2 h-2 bg-claude-orange rounded-full"
                   />
                 ))}
               </div>
@@ -245,8 +244,8 @@ export const ChatPanel: FC<ChatPanelProps> = ({
 
         <div ref={messagesEndRef} />
 
-        {/* New Strategy Button - shown after strategy is created */}
-        {lastCreatedStrategy && currentStep === "serve" && (
+        {/* New Strategy Button */}
+        {lastCreatedStrategy && currentStep === "deploy" && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -254,35 +253,35 @@ export const ChatPanel: FC<ChatPanelProps> = ({
           >
             <button
               onClick={startNewStrategy}
-              className="flex items-center gap-2 px-6 py-3 bg-accent-pink/20 border border-accent-pink/50 rounded-xl text-accent-pink hover:bg-accent-pink/30 transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-claude-orange/10 border border-claude-orange/30 rounded-xl text-claude-orange hover:bg-claude-orange/20 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              <span className="font-bold lowercase">create new strategy</span>
+              <span className="font-medium">Create New Strategy</span>
             </button>
           </motion.div>
         )}
       </div>
 
       {/* Input */}
-      <div className="border-t border-white/10 p-4">
+      <div className="border-t border-ink/10 p-4 bg-white">
         <form onSubmit={handleSubmit} className="relative">
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="describe your trading strategy..."
+            placeholder="Describe your trading strategy..."
             disabled={isLoading}
             rows={1}
-            className="w-full bg-white/5 border-2 border-white/10 rounded-xl px-5 py-4 pr-14 text-white placeholder-white/30 resize-none focus:outline-none focus:border-accent-pink/50 transition-colors disabled:opacity-50"
+            className="w-full bg-ink/5 border border-ink/10 rounded-xl px-5 py-4 pr-14 text-ink placeholder-ink/40 resize-none focus:outline-none focus:border-claude-orange/50 transition-colors disabled:opacity-50"
             style={{ minHeight: "56px", maxHeight: "200px" }}
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-accent-pink rounded-lg flex items-center justify-center text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent-pink/80 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-claude-orange rounded-lg flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-claude-orange-dark transition-colors"
           >
             <svg
               className="w-5 h-5"
@@ -299,9 +298,9 @@ export const ChatPanel: FC<ChatPanelProps> = ({
             </svg>
           </button>
         </form>
-        <div className="flex items-center justify-between mt-3 text-xs text-white/30">
-          <span>press enter to send, shift+enter for new line</span>
-          <span className="font-mono">powered by claude</span>
+        <div className="flex items-center justify-between mt-3 text-xs text-ink/30">
+          <span>Press Enter to send, Shift+Enter for new line</span>
+          <span className="font-mono">Powered by Claude</span>
         </div>
       </div>
     </div>

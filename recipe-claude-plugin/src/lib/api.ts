@@ -377,46 +377,27 @@ export async function getNewLaunches(limit: number = 10): Promise<Array<{
 
 /**
  * Get OHLCV candle data for technical analysis
- * Routes through recipe.money backend which has Birdeye API key
+ * NOTE: This feature requires Birdeye API key which is not available in the plugin.
+ * The OHLCV endpoint is not implemented on recipe.money backend for public access.
+ * Returns an error message directing users to use the web app for this feature.
  */
 export async function getOHLCV(
   tokenAddress: string,
   timeframe: TimeFrame = "1H",
   limit: number = 100
 ): Promise<OHLCVCandle[]> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-  try {
-    const url = new URL(`${API_BASE}/data/ohlcv`);
-    url.searchParams.set("address", tokenAddress);
-    url.searchParams.set("timeframe", timeframe);
-    url.searchParams.set("limit", limit.toString());
-
-    const response = await fetch(url.toString(), {
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch OHLCV data: ${response.status}`);
-    }
-
-    const data = await response.json() as { candles?: OHLCVCandle[]; success?: boolean };
-    return data.candles || [];
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("OHLCV data request timed out");
-    }
-    throw error;
-  }
+  // OHLCV requires Birdeye API key - not available in plugin
+  // The /api/data/ohlcv endpoint doesn't exist on recipe.money
+  throw new Error(
+    "OHLCV data requires Birdeye API access. This feature is available in the Recipe.money web app. " +
+    "For technical analysis, please use the web app at https://recipe.money"
+  );
 }
 
 /**
  * Get new pairs with filters for sniping strategies
- * Routes through recipe.money backend which has Birdeye API key
+ * Uses trending data from recipe.money backend (which has Birdeye API key)
+ * Applies local filtering for the options
  */
 export async function getNewPairs(options: {
   maxAgeMinutes?: number;
@@ -427,119 +408,79 @@ export async function getNewPairs(options: {
   maxMarketCap?: number;
   limit?: number;
 } = {}): Promise<NewPairData[]> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
-
   try {
-    const url = new URL(`${API_BASE}/data/new-pairs`);
-    if (options.maxAgeMinutes) url.searchParams.set("maxAgeMinutes", options.maxAgeMinutes.toString());
-    if (options.minLiquidity) url.searchParams.set("minLiquidity", options.minLiquidity.toString());
-    if (options.maxLiquidity) url.searchParams.set("maxLiquidity", options.maxLiquidity.toString());
-    if (options.minVolume) url.searchParams.set("minVolume", options.minVolume.toString());
-    if (options.minMarketCap) url.searchParams.set("minMarketCap", options.minMarketCap.toString());
-    if (options.maxMarketCap) url.searchParams.set("maxMarketCap", options.maxMarketCap.toString());
-    if (options.limit) url.searchParams.set("limit", options.limit.toString());
+    // Use the working /api/data/trending endpoint and filter locally
+    const trending = await getTrending();
+    
+    let pairs = trending.newLaunches.map(nl => ({
+      address: nl.address,
+      symbol: nl.symbol,
+      name: nl.name,
+      logoURI: nl.logoURI,
+      price: nl.price,
+      liquidity: nl.liquidity,
+      volume24h: nl.volume24h,
+      marketCap: nl.marketCap,
+      listedAt: nl.listedAt,
+      ageMinutes: nl.ageMinutes || 0,
+      dex: nl.dex,
+    }));
 
-    const response = await fetch(url.toString(), {
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      // Fallback to trending data new launches if endpoint not available
-      const trending = await getTrending();
-      return trending.newLaunches.map(nl => ({
-        address: nl.address,
-        symbol: nl.symbol,
-        name: nl.name,
-        logoURI: nl.logoURI,
-        price: nl.price,
-        liquidity: nl.liquidity,
-        volume24h: nl.volume24h,
-        marketCap: nl.marketCap,
-        listedAt: nl.listedAt,
-        ageMinutes: nl.ageMinutes || 0,
-        dex: undefined,
-      }));
+    // Apply local filtering
+    if (options.maxAgeMinutes) {
+      pairs = pairs.filter(p => p.ageMinutes <= options.maxAgeMinutes!);
+    }
+    if (options.minLiquidity) {
+      pairs = pairs.filter(p => p.liquidity >= options.minLiquidity!);
+    }
+    if (options.maxLiquidity) {
+      pairs = pairs.filter(p => p.liquidity <= options.maxLiquidity!);
+    }
+    if (options.minVolume) {
+      pairs = pairs.filter(p => p.volume24h >= options.minVolume!);
+    }
+    if (options.minMarketCap) {
+      pairs = pairs.filter(p => p.marketCap >= options.minMarketCap!);
+    }
+    if (options.maxMarketCap) {
+      pairs = pairs.filter(p => p.marketCap <= options.maxMarketCap!);
     }
 
-    const data = await response.json() as { pairs?: NewPairData[] };
-    return data.pairs || [];
+    return pairs.slice(0, options.limit || 20);
   } catch (error) {
-    clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("New pairs request timed out");
-    }
-    // Fallback to trending data on error
-    try {
-      const trending = await getTrending();
-      return trending.newLaunches.map(nl => ({
-        address: nl.address,
-        symbol: nl.symbol,
-        name: nl.name,
-        logoURI: nl.logoURI,
-        price: nl.price,
-        liquidity: nl.liquidity,
-        volume24h: nl.volume24h,
-        marketCap: nl.marketCap,
-        listedAt: nl.listedAt,
-        ageMinutes: nl.ageMinutes || 0,
-        dex: undefined,
-      }));
-    } catch {
-      return [];
-    }
+    console.error("Failed to get new pairs:", error);
+    return [];
   }
 }
 
 /**
  * Get detailed pair metrics (volume, trades, price changes over multiple timeframes)
- * Routes through recipe.money backend which has Birdeye API key
+ * Uses DexScreener directly (no API key needed)
+ * Note: 30m/1h granular data not available via DexScreener, only 24h
  */
 export async function getPairDetails(address: string): Promise<PairOverview | null> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-  try {
-    const url = new URL(`${API_BASE}/data/pair-details`);
-    url.searchParams.set("address", address);
-
-    const response = await fetch(url.toString(), {
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      // Fallback: get basic info from DexScreener
-      const tokenInfo = await getTokenInfo(address);
-      if (tokenInfo) {
-        return {
-          price: tokenInfo.price,
-          volume30m: 0,
-          volume1h: 0,
-          volume24h: tokenInfo.volume24h,
-          liquidity: tokenInfo.liquidity,
-          trades30m: 0,
-          trades1h: 0,
-          priceChange30m: 0,
-          priceChange1h: 0,
-        };
-      }
-      return null;
-    }
-
-    return response.json() as Promise<PairOverview>;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    return null;
+  // Use DexScreener directly - the /api/data/pair-details endpoint doesn't exist
+  const tokenInfo = await getTokenInfo(address);
+  if (tokenInfo) {
+    return {
+      price: tokenInfo.price,
+      volume30m: 0, // Not available from DexScreener
+      volume1h: 0,  // Not available from DexScreener
+      volume24h: tokenInfo.volume24h,
+      liquidity: tokenInfo.liquidity,
+      trades30m: 0, // Not available from DexScreener
+      trades1h: 0,  // Not available from DexScreener
+      priceChange30m: 0, // Not available from DexScreener
+      priceChange1h: 0,  // Not available from DexScreener
+    };
   }
+  return null;
 }
 
 /**
  * Advanced token search with multiple filters
- * Routes through recipe.money backend which has Birdeye API key
+ * Uses DexScreener directly with local filtering (no API key needed)
+ * Note: minHolders filter not available via DexScreener
  */
 export async function advancedSearchTokens(options: {
   keyword?: string;
@@ -553,123 +494,61 @@ export async function advancedSearchTokens(options: {
   minHolders?: number;
   limit?: number;
 }): Promise<TokenOverview[]> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
-
+  // Use DexScreener directly - the /api/data/search-tokens endpoint doesn't exist
+  const query = options.keyword || options.symbolStartsWith || "solana";
+  
   try {
-    const url = new URL(`${API_BASE}/data/search-tokens`);
-    if (options.keyword) url.searchParams.set("keyword", options.keyword);
-    if (options.symbolStartsWith) url.searchParams.set("symbolStartsWith", options.symbolStartsWith);
-    if (options.nameContains) url.searchParams.set("nameContains", options.nameContains);
-    if (options.minMarketCap) url.searchParams.set("minMarketCap", options.minMarketCap.toString());
-    if (options.maxMarketCap) url.searchParams.set("maxMarketCap", options.maxMarketCap.toString());
-    if (options.minLiquidity) url.searchParams.set("minLiquidity", options.minLiquidity.toString());
-    if (options.maxLiquidity) url.searchParams.set("maxLiquidity", options.maxLiquidity.toString());
-    if (options.minVolume24h) url.searchParams.set("minVolume24h", options.minVolume24h.toString());
-    if (options.minHolders) url.searchParams.set("minHolders", options.minHolders.toString());
-    if (options.limit) url.searchParams.set("limit", options.limit.toString());
-
-    const response = await fetch(url.toString(), {
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      // Fallback to basic DexScreener search with local filtering
-      if (options.keyword || options.symbolStartsWith) {
-        const query = options.keyword || options.symbolStartsWith || "";
-        const results = await searchTokens(query);
-        return results
-          .filter(r => {
-            if (options.symbolStartsWith && !r.symbol.toUpperCase().startsWith(options.symbolStartsWith.toUpperCase())) return false;
-            if (options.nameContains && !r.name.toLowerCase().includes(options.nameContains.toLowerCase())) return false;
-            if (options.minMarketCap && r.marketCap < options.minMarketCap) return false;
-            if (options.maxMarketCap && r.marketCap > options.maxMarketCap) return false;
-            if (options.minLiquidity && r.liquidity < options.minLiquidity) return false;
-            if (options.maxLiquidity && r.liquidity > options.maxLiquidity) return false;
-            if (options.minVolume24h && r.volume24h < options.minVolume24h) return false;
-            return true;
-          })
-          .slice(0, options.limit || 20)
-          .map(r => ({
-            address: r.address,
-            symbol: r.symbol,
-            name: r.name,
-            decimals: 9,
-            price: r.price,
-            priceChange24h: r.priceChange24h,
-            volume24h: r.volume24h,
-            liquidity: r.liquidity,
-            marketCap: r.marketCap,
-          }));
-      }
-      return [];
-    }
-
-    const data = await response.json() as { tokens?: TokenOverview[] };
-    return data.tokens || [];
+    const results = await searchTokens(query);
+    
+    return results
+      .filter(r => {
+        if (options.symbolStartsWith && !r.symbol.toUpperCase().startsWith(options.symbolStartsWith.toUpperCase())) return false;
+        if (options.nameContains && !r.name.toLowerCase().includes(options.nameContains.toLowerCase())) return false;
+        if (options.minMarketCap && r.marketCap < options.minMarketCap) return false;
+        if (options.maxMarketCap && r.marketCap > options.maxMarketCap) return false;
+        if (options.minLiquidity && r.liquidity < options.minLiquidity) return false;
+        if (options.maxLiquidity && r.liquidity > options.maxLiquidity) return false;
+        if (options.minVolume24h && r.volume24h < options.minVolume24h) return false;
+        // minHolders not available from DexScreener
+        return true;
+      })
+      .slice(0, options.limit || 20)
+      .map(r => ({
+        address: r.address,
+        symbol: r.symbol,
+        name: r.name,
+        decimals: 9,
+        price: r.price,
+        priceChange24h: r.priceChange24h,
+        volume24h: r.volume24h,
+        liquidity: r.liquidity,
+        marketCap: r.marketCap,
+      }));
   } catch (error) {
-    clearTimeout(timeoutId);
+    console.error("Advanced search error:", error);
     return [];
   }
 }
 
 /**
  * Get token overview by address
- * First tries recipe.money backend, falls back to DexScreener
+ * Uses DexScreener directly (no API key needed)
  */
 export async function getTokenOverview(address: string): Promise<TokenOverview | null> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-  try {
-    const url = new URL(`${API_BASE}/data/token-overview`);
-    url.searchParams.set("address", address);
-
-    const response = await fetch(url.toString(), {
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      // Fallback to DexScreener
-      const info = await getTokenInfo(address);
-      if (info) {
-        return {
-          address: info.address,
-          symbol: info.symbol,
-          name: info.name,
-          decimals: 9,
-          price: info.price,
-          priceChange24h: info.priceChange24h,
-          volume24h: info.volume24h,
-          liquidity: info.liquidity,
-          marketCap: info.marketCap,
-        };
-      }
-      return null;
-    }
-
-    return response.json() as Promise<TokenOverview>;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    // Fallback to DexScreener
-    const info = await getTokenInfo(address);
-    if (info) {
-      return {
-        address: info.address,
-        symbol: info.symbol,
-        name: info.name,
-        decimals: 9,
-        price: info.price,
-        priceChange24h: info.priceChange24h,
-        volume24h: info.volume24h,
-        liquidity: info.liquidity,
-        marketCap: info.marketCap,
-      };
-    }
-    return null;
+  // Use DexScreener directly - the /api/data/token-overview endpoint doesn't exist
+  const info = await getTokenInfo(address);
+  if (info) {
+    return {
+      address: info.address,
+      symbol: info.symbol,
+      name: info.name,
+      decimals: 9, // Default, actual decimals would need on-chain lookup
+      price: info.price,
+      priceChange24h: info.priceChange24h,
+      volume24h: info.volume24h,
+      liquidity: info.liquidity,
+      marketCap: info.marketCap,
+    };
   }
+  return null;
 }

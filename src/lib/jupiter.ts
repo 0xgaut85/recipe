@@ -5,7 +5,8 @@ import {
 } from "@solana/web3.js";
 import { getConnection, getKeypairFromEncrypted } from "./wallet";
 
-const JUPITER_API_BASE = "https://quote-api.jup.ag/v6";
+const JUPITER_API_BASE = "https://api.jup.ag/swap/v1";
+const JUPITER_API_KEY = process.env.JUPITER_API_KEY;
 
 // Common token mints with their decimals
 export const TOKEN_MINTS: Record<string, string> = {
@@ -110,7 +111,11 @@ export async function getSwapQuote(
   url.searchParams.set("amount", amount.toString());
   url.searchParams.set("slippageBps", slippageBps.toString());
 
-  const response = await fetch(url.toString());
+  const response = await fetch(url.toString(), {
+    headers: {
+      ...(JUPITER_API_KEY && { "x-api-key": JUPITER_API_KEY }),
+    },
+  });
 
   if (!response.ok) {
     const error = await response.text();
@@ -132,6 +137,7 @@ export async function getSwapTransaction(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(JUPITER_API_KEY && { "x-api-key": JUPITER_API_KEY }),
     },
     body: JSON.stringify({
       quoteResponse: quote,
@@ -185,19 +191,17 @@ export async function executeSwap(
   // Sign transaction
   transaction.sign([keypair]);
 
+  // Get blockhash before sending
+  const latestBlockhash = await connection.getLatestBlockhash();
+
   // Send transaction
   const signature = await connection.sendTransaction(transaction, {
     skipPreflight: false,
     maxRetries: 3,
   });
 
-  // Confirm transaction
-  const latestBlockhash = await connection.getLatestBlockhash();
-  await connection.confirmTransaction({
-    signature,
-    blockhash: latestBlockhash.blockhash,
-    lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-  });
+  // Confirm transaction using polling (avoids WebSocket issues in serverless)
+  await confirmTransactionPolling(connection, signature, latestBlockhash);
 
   return {
     signature,
@@ -205,6 +209,41 @@ export async function executeSwap(
     outputAmount: quote.outAmount,
     priceImpact: quote.priceImpactPct,
   };
+}
+
+/**
+ * Confirm transaction using polling instead of WebSocket subscription
+ * This avoids "t.mask is not a function" errors in serverless environments
+ */
+async function confirmTransactionPolling(
+  connection: Connection,
+  signature: string,
+  blockhash: { blockhash: string; lastValidBlockHeight: number },
+  maxRetries: number = 30,
+  retryDelayMs: number = 1000
+): Promise<void> {
+  for (let i = 0; i < maxRetries; i++) {
+    const status = await connection.getSignatureStatus(signature);
+    
+    if (status?.value?.confirmationStatus === "confirmed" || 
+        status?.value?.confirmationStatus === "finalized") {
+      if (status.value.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(status.value.err)}`);
+      }
+      return; // Transaction confirmed successfully
+    }
+
+    // Check if blockhash expired
+    const currentBlockHeight = await connection.getBlockHeight();
+    if (currentBlockHeight > blockhash.lastValidBlockHeight) {
+      throw new Error("Transaction expired: blockhash no longer valid");
+    }
+
+    // Wait before next poll
+    await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+  }
+
+  throw new Error(`Transaction confirmation timeout after ${maxRetries} attempts`);
 }
 
 /**

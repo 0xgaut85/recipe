@@ -14,11 +14,11 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
   return (
     <div className={className}>
       {badge && (
-        <span className="inline-block px-3 py-1 rounded-full bg-white/10 text-white/60 text-xs font-bold uppercase tracking-wider mb-6 border border-white/10">
+        <span className="inline-block px-3 py-1.5 rounded-full bg-claude-orange/10 text-claude-orange text-xs font-medium uppercase tracking-wider mb-6">
           {badge}
         </span>
       )}
-      <h2 className="font-display text-3xl font-bold text-ink mb-8 lowercase">
+      <h2 className="font-display text-2xl font-semibold text-ink mb-6">
         {title}
       </h2>
     </div>

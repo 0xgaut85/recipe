@@ -26,17 +26,17 @@ export const DocsSidebar: FC<DocsSidebarProps> = ({
   onSectionClick,
 }) => {
   return (
-    <aside className="fixed left-0 top-0 h-screen w-72 bg-white border-r-2 border-ink pt-24 pb-8 overflow-hidden z-40 hidden lg:block">
+    <aside className="fixed left-0 top-0 h-screen w-72 bg-ink border-r border-white/10 pt-24 pb-8 overflow-hidden z-40 hidden lg:block">
       <div className="px-8 mb-8">
         <Link
           href="/"
-          className="flex items-center gap-2 text-ink hover:underline-pink transition-all text-sm font-bold mb-6 lowercase group"
+          className="flex items-center gap-2 text-white/60 hover:text-white transition-all text-sm font-medium mb-6 group"
         >
           <span>←</span>
-          <span>back</span>
+          <span>Back</span>
         </Link>
-        <h2 className="font-display font-bold text-xl text-ink tracking-tight lowercase">
-          documentation
+        <h2 className="font-display font-semibold text-xl text-white tracking-tight">
+          Documentation
         </h2>
       </div>
 
@@ -49,18 +49,18 @@ export const DocsSidebar: FC<DocsSidebarProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <h3 className="text-xs font-bold text-ink uppercase tracking-widest mb-3 px-2 border-b-2 border-ink/10 pb-1 w-fit">
+              <h3 className="text-xs font-medium text-white/40 uppercase tracking-widest mb-3 px-2">
                 {group.title}
               </h3>
-              <ul className="space-y-2 relative">
+              <ul className="space-y-1 relative">
                 {group.items.map((item) => (
                   <li key={item.id}>
                     <button
                       onClick={() => onSectionClick(item.id)}
-                      className={`w-full text-left px-4 py-2 text-sm transition-all relative rounded-xl border-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition-all relative rounded-lg ${
                         activeSection === item.id
-                          ? "bg-accent-pink text-ink border-ink font-bold shadow-[2px_2px_0px_0px_#1A1A1A]"
-                          : "border-transparent text-ink/70 hover:text-ink hover:border-ink/10"
+                          ? "bg-claude-orange/15 text-claude-orange font-medium"
+                          : "text-white/60 hover:text-white hover:bg-white/5"
                       }`}
                     >
                       {item.title}

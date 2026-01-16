@@ -2,17 +2,17 @@
 
 import { FC } from "react";
 import { motion } from "framer-motion";
-import type { CookingStep } from "@/app/app/page";
+import type { TradingStep } from "@/app/app/page";
 
-const steps: { id: CookingStep; num: string; label: string }[] = [
-  { id: "describe", num: "01", label: "describe" },
-  { id: "cook", num: "02", label: "cook" },
-  { id: "taste", num: "03", label: "taste" },
-  { id: "serve", num: "04", label: "serve" },
+const steps: { id: TradingStep; num: string; label: string }[] = [
+  { id: "describe", num: "01", label: "Describe" },
+  { id: "configure", num: "02", label: "Configure" },
+  { id: "review", num: "03", label: "Review" },
+  { id: "deploy", num: "04", label: "Deploy" },
 ];
 
 interface StepIndicatorProps {
-  currentStep: CookingStep;
+  currentStep: TradingStep;
 }
 
 export const StepIndicator: FC<StepIndicatorProps> = ({ currentStep }) => {
@@ -27,25 +27,25 @@ export const StepIndicator: FC<StepIndicatorProps> = ({ currentStep }) => {
         return (
           <div
             key={step.id}
-            className={`relative flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all ${
+            className={`relative flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
               isActive
-                ? "bg-accent-pink border-accent-pink text-black"
+                ? "bg-claude-orange/10 border-claude-orange/30 text-claude-orange"
                 : isCompleted
-                ? "bg-white/10 border-white/20 text-white"
-                : "bg-transparent border-white/10 text-white/40"
+                ? "bg-ink/5 border-ink/10 text-ink"
+                : "bg-transparent border-ink/10 text-ink/40"
             }`}
           >
             <span className="font-mono text-xs opacity-60">{step.num}</span>
-            <span className="font-bold text-sm lowercase">{step.label}</span>
+            <span className="font-medium text-sm">{step.label}</span>
             
             {isCompleted && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute -right-1 -top-1 w-4 h-4 bg-accent-blue rounded-full flex items-center justify-center"
+                className="absolute -right-1 -top-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
               >
                 <svg
-                  className="w-2.5 h-2.5 text-black"
+                  className="w-2.5 h-2.5 text-white"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

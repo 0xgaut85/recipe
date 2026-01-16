@@ -173,12 +173,44 @@ export async function POST(req: NextRequest) {
       const outputDecimals = getTokenDecimals(params.outputToken);
       const actualOutputAmount = fromSmallestUnit(parseInt(result.outputAmount), outputDecimals);
 
+      // Calculate PnL for sell trades
+      let pnlUsd: number | null = null;
+      
+      if (!isBuy) {
+        // This is a sell - calculate PnL
+        const buyTrades = await prisma.trade.findMany({
+          where: {
+            userId,
+            outputToken: params.inputToken, // We bought this token before
+            direction: "BUY",
+            status: "CONFIRMED",
+          },
+          orderBy: { createdAt: "desc" },
+        });
+        
+        if (buyTrades.length > 0) {
+          // Calculate average buy price
+          const totalBought = buyTrades.reduce((sum, t) => sum + t.outputAmount, 0);
+          const totalCost = buyTrades.reduce((sum, t) => sum + (t.inputAmount * (t.priceUsd || 0)), 0);
+          const avgBuyPriceUsd = totalBought > 0 ? totalCost / totalBought : 0;
+          
+          // Get current SOL price for sell value calculation
+          const solPrice = await getTokenPrice(TOKEN_MINTS.SOL);
+          const sellValueUsd = actualOutputAmount * solPrice;
+          const costBasisUsd = params.amount * avgBuyPriceUsd;
+          
+          pnlUsd = sellValueUsd - costBasisUsd;
+          console.log(`[Trade] PnL: $${pnlUsd.toFixed(2)} (sold for $${sellValueUsd.toFixed(2)}, cost $${costBasisUsd.toFixed(2)})`);
+        }
+      }
+
       await prisma.trade.update({
         where: { id: trade.id },
         data: {
           signature: result.signature,
           outputAmount: actualOutputAmount,
           status: "CONFIRMED",
+          pnlUsd,
         },
       });
 

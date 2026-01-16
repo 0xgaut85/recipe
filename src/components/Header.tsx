@@ -22,40 +22,48 @@ export const Header: FC = () => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/80 backdrop-blur-xl border-b border-ink/5 py-4"
-          : "bg-transparent py-6"
+          ? "bg-ink/90 backdrop-blur-xl border-b border-white/5 py-3"
+          : "bg-transparent py-5"
       }`}
     >
       <div className="container-wide flex items-center justify-between">
-        <Link href="/" className="pl-0 relative z-10 group flex items-center gap-3">
+        <Link href="/" className="relative z-10 group flex items-center gap-3">
           <Image
-            src="/logo.jpg"
-            alt="recipe.money logo"
-            width={52}
-            height={52}
-            className="rounded-xl border border-ink/20"
+            src="/claude.png"
+            alt="Claude Trade"
+            width={36}
+            height={36}
+            className="rounded-lg"
           />
-          <span className="font-display font-bold text-xl text-ink tracking-tight group-hover:text-ink/70 transition-colors lowercase hidden sm:inline">
-            recipe
+          <span className="font-display font-semibold text-lg text-white tracking-tight group-hover:text-white/70 transition-colors">
+            CLAUDE TRADE
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-12">
+        <nav className="hidden md:flex items-center gap-10">
           <Link
             href="/docs"
-            className="text-ink text-sm font-medium underline-pink hover:text-ink/80 transition-colors lowercase"
+            className="text-white/60 text-sm font-medium hover:text-white transition-colors"
           >
-            what&apos;s recipe?
+            Documentation
           </Link>
+          <a
+            href="https://github.com/0xLaylo/recipe-plugin"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/60 text-sm font-medium hover:text-white transition-colors"
+          >
+            GitHub
+          </a>
         </nav>
 
         <Link
           href="/app"
-          className="px-6 py-2.5 rounded-full bg-ink text-white font-bold text-sm hover:bg-black transition-all duration-200 border-2 border-ink shadow-[4px_4px_0px_0px_#1A1A1A] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#1A1A1A] lowercase"
+          className="px-5 py-2.5 rounded-lg bg-claude-orange text-white font-medium text-sm hover:bg-claude-orange/90 transition-all duration-200"
         >
-          start cooking
+          Launch App
         </Link>
       </div>
     </motion.header>

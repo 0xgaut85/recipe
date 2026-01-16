@@ -1,5 +1,5 @@
 export { GlassCard } from "./GlassCard";
+export { CuisineTicket, InfoCard } from "./CuisineTicket";
 export { SectionHeader } from "./SectionHeader";
-export { TagList } from "./TagList";
 export { StepCard } from "./StepCard";
-export { CuisineTicket } from "./CuisineTicket";
+export { TagList } from "./TagList";

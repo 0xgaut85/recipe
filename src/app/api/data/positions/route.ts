@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
             mint: token.mint,
             symbol: overview.symbol || "???",
             name: overview.name || "Unknown",
-            logoURI: undefined, // Would need separate API call
+            logoURI: overview.logoURI,
             balance: token.balance,
             decimals: overview.decimals || 9,
             price: overview.price || 0,

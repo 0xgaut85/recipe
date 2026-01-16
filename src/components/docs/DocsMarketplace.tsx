@@ -1,26 +1,26 @@
 import { FC } from "react";
 
 const marketplaceFeatures = [
-  "publish publicly or privately",
-  "monetize via subscriptions or usage fees",
-  "earn royalties on forks and downstream usage",
+  "Publish publicly or privately",
+  "Monetize via subscriptions or usage fees",
+  "Earn royalties on forks and downstream usage",
 ];
 
 export const DocsMarketplace: FC = () => {
   return (
     <section id="marketplace" className="scroll-mt-32">
-      <h2 className="font-display text-3xl font-bold text-ink mb-8 lowercase">
-        marketplace
+      <h2 className="font-display text-2xl font-semibold text-white mb-6">
+        Marketplace
       </h2>
-      <div className="bg-white border-2 border-ink rounded-3xl p-10 shadow-[8px_8px_0px_0px_#1A1A1A]">
-        <p className="text-xl font-bold text-ink mb-6 lowercase">
-          the goal is simple: the best strategies rise, builders get paid, users
-          get execution without reinventing infra.
+      <div className="bg-white/[0.02] border border-white/10 rounded-xl p-8 md:p-10">
+        <p className="text-lg font-medium text-white mb-6">
+          The goal is simple: the best strategies rise, builders get paid, users
+          get execution without reinventing infrastructure.
         </p>
-        <ul className="space-y-4 text-ink font-medium lowercase">
+        <ul className="space-y-3 text-white/80">
           {marketplaceFeatures.map((feature, i) => (
             <li key={i} className="flex items-center gap-3">
-              <span className="w-2 h-2 bg-ink rounded-full" />
+              <span className="w-2 h-2 bg-claude-orange rounded-full" />
               {feature}
             </li>
           ))}

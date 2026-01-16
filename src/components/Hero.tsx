@@ -2,173 +2,110 @@
 
 import { FC } from "react";
 import { motion } from "framer-motion";
-import { GlassCard, CuisineTicket } from "@/components/ui";
+import Link from "next/link";
 
 export const Hero: FC = () => {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-24">
-      {/* Animated Gradient Background */}
-      <div className="absolute inset-0 -z-10 bg-white">
-        <motion.div
-          animate={{
-            scale: [1, 1.05, 1],
-            rotate: [0, 8, 0],
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 right-0 w-[800px] h-[800px] bg-accent-pink/8 rounded-full blur-[120px]"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.08, 1],
-            rotate: [0, -5, 0],
-          }}
-          transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent-blue/8 rounded-full blur-[120px]"
-        />
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 bg-ink">
+      {/* Subtle orange gradient glow */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-claude-orange/10 rounded-full blur-[200px]" />
+        <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-claude-orange/5 rounded-full blur-[180px]" />
       </div>
 
-      <div className="container-wide relative z-10 grid lg:grid-cols-2 gap-12 items-center">
-        {/* Left Content */}
-        <div className="text-center lg:text-left">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <GlassCard
-              variant="light"
-              className="inline-block px-4 py-2 rounded-full mb-6"
-            >
-              <span className="text-sm font-bold text-ink tracking-wide lowercase">
-                the vibetrading platform
-              </span>
-            </GlassCard>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            className="font-display text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-semibold text-ink leading-[0.9] tracking-tight mb-8"
-          >
-            time to
-            <br />
-            <span className="relative inline-block">
-              cook.
-              <motion.svg
-                viewBox="0 0 100 20"
-                className="absolute -bottom-4 left-0 w-full h-auto text-accent-pink -z-10 opacity-60"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 0.6 }}
-                transition={{ duration: 1.2, delay: 0.8, ease: "easeOut" }}
-              >
-                <motion.path
-                  d="M0 10 Q50 20 100 10"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 1.2, delay: 0.8, ease: "easeOut" }}
-                />
-              </motion.svg>
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="text-xl md:text-2xl text-ink-light font-medium max-w-lg mx-auto lg:mx-0 leading-relaxed lowercase"
-          >
-            if you can describe it, you can run it.
-            <br />
-            iterate fast enough to matter.
-          </motion.p>
-        </div>
-
-        {/* Right Visual - Cuisine Tickets */}
-        <div
-          className="relative h-[600px] w-full hidden lg:flex items-center justify-center"
-          style={{ perspective: "1200px" }}
+      <div className="container-wide relative z-10 text-center max-w-4xl mx-auto">
+        {/* Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          {/* Ticket 1 - The Old Way */}
-          <CuisineTicket
-            variant="light"
-            delay={0.4}
-            floatDirection="up"
-            className="absolute top-16 right-8 w-72"
-          >
-            <div className="text-center mb-1">
-              <span className="text-[10px] font-bold text-ink/40 uppercase tracking-[0.2em]">
-                order #001
-              </span>
-            </div>
-            <p className="font-display text-2xl font-bold text-ink mb-4 lowercase text-center">
-              the old way
-            </p>
-            <div className="space-y-2 text-ink-light font-medium text-sm lowercase">
-              <p className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-ink/30 rounded-full" />
-                write glue code
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-ink/30 rounded-full" />
-                normalize data
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-ink/30 rounded-full" />
-                debug api limits
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-ink/30 rounded-full" />
-                maybe trade?
-              </p>
-            </div>
-            <div className="mt-4 pt-3 border-t border-dashed border-ink/20 text-center">
-              <span className="text-xs font-mono text-ink/40">
-                ≈ days to weeks
-              </span>
-            </div>
-          </CuisineTicket>
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/70 text-sm font-medium mb-8">
+            <span className="w-2 h-2 rounded-full bg-claude-orange animate-pulse" />
+            Powered by Claude AI
+          </span>
+        </motion.div>
 
-          {/* Ticket 2 - The Recipe Way */}
-          <CuisineTicket
-            variant="accent"
-            delay={0.6}
-            floatDirection="down"
-            className="absolute top-52 left-4 w-72 z-10"
+        {/* Headline */}
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold text-white leading-[1.05] tracking-tight mb-6"
+        >
+          Trade with
+          <br />
+          <span className="relative inline-block">
+            Intelligence
+            <svg
+              viewBox="0 0 200 8"
+              className="absolute -bottom-2 left-0 w-full h-auto"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M0 4 Q50 8 100 4 T200 4"
+                fill="none"
+                stroke="#E57B3A"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+        </motion.h1>
+
+        {/* Subtitle */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          className="text-lg md:text-xl text-white/60 font-normal max-w-2xl mx-auto leading-relaxed mb-10"
+        >
+          Describe your trading strategy in natural language. Claude executes it on Solana in seconds, not days.
+        </motion.p>
+
+        {/* CTA Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+        >
+          <Link
+            href="/app"
+            className="px-8 py-4 rounded-lg bg-claude-orange text-white font-semibold text-base hover:bg-claude-orange/90 transition-all duration-200 min-w-[180px]"
           >
-            <div className="text-center mb-1">
-              <span className="text-[10px] font-bold text-ink/60 uppercase tracking-[0.2em]">
-                order #002
-              </span>
+            Launch App
+          </Link>
+          <Link
+            href="/docs"
+            className="px-8 py-4 rounded-lg bg-transparent border border-white/20 text-white font-semibold text-base hover:bg-white/5 transition-all duration-200 min-w-[180px]"
+          >
+            Read Docs
+          </Link>
+        </motion.div>
+
+        {/* Stats Row */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-20 pt-10 border-t border-white/10"
+        >
+          <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto">
+            <div className="text-center">
+              <div className="font-display text-3xl font-bold text-white">10s</div>
+              <div className="text-sm text-white/50 mt-1">Strategy Deploy</div>
             </div>
-            <p className="font-display text-2xl font-bold text-ink mb-4 lowercase text-center">
-              the recipe way
-            </p>
-            <div className="space-y-2 text-ink font-bold text-base lowercase">
-              <p className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-ink rounded-full" />
-                describe intent
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-ink rounded-full" />
-                claude cooks
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-ink rounded-full" />
-                deploy to solana
-              </p>
+            <div className="text-center">
+              <div className="font-display text-3xl font-bold text-white">24/7</div>
+              <div className="text-sm text-white/50 mt-1">Monitoring</div>
             </div>
-            <div className="mt-4 pt-3 border-t border-dashed border-ink/30 text-center">
-              <span className="text-sm font-mono font-bold text-ink">
-                ≈ minutes
-              </span>
+            <div className="text-center">
+              <div className="font-display text-3xl font-bold text-claude-orange">AI</div>
+              <div className="text-sm text-white/50 mt-1">Powered</div>
             </div>
-          </CuisineTicket>
-        </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

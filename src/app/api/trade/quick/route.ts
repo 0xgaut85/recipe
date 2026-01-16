@@ -99,6 +99,42 @@ export async function POST(req: NextRequest) {
     // Get token info for the trade record
     const outputTokenInfo = await getTokenOverview(outputMint);
     const inputTokenInfo = await getTokenOverview(inputMint);
+    const outputAmount = fromSmallestUnit(parseInt(result.outputAmount), outputDecimals);
+
+    // Calculate PnL for sell trades
+    let pnlUsd: number | null = null;
+    
+    if (action === "sell") {
+      // Find original buy trades for this token to calculate average cost basis
+      const buyTrades = await prisma.trade.findMany({
+        where: {
+          userId,
+          outputToken: tokenMint, // We bought this token
+          direction: "BUY",
+          status: "CONFIRMED",
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      
+      if (buyTrades.length > 0) {
+        // Calculate average buy price (weighted by amount)
+        const totalBought = buyTrades.reduce((sum, t) => sum + t.outputAmount, 0);
+        const totalCost = buyTrades.reduce((sum, t) => sum + (t.inputAmount * (t.priceUsd || 0)), 0);
+        const avgBuyPriceUsd = totalBought > 0 ? totalCost / totalBought : 0;
+        
+        // Sell value = output amount (SOL) * SOL price
+        const solPrice = outputTokenInfo?.price || 200; // SOL price
+        const sellValueUsd = outputAmount * solPrice;
+        
+        // Cost basis for this sell = amount sold * avg buy price
+        const costBasisUsd = tradeAmount * avgBuyPriceUsd;
+        
+        // PnL = sell value - cost basis
+        pnlUsd = sellValueUsd - costBasisUsd;
+        
+        console.log(`[Trade] PnL calculation: sold ${tradeAmount} for ${outputAmount} SOL ($${sellValueUsd.toFixed(2)}), cost basis $${costBasisUsd.toFixed(2)}, PnL: $${pnlUsd.toFixed(2)}`);
+      }
+    }
 
     // Record the trade
     const trade = await prisma.trade.create({
@@ -110,8 +146,9 @@ export async function POST(req: NextRequest) {
         inputToken: inputMint,
         outputToken: outputMint,
         inputAmount: tradeAmount,
-        outputAmount: fromSmallestUnit(parseInt(result.outputAmount), outputDecimals),
-        priceUsd: outputTokenInfo?.price || 0,
+        outputAmount,
+        priceUsd: action === "buy" ? (inputTokenInfo?.price || 0) : (outputTokenInfo?.price || 0),
+        pnlUsd,
         status: "CONFIRMED",
       },
     });

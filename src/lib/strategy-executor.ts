@@ -168,12 +168,12 @@ async function executeSniperStrategy(
   });
 
   // Get new pairs matching criteria
-  // Use lower defaults to catch more opportunities
+  // Respect user config, use sensible defaults only when not specified
   const filterOptions = {
     maxAgeMinutes: config.maxAgeMinutes || 60,
-    minLiquidity: config.minLiquidity ?? 1000, // Lower default: $1k
+    minLiquidity: config.minLiquidity ?? 1000, // Default: $1k
     maxLiquidity: config.maxLiquidity,
-    minVolume: config.minVolume ?? 0,
+    minVolume: config.minVolume ?? 0, // Respect user config, default 0
     minMarketCap: config.minMarketCap ?? 0,
     maxMarketCap: config.maxMarketCap,
     limit: 20,
@@ -235,10 +235,10 @@ async function executeSniperStrategy(
     };
   }
 
-  // Find first pair we haven't bought yet
-  const targetPair = filteredPairs.find((pair) => !boughtTokens.has(pair.address));
+  // Get pairs we haven't bought yet
+  const availablePairs = filteredPairs.filter((pair) => !boughtTokens.has(pair.address));
 
-  if (!targetPair) {
+  if (availablePairs.length === 0) {
     return {
       strategyId,
       strategyName,
@@ -247,68 +247,90 @@ async function executeSniperStrategy(
     };
   }
 
-  // Execute the trade
+  // Try each pair until one succeeds (some may not be tradable on Jupiter yet)
   const solAmount = config.amount || 0.01;
   const slippageBps = config.slippageBps || 300; // 3% default for memecoins
   const inputMint = TOKEN_MINTS.SOL;
-  const outputMint = targetPair.address;
+  
+  const errors: string[] = [];
+  
+  for (const targetPair of availablePairs.slice(0, 5)) { // Try up to 5 pairs
+    const outputMint = targetPair.address;
 
-  try {
-    // Get quote first
-    const quote = await getSwapQuote(
-      inputMint,
-      outputMint,
-      toSmallestUnit(solAmount, 9), // SOL has 9 decimals
-      slippageBps
-    );
+    try {
+      console.log(`[Sniper] Trying to buy ${targetPair.symbol} (${targetPair.address.slice(0, 8)}...)`);
+      
+      // Get quote first
+      const quote = await getSwapQuote(
+        inputMint,
+        outputMint,
+        toSmallestUnit(solAmount, 9), // SOL has 9 decimals
+        slippageBps
+      );
 
-    // Execute swap
-    const result = await executeSwap(
-      encryptedPrivateKey,
-      inputMint,
-      outputMint,
-      toSmallestUnit(solAmount, 9),
-      slippageBps
-    );
+      // Execute swap
+      const result = await executeSwap(
+        encryptedPrivateKey,
+        inputMint,
+        outputMint,
+        toSmallestUnit(solAmount, 9),
+        slippageBps
+      );
 
-    // Record trade in database
-    await prisma.trade.create({
-      data: {
-        userId,
-        signature: result.signature,
-        type: "SPOT",
-        direction: "BUY",
-        inputToken: "SOL",
-        outputToken: targetPair.address,
-        inputAmount: solAmount,
-        outputAmount: parseFloat(result.outputAmount) / Math.pow(10, 9), // Approximate
-        priceUsd: targetPair.price,
-        status: "CONFIRMED",
-      },
-    });
+      // Record trade in database
+      await prisma.trade.create({
+        data: {
+          userId,
+          signature: result.signature,
+          type: "SPOT",
+          direction: "BUY",
+          inputToken: "SOL",
+          outputToken: targetPair.address,
+          inputAmount: solAmount,
+          outputAmount: parseFloat(result.outputAmount) / Math.pow(10, 9), // Approximate
+          priceUsd: targetPair.price,
+          status: "CONFIRMED",
+        },
+      });
 
-    return {
-      strategyId,
-      strategyName,
-      action: "TRADE_EXECUTED",
-      details: `Bought ${targetPair.symbol} (${targetPair.name})`,
-      trade: {
-        signature: result.signature,
-        tokenAddress: targetPair.address,
-        tokenSymbol: targetPair.symbol,
-        inputAmount: solAmount,
-        outputAmount: fromSmallestUnit(parseInt(result.outputAmount), 9),
-      },
-    };
-  } catch (error) {
-    console.error("Sniper trade error:", error);
-    return {
-      strategyId,
-      strategyName,
-      action: "ERROR",
-      error: error instanceof Error ? error.message : "Trade execution failed",
-    };
+      console.log(`[Sniper] Successfully bought ${targetPair.symbol}!`);
+      
+      return {
+        strategyId,
+        strategyName,
+        action: "TRADE_EXECUTED",
+        details: `Bought ${targetPair.symbol} (${targetPair.name})`,
+        trade: {
+          signature: result.signature,
+          tokenAddress: targetPair.address,
+          tokenSymbol: targetPair.symbol,
+          inputAmount: solAmount,
+          outputAmount: fromSmallestUnit(parseInt(result.outputAmount), 9),
+        },
+      };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      console.log(`[Sniper] Failed to buy ${targetPair.symbol}: ${errorMsg}`);
+      
+      // If token not tradable, try next one
+      if (errorMsg.includes("not tradable") || errorMsg.includes("TOKEN_NOT_TRADABLE")) {
+        errors.push(`${targetPair.symbol}: not tradable yet`);
+        continue;
+      }
+      
+      // For other errors, still try next token but log it
+      errors.push(`${targetPair.symbol}: ${errorMsg}`);
+      continue;
+    }
   }
+  
+  // All attempts failed
+  return {
+    strategyId,
+    strategyName,
+    action: "NO_OPPORTUNITIES",
+    details: `Tried ${Math.min(availablePairs.length, 5)} tokens but none tradable: ${errors.join("; ")}`,
+  };
 }
 
 /**

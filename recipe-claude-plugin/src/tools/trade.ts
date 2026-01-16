@@ -68,6 +68,52 @@ export const tradeTools: Tool[] = [
     },
   },
   {
+    name: "recipe_quick_buy",
+    description:
+      "Quick buy a token using SOL. Simplified version of swap - just specify the token and SOL amount. WARNING: Uses real funds!",
+    inputSchema: {
+      type: "object",
+      properties: {
+        token: {
+          type: "string",
+          description: "Token to buy - symbol, name, or mint address",
+        },
+        solAmount: {
+          type: "number",
+          description: "Amount of SOL to spend",
+        },
+        slippageBps: {
+          type: "number",
+          description: "Slippage tolerance in basis points (default: 100 = 1%)",
+        },
+      },
+      required: ["token", "solAmount"],
+    },
+  },
+  {
+    name: "recipe_quick_sell",
+    description:
+      "Quick sell a token for SOL. Simplified version of swap - just specify the token and amount to sell. WARNING: Uses real funds!",
+    inputSchema: {
+      type: "object",
+      properties: {
+        token: {
+          type: "string",
+          description: "Token to sell - symbol, name, or mint address",
+        },
+        amount: {
+          type: "number",
+          description: "Amount of the token to sell",
+        },
+        slippageBps: {
+          type: "number",
+          description: "Slippage tolerance in basis points (default: 100 = 1%)",
+        },
+      },
+      required: ["token", "amount"],
+    },
+  },
+  {
     name: "recipe_tokens_list",
     description:
       "List common token symbols and their mint addresses. Useful for finding tokens to trade.",
@@ -316,6 +362,233 @@ export async function handleTradeTool(
                   error: "Swap failed",
                   message: error instanceof Error ? error.message : "Unknown error",
                   suggestion: "Check your balance, slippage settings, and try again",
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
+    case "recipe_quick_buy": {
+      const tokenArg = args?.token as string;
+      const solAmount = args?.solAmount as number;
+      const slippageBps = (args?.slippageBps as number) || 100;
+
+      if (!tokenArg || !solAmount) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "Missing required parameters: token, solAmount",
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // Check wallet exists
+      const wallet = loadWallet();
+      if (!wallet) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "No wallet found",
+                  solution: "Use recipe_wallet_create to generate a wallet first",
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      try {
+        // Check SOL balance
+        const balance = await getSolBalance(wallet.publicKey);
+        if (balance < solAmount + 0.01) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    error: "Insufficient SOL balance",
+                    required: solAmount + 0.01,
+                    available: balance,
+                    solution: `Send at least ${(solAmount + 0.01 - balance).toFixed(4)} more SOL to ${wallet.publicKey}`,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Resolve the token
+        const outputToken = await resolveTokenMintWithSearch(tokenArg);
+        if (!outputToken) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Could not find token: ${tokenArg}. Please provide the contract address (CA).`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Execute buy (SOL -> Token)
+        const result = await executeSwap(
+          "SOL",
+          outputToken.address,
+          solAmount,
+          slippageBps
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  action: "BUY",
+                  signature: result.signature,
+                  spent: `${result.inputAmount} SOL`,
+                  received: `${result.outputAmount} ${outputToken.symbol}`,
+                  priceImpact: `${result.priceImpact.toFixed(4)}%`,
+                  explorerUrl: result.explorerUrl,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Buy failed",
+                  message: error instanceof Error ? error.message : "Unknown error",
+                  suggestion: "Check your balance, slippage settings, and try again",
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
+    case "recipe_quick_sell": {
+      const tokenArg = args?.token as string;
+      const amount = args?.amount as number;
+      const slippageBps = (args?.slippageBps as number) || 100;
+
+      if (!tokenArg || !amount) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "Missing required parameters: token, amount",
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // Check wallet exists
+      const wallet = loadWallet();
+      if (!wallet) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "No wallet found",
+                  solution: "Use recipe_wallet_create to generate a wallet first",
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      try {
+        // Resolve the token
+        const inputToken = await resolveTokenMintWithSearch(tokenArg);
+        if (!inputToken) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Could not find token: ${tokenArg}. Please provide the contract address (CA).`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Execute sell (Token -> SOL)
+        const result = await executeSwap(
+          inputToken.address,
+          "SOL",
+          amount,
+          slippageBps
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  action: "SELL",
+                  signature: result.signature,
+                  sold: `${result.inputAmount} ${inputToken.symbol}`,
+                  received: `${result.outputAmount} SOL`,
+                  priceImpact: `${result.priceImpact.toFixed(4)}%`,
+                  explorerUrl: result.explorerUrl,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Sell failed",
+                  message: error instanceof Error ? error.message : "Unknown error",
+                  suggestion: "Check your token balance, slippage settings, and try again",
                 },
                 null,
                 2

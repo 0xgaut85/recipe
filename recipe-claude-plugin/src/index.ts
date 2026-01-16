@@ -70,8 +70,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleTokenTool(name, args as Record<string, unknown>);
     }
 
-    // Trade tools
-    if (name.startsWith("recipe_swap_") || name === "recipe_tokens_list") {
+    // Trade tools (swap, quick buy/sell, tokens list)
+    if (
+      name.startsWith("recipe_swap_") ||
+      name.startsWith("recipe_quick_") ||
+      name === "recipe_tokens_list"
+    ) {
       return await handleTradeTool(name, args as Record<string, unknown>);
     }
 

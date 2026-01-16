@@ -32,9 +32,10 @@ interface ParsedStrategyConfig {
   description: string;
   amount: number;
   maxAgeMinutes: number;
-  minLiquidity: number;
-  minVolume: number;
-  minMarketCap: number;
+  // All filter fields are optional - only set if user explicitly mentions them
+  minLiquidity?: number;
+  minVolume?: number;
+  minMarketCap?: number;
   maxMarketCap?: number;
   nameFilter?: string;
   takeProfit?: number;
@@ -116,11 +117,12 @@ function alreadyHasStrategy(messages: Message[]): boolean {
 }
 
 // Helper to parse money values like "$5k", "$20", "$15k"
-function parseMoneyValue(text: string, fieldName: string, defaultValue: number): number {
+// Returns null if field not found, allowing caller to decide on defaults
+function parseMoneyValue(text: string, fieldName: string): number | null {
   // Match patterns like "min liquidity: $5k" or "min volume: $20"
   const regex = new RegExp(`${fieldName}:\\s*\\$?([\\d.]+)(k)?`, 'i');
   const match = text.match(regex);
-  if (!match) return defaultValue;
+  if (!match) return null;
   const value = parseFloat(match[1]);
   const hasK = match[2]?.toLowerCase() === 'k';
   return hasK ? value * 1000 : value;
@@ -153,11 +155,12 @@ function parseStrategyConfig(messages: Message[]): ParsedStrategyConfig | null {
       const ageMatch = content.match(/max age:\s*(\d+)\s*min/i);
       const maxAgeMinutes = ageMatch ? parseInt(ageMatch[1]) : 30;
       
-      // Extract money values with proper k handling
-      const minLiquidity = parseMoneyValue(content, "min liquidity", 5000);
-      const minVolume = parseMoneyValue(content, "min volume", 10000);
-      const minMarketCap = parseMoneyValue(content, "min mcap", 10000);
-      const maxMarketCap = parseMoneyValue(content, "max mcap", 0);
+      // Extract money values - only include if user explicitly mentioned them
+      // Returns null if not found, so executor will use its own defaults
+      const minLiquidity = parseMoneyValue(content, "min liquidity");
+      const minVolume = parseMoneyValue(content, "min volume");
+      const minMarketCap = parseMoneyValue(content, "min mcap");
+      const maxMarketCap = parseMoneyValue(content, "max mcap");
       
       // Extract name filter (handle quoted and unquoted)
       const filterMatch = content.match(/name filter:\s*"?([^"\n-]+)"?/i);
@@ -178,15 +181,17 @@ function parseStrategyConfig(messages: Message[]): ParsedStrategyConfig | null {
       
       // Validate we have minimum required fields
       if (amount > 0) {
+        // Only include filters that user explicitly mentioned (non-null)
         return {
           name,
           description: `Sniper strategy: ${name}`,
           amount,
           maxAgeMinutes,
-          minLiquidity,
-          minVolume,
-          minMarketCap,
-          maxMarketCap: maxMarketCap > 0 ? maxMarketCap : undefined,
+          // Only include if user specified (null means not mentioned)
+          ...(minLiquidity !== null && { minLiquidity }),
+          ...(minVolume !== null && { minVolume }),
+          ...(minMarketCap !== null && { minMarketCap }),
+          ...(maxMarketCap !== null && maxMarketCap > 0 && { maxMarketCap }),
           nameFilter,
           takeProfit,
           stopLoss,
@@ -203,25 +208,29 @@ function parseStrategyConfig(messages: Message[]): ParsedStrategyConfig | null {
 // Create strategy directly in database
 async function createStrategyDirectly(userId: string, config: ParsedStrategyConfig): Promise<{ success: boolean; strategyId?: string; error?: string }> {
   try {
+    // Build config object with only defined values
+    const strategyConfig = {
+      type: "SNIPER" as const,
+      amount: config.amount,
+      maxAgeMinutes: config.maxAgeMinutes,
+      slippageBps: 300,
+      // Only include optional filters if they were specified by user
+      ...(config.minLiquidity !== undefined && { minLiquidity: config.minLiquidity }),
+      ...(config.minVolume !== undefined && { minVolume: config.minVolume }),
+      ...(config.minMarketCap !== undefined && { minMarketCap: config.minMarketCap }),
+      ...(config.maxMarketCap !== undefined && { maxMarketCap: config.maxMarketCap }),
+      ...(config.nameFilter !== undefined && { nameFilter: config.nameFilter }),
+      ...(config.takeProfit !== undefined && { takeProfit: config.takeProfit }),
+      ...(config.stopLoss !== undefined && { stopLoss: config.stopLoss }),
+    };
+    
     const strategy = await prisma.strategy.create({
       data: {
         userId,
         name: config.name,
         description: config.description,
         isActive: true,
-        config: {
-          type: "SNIPER",
-          amount: config.amount,
-          maxAgeMinutes: config.maxAgeMinutes,
-          minLiquidity: config.minLiquidity,
-          minVolume: config.minVolume,
-          minMarketCap: config.minMarketCap,
-          maxMarketCap: config.maxMarketCap,
-          nameFilter: config.nameFilter,
-          takeProfit: config.takeProfit,
-          stopLoss: config.stopLoss,
-          slippageBps: 300,
-        },
+        config: strategyConfig,
       },
     });
     

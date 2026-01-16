@@ -39,15 +39,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console in development
     console.error("Error Boundary caught an error:", error, errorInfo);
 
     this.setState({
       errorInfo: errorInfo.componentStack || null,
     });
-
-    // In production, you might want to send this to an error tracking service
-    // logErrorToService(error, errorInfo);
   }
 
   handleReset = () => {
@@ -61,12 +57,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      // Custom fallback provided
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default error UI
       return (
         <motion.div
           initial={{ opacity: 0 }}
@@ -83,19 +77,19 @@ export class ErrorBoundary extends Component<Props, State> {
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </motion.div>
 
-            <h2 className="font-display text-2xl text-ink mb-3 lowercase">
-              something went wrong
+            <h2 className="font-display text-2xl text-ink mb-3">
+              Something Went Wrong
             </h2>
 
             <p className="text-ink/60 mb-6 text-sm">
-              an unexpected error occurred. you can try refreshing the page or
+              An unexpected error occurred. You can try refreshing the page or
               going back to the home page.
             </p>
 
             {process.env.NODE_ENV === "development" && this.state.error && (
               <details className="mb-6 text-left">
                 <summary className="cursor-pointer text-sm text-ink/40 hover:text-ink/60">
-                  error details (dev only)
+                  Error details (dev only)
                 </summary>
                 <pre className="mt-2 p-3 bg-ink/5 rounded-lg text-xs overflow-auto max-h-40 text-red-600">
                   {this.state.error.message}
@@ -112,20 +106,20 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex gap-3 justify-center">
               <motion.button
                 onClick={this.handleReset}
-                className="flex items-center gap-2 px-4 py-2 bg-ink text-white rounded-full text-sm font-semibold hover:bg-black transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-ink text-white rounded-lg text-sm font-medium hover:bg-ink/90 transition-colors"
                 whileTap={{ scale: 0.95 }}
               >
                 <RefreshCw size={16} />
-                try again
+                Try Again
               </motion.button>
 
               <Link href="/">
                 <motion.button
-                  className="flex items-center gap-2 px-4 py-2 bg-ink/10 text-ink rounded-full text-sm font-semibold hover:bg-ink/20 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-ink/10 text-ink rounded-lg text-sm font-medium hover:bg-ink/20 transition-colors"
                   whileTap={{ scale: 0.95 }}
                 >
                   <Home size={16} />
-                  go home
+                  Go Home
                 </motion.button>
               </Link>
             </div>
@@ -180,33 +174,33 @@ export class AppErrorBoundary extends Component<Props, State> {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="min-h-screen bg-black flex items-center justify-center p-8"
+          className="min-h-screen bg-white flex items-center justify-center p-8"
         >
           <div className="text-center max-w-md">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", damping: 15 }}
-              className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center"
+              className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center"
             >
-              <AlertTriangle className="w-8 h-8 text-red-400" />
+              <AlertTriangle className="w-8 h-8 text-red-500" />
             </motion.div>
 
-            <h2 className="font-display text-2xl text-white mb-3 lowercase">
-              terminal error
+            <h2 className="font-display text-2xl text-ink mb-3">
+              Terminal Error
             </h2>
 
-            <p className="text-white/60 mb-6 text-sm">
-              the trading terminal encountered an error. your funds are safe.
-              try refreshing or return to the landing page.
+            <p className="text-ink/60 mb-6 text-sm">
+              The trading terminal encountered an error. Your funds are safe.
+              Try refreshing or return to the landing page.
             </p>
 
             {process.env.NODE_ENV === "development" && this.state.error && (
               <details className="mb-6 text-left">
-                <summary className="cursor-pointer text-sm text-white/40 hover:text-white/60">
-                  error details (dev only)
+                <summary className="cursor-pointer text-sm text-ink/40 hover:text-ink/60">
+                  Error details (dev only)
                 </summary>
-                <pre className="mt-2 p-3 bg-white/5 rounded-lg text-xs overflow-auto max-h-40 text-red-400 font-mono">
+                <pre className="mt-2 p-3 bg-ink/5 rounded-lg text-xs overflow-auto max-h-40 text-red-500 font-mono">
                   {this.state.error.message}
                   {this.state.errorInfo && (
                     <>
@@ -221,20 +215,20 @@ export class AppErrorBoundary extends Component<Props, State> {
             <div className="flex gap-3 justify-center">
               <motion.button
                 onClick={this.handleReset}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-full text-sm font-semibold hover:bg-white/90 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-ink text-white rounded-lg text-sm font-medium hover:bg-ink/90 transition-colors"
                 whileTap={{ scale: 0.95 }}
               >
                 <RefreshCw size={16} />
-                try again
+                Try Again
               </motion.button>
 
               <Link href="/">
                 <motion.button
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-full text-sm font-semibold hover:bg-white/20 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-ink/10 text-ink rounded-lg text-sm font-medium hover:bg-ink/20 transition-colors"
                   whileTap={{ scale: 0.95 }}
                 >
                   <Home size={16} />
-                  exit terminal
+                  Exit Terminal
                 </motion.button>
               </Link>
             </div>

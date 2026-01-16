@@ -1,6 +1,6 @@
 import { FC, ReactNode } from "react";
 
-type GlassCardVariant = "light" | "dark" | "panel" | "pink" | "blue";
+type GlassCardVariant = "default" | "light" | "panel" | "accent";
 
 interface GlassCardProps {
   variant?: GlassCardVariant;
@@ -9,15 +9,14 @@ interface GlassCardProps {
 }
 
 const variantClasses: Record<GlassCardVariant, string> = {
-  light: "glass-card bg-white",
-  dark: "glass-card-dark",
-  panel: "glass-panel bg-white",
-  pink: "glass-card bg-accent-pink",
-  blue: "glass-card bg-accent-blue",
+  default: "glass-card", // Dark theme default
+  light: "glass-card-light", // Light version for app terminal
+  panel: "glass-panel",
+  accent: "accent-card",
 };
 
 export const GlassCard: FC<GlassCardProps> = ({
-  variant = "light",
+  variant = "default",
   className = "",
   children,
 }) => {

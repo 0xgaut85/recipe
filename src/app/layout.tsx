@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { Fredoka, Quicksand, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletContextProvider } from "@/components/WalletProvider";
 
-const fredoka = Fredoka({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-fredoka",
+  variable: "--font-space-grotesk",
   display: "swap",
 });
 
-const quicksand = Quicksand({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-quicksand",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -22,12 +22,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "recipe.money | the vibetrading platform",
+  title: "CLAUDE TRADE | AI-Powered Trading on Solana",
   description:
-    "Turn intent into execution. The first vibetrading platform on Solana powered by Claude Code.",
+    "Turn intent into execution. The first AI-powered trading platform on Solana powered by Claude.",
   icons: {
-    icon: "/logo.jpg",
-    apple: "/logo.jpg",
+    icon: "/claude.png",
+    apple: "/claude.png",
   },
 };
 
@@ -39,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${fredoka.variable} ${quicksand.variable} ${jetbrainsMono.variable} font-body antialiased`}
+        className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} font-body antialiased`}
       >
         <WalletContextProvider>{children}</WalletContextProvider>
       </body>

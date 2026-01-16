@@ -3,77 +3,45 @@
 import { FC, ReactNode } from "react";
 import { motion } from "framer-motion";
 
-interface CuisineTicketProps {
+interface InfoCardProps {
   children: ReactNode;
   variant?: "light" | "accent";
   className?: string;
   delay?: number;
-  floatDirection?: "up" | "down";
 }
 
-export const CuisineTicket: FC<CuisineTicketProps> = ({
+// Renamed from CuisineTicket to InfoCard - a clean tech-style info card
+export const CuisineTicket: FC<InfoCardProps> = ({
   children,
   variant = "light",
   className = "",
   delay = 0,
-  floatDirection = "up",
 }) => {
   const isAccent = variant === "accent";
 
-  // Subtle floating animation
-  const floatY = floatDirection === "up" ? [0, -8, 0] : [0, 8, 0];
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40, rotateX: -15 }}
-      animate={{ opacity: 1, y: 0, rotateX: 0 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.8,
+        duration: 0.5,
         delay,
         ease: [0.22, 1, 0.36, 1],
       }}
       className={`relative ${className}`}
-      style={{ perspective: "1000px" }}
     >
-      <motion.div
-        animate={{ y: floatY }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: delay + 0.5,
-        }}
-        style={{
-          transformStyle: "preserve-3d",
-          transform: "rotateY(-5deg) rotateX(5deg)",
-        }}
+      <div
+        className={`rounded-xl p-6 border transition-all ${
+          isAccent 
+            ? "bg-claude-orange/5 border-claude-orange/20 text-ink" 
+            : "bg-white border-ink/10 text-ink"
+        }`}
       >
-        {/* Ticket Container with curved top */}
-        <div
-          className={`relative overflow-visible rounded-b-3xl border-2 border-ink shadow-[8px_8px_0px_0px_#1A1A1A] ${
-            isAccent ? "bg-accent-blue text-ink" : "bg-white text-ink"
-          }`}
-        >
-          {/* Curved top edge */}
-          <div
-            className={`absolute -top-6 left-0 right-0 h-8 ${
-              isAccent ? "bg-accent-blue" : "bg-white"
-            }`}
-            style={{
-              borderRadius: "100% 100% 0 0 / 100% 100% 0 0",
-              borderTop: "2px solid #1A1A1A",
-              borderLeft: "2px solid #1A1A1A",
-              borderRight: "2px solid #1A1A1A",
-            }}
-          />
-
-          {/* Perforated line */}
-          <div className="absolute top-2 left-4 right-4 border-t-2 border-dashed border-ink/20" />
-
-          {/* Content */}
-          <div className="pt-8 pb-8 px-8">{children}</div>
-        </div>
-      </motion.div>
+        {children}
+      </div>
     </motion.div>
   );
 };
+
+// Export alias for backwards compatibility
+export const InfoCard = CuisineTicket;

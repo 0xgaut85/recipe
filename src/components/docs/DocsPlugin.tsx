@@ -2,27 +2,27 @@ import { FC } from "react";
 import { GlassCard } from "@/components/ui";
 
 const pluginExamples = [
-  "analyze this wallet and summarize its behavior patterns",
-  "turn this observation into a recipe with entries/exits and risk limits",
-  "fork the top recipe for this meta and adapt it to my rules",
+  "Analyze this wallet and summarize its behavior patterns",
+  "Turn this observation into a strategy with entries/exits and risk limits",
+  "Fork the top strategy for this market and adapt it to my rules",
 ];
 
 export const DocsPlugin: FC = () => {
   return (
     <section id="plugin" className="scroll-mt-32">
-      <h2 className="font-display text-3xl font-bold text-ink mb-8 lowercase">
-        the claude code plugin
+      <h2 className="font-display text-2xl font-semibold text-white mb-6">
+        Claude Plugin
       </h2>
-      <GlassCard variant="light" className="p-8 bg-white/50">
-        <p className="text-ink font-medium mb-6 lowercase">
-          recipe also ships a claude code plugin so users can cook from anywhere
-          claude is. this makes claude a front-end for research + drafting,
-          while recipe remains the execution layer.
+      <GlassCard variant="default" className="p-8">
+        <p className="text-white/80 mb-6">
+          Claude Trade also ships a Claude Code plugin so users can trade from anywhere
+          Claude is. This makes Claude a front-end for research and drafting,
+          while Claude Trade remains the execution layer.
         </p>
-        <ul className="space-y-3 text-ink font-medium lowercase">
+        <ul className="space-y-3 text-white">
           {pluginExamples.map((example, i) => (
             <li key={i} className="flex items-start gap-3">
-              <span className="w-2 h-2 bg-accent-blue rounded-full mt-2" />
+              <span className="w-2 h-2 bg-claude-orange rounded-full mt-2 flex-shrink-0" />
               &quot;{example}&quot;
             </li>
           ))}

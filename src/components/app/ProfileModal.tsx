@@ -57,11 +57,11 @@ export const ProfileModal: FC<ProfileModalProps> = ({
       }
 
       const updatedProfile = await response.json();
-      toast.success("profile updated successfully");
+      toast.success("Profile updated successfully");
       onUpdate?.(updatedProfile);
       onClose();
     } catch (error) {
-      toast.error("failed to update profile");
+      toast.error("Failed to update profile");
     } finally {
       setIsLoading(false);
     }
@@ -81,19 +81,19 @@ export const ProfileModal: FC<ProfileModalProps> = ({
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white border-2 border-ink rounded-[2rem] shadow-[8px_8px_0px_0px_#1A1A1A] w-full max-w-md overflow-hidden"
+            className="bg-white border border-ink/10 rounded-xl w-full max-w-md overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b-2 border-ink/10">
-              <h2 className="font-display text-2xl lowercase text-ink">
-                edit profile
+            <div className="flex items-center justify-between p-6 border-b border-ink/10">
+              <h2 className="font-display text-xl font-semibold text-ink">
+                Edit Profile
               </h2>
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-ink/5 transition-colors"
+                className="p-2 rounded-lg hover:bg-ink/5 transition-colors"
               >
-                <X size={20} className="text-ink" />
+                <X size={20} className="text-ink/50" />
               </button>
             </div>
 
@@ -101,9 +101,9 @@ export const ProfileModal: FC<ProfileModalProps> = ({
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {/* Name */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-ink lowercase">
+                <label className="flex items-center gap-2 text-sm font-medium text-ink/70">
                   <User size={16} />
-                  name
+                  Name
                 </label>
                 <input
                   type="text"
@@ -111,17 +111,17 @@ export const ProfileModal: FC<ProfileModalProps> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  placeholder="chef_anon"
-                  className="w-full p-3 rounded-xl border-2 border-ink/20 focus:border-accent-pink focus:outline-none transition-colors"
+                  placeholder="Your name"
+                  className="w-full p-3 rounded-lg border border-ink/10 focus:border-claude-orange focus:outline-none transition-colors"
                   maxLength={50}
                 />
               </div>
 
               {/* Avatar URL */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-ink lowercase">
+                <label className="flex items-center gap-2 text-sm font-medium text-ink/70">
                   <User size={16} />
-                  avatar url
+                  Avatar URL
                 </label>
                 <input
                   type="url"
@@ -133,14 +133,15 @@ export const ProfileModal: FC<ProfileModalProps> = ({
                     })
                   }
                   placeholder="https://example.com/avatar.png"
-                  className="w-full p-3 rounded-xl border-2 border-ink/20 focus:border-accent-pink focus:outline-none transition-colors"
+                  className="w-full p-3 rounded-lg border border-ink/10 focus:border-claude-orange focus:outline-none transition-colors"
                 />
               </div>
 
               {/* X Handle */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-ink lowercase">
-                  <AtSign size={16} />x handle
+                <label className="flex items-center gap-2 text-sm font-medium text-ink/70">
+                  <AtSign size={16} />
+                  X Handle
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
@@ -156,7 +157,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({
                       })
                     }
                     placeholder="username"
-                    className="w-full p-3 pl-8 rounded-xl border-2 border-ink/20 focus:border-accent-pink focus:outline-none transition-colors"
+                    className="w-full p-3 pl-8 rounded-lg border border-ink/10 focus:border-claude-orange focus:outline-none transition-colors"
                     maxLength={50}
                   />
                 </div>
@@ -164,31 +165,31 @@ export const ProfileModal: FC<ProfileModalProps> = ({
 
               {/* Bio */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-ink lowercase">
+                <label className="flex items-center gap-2 text-sm font-medium text-ink/70">
                   <FileText size={16} />
-                  bio
+                  Bio
                 </label>
                 <textarea
                   value={formData.bio || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, bio: e.target.value || null })
                   }
-                  placeholder="tell us about your trading style..."
-                  className="w-full p-3 rounded-xl border-2 border-ink/20 focus:border-accent-pink focus:outline-none transition-colors resize-none h-24"
+                  placeholder="Tell us about your trading style..."
+                  className="w-full p-3 rounded-lg border border-ink/10 focus:border-claude-orange focus:outline-none transition-colors resize-none h-24"
                   maxLength={500}
                 />
               </div>
 
               {/* Show on Leaderboard */}
-              <div className="flex items-center justify-between p-3 rounded-xl border-2 border-ink/20">
+              <div className="flex items-center justify-between p-3 rounded-lg border border-ink/10">
                 <div className="flex items-center gap-2">
                   {formData.showOnLeaderboard ? (
-                    <Eye size={16} className="text-ink" />
+                    <Eye size={16} className="text-ink/60" />
                   ) : (
                     <EyeOff size={16} className="text-ink/40" />
                   )}
-                  <span className="text-sm font-semibold text-ink lowercase">
-                    show on leaderboard
+                  <span className="text-sm font-medium text-ink/70">
+                    Show on Leaderboard
                   </span>
                 </div>
                 <button
@@ -201,7 +202,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({
                   }
                   className={`w-12 h-6 rounded-full transition-colors ${
                     formData.showOnLeaderboard
-                      ? "bg-accent-pink"
+                      ? "bg-claude-orange"
                       : "bg-ink/20"
                   }`}
                 >
@@ -218,11 +219,11 @@ export const ProfileModal: FC<ProfileModalProps> = ({
               <motion.button
                 type="submit"
                 disabled={isLoading}
-                className="w-full p-4 rounded-full bg-ink text-white font-semibold lowercase flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-50"
+                className="w-full p-4 rounded-lg bg-ink text-white font-medium flex items-center justify-center gap-2 hover:bg-ink/90 transition-colors disabled:opacity-50"
                 whileTap={{ scale: 0.98 }}
               >
                 <Save size={18} />
-                {isLoading ? "saving..." : "save changes"}
+                {isLoading ? "Saving..." : "Save Changes"}
               </motion.button>
             </form>
           </motion.div>

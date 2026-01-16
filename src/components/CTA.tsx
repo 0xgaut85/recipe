@@ -4,19 +4,17 @@ import { FC } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { GlassCard } from "@/components/ui";
 
 const socialLinks = [
-  { label: "x", href: "https://x.com/recipedotmoney" },
-  { label: "github", href: "https://github.com/0xLaylo/recipe-plugin" },
+  { label: "X", href: "https://x.com/recipedotmoney" },
+  { label: "GitHub", href: "https://github.com/0xLaylo/recipe-plugin" },
 ];
 
-// Smooth easing curve
 const smoothEase = [0.22, 1, 0.36, 1];
 
 export const CTA: FC = () => {
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-24 relative overflow-hidden bg-ink">
       <div className="container-wide relative z-10">
         <motion.div
           initial={{ y: 30, opacity: 0 }}
@@ -24,40 +22,18 @@ export const CTA: FC = () => {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.7, ease: smoothEase }}
         >
-          <GlassCard
-            variant="panel"
-            className="p-12 md:p-20 text-center relative overflow-hidden"
-          >
-            {/* Background Blobs - Subtler animation */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 opacity-25">
-              <motion.div
-                animate={{ scale: [1, 1.05, 1], x: [0, 20, 0] }}
-                transition={{
-                  duration: 20,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute -top-1/2 -left-1/4 w-[800px] h-[800px] bg-accent-pink/30 rounded-full blur-[100px]"
-              />
-              <motion.div
-                animate={{ scale: [1, 1.08, 1], x: [0, -15, 0] }}
-                transition={{
-                  duration: 25,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute -bottom-1/2 -right-1/4 w-[800px] h-[800px] bg-accent-blue/30 rounded-full blur-[100px]"
-              />
-            </div>
-
+          <div className="glass-card p-12 md:p-16 text-center relative overflow-hidden">
+            {/* Subtle gradient accent */}
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-claude-orange/15 rounded-full blur-[150px] -z-10" />
+            
             <motion.h2
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.1, ease: smoothEase }}
-              className="font-display text-4xl md:text-6xl font-bold text-ink mb-6 tracking-tight lowercase"
+              className="font-display text-3xl md:text-5xl font-semibold text-white mb-6 tracking-tight"
             >
-              ready to cook?
+              Ready to Trade Smarter?
             </motion.h2>
 
             <motion.p
@@ -65,11 +41,11 @@ export const CTA: FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2, ease: smoothEase }}
-              className="text-xl text-ink-light mb-12 max-w-xl mx-auto lowercase font-medium"
+              className="text-lg text-white/60 mb-10 max-w-xl mx-auto font-normal"
             >
-              join the chefs in the kitchen.
+              Join traders using AI to execute strategies
               <br />
-              start shipping strategies in minutes.
+              faster than ever before.
             </motion.p>
 
             <motion.div
@@ -77,61 +53,61 @@ export const CTA: FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.3, ease: smoothEase }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-6"
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
               <Link
                 href="/app"
-                className="px-8 py-3.5 rounded-full bg-ink text-white font-bold hover:bg-black transition-all duration-200 border-2 border-ink shadow-[4px_4px_0px_0px_#1A1A1A] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#1A1A1A] lowercase"
+                className="px-8 py-4 rounded-lg bg-claude-orange text-white font-semibold hover:bg-claude-orange/90 transition-all duration-200 min-w-[180px]"
               >
-                start cooking
+                Launch App
               </Link>
 
               <Link
                 href="/docs"
-                className="px-8 py-3.5 rounded-full bg-white border-2 border-ink text-ink font-bold hover:bg-ink hover:text-white transition-all duration-200 shadow-[4px_4px_0px_0px_#1A1A1A] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#1A1A1A] lowercase"
+                className="px-8 py-4 rounded-lg bg-white/5 border border-white/20 text-white font-semibold hover:bg-white/10 transition-all duration-200 min-w-[180px]"
               >
-                read docs
+                Read Docs
               </Link>
             </motion.div>
+          </div>
+        </motion.div>
 
-            {/* Footer with logo and links */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.5, ease: smoothEase }}
-              className="mt-16 pt-8 border-t border-ink/5 flex flex-col sm:flex-row items-center justify-between gap-6"
-            >
-              {/* Left: Logo and Copyright */}
-              <div className="flex items-center gap-4">
-                <Image
-                  src="/logo.jpg"
-                  alt="recipe.money logo"
-                  width={42}
-                  height={42}
-                  className="rounded-xl border border-ink/20"
-                />
-                <span className="text-sm font-medium text-ink/40 lowercase">
-                  © 2026 recipe.money
-                </span>
-              </div>
+        {/* Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.5, ease: smoothEase }}
+          className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-6"
+        >
+          {/* Left: Logo and Copyright */}
+          <div className="flex items-center gap-4">
+            <Image
+              src="/claude.png"
+              alt="Claude Trade"
+              width={32}
+              height={32}
+              className="rounded-lg"
+            />
+            <span className="text-sm font-normal text-white/40">
+              © 2026 CLAUDE TRADE
+            </span>
+          </div>
 
-              {/* Right: Social Links */}
-              <div className="flex items-center gap-8 text-sm font-bold text-ink/40 uppercase tracking-widest">
-                {socialLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-ink transition-colors duration-200"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-              </div>
-            </motion.div>
-          </GlassCard>
+          {/* Right: Social Links */}
+          <div className="flex items-center gap-8 text-sm font-medium text-white/40">
+            {socialLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition-colors duration-200"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
         </motion.div>
       </div>
     </section>

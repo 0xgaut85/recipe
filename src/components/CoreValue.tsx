@@ -2,25 +2,23 @@
 
 import { FC } from "react";
 import { motion } from "framer-motion";
-import { GlassCard } from "@/components/ui";
 
 const steps = [
-  { num: "01", title: "describe" },
-  { num: "02", title: "cook" },
-  { num: "03", title: "taste" },
-  { num: "04", title: "serve" },
+  { num: "01", title: "Describe", desc: "Tell Claude what you want to trade" },
+  { num: "02", title: "Configure", desc: "Set your parameters and limits" },
+  { num: "03", title: "Review", desc: "Verify the strategy before launch" },
+  { num: "04", title: "Deploy", desc: "Execute live on Solana" },
 ];
 
-// Smooth easing curve
 const smoothEase = [0.22, 1, 0.36, 1];
 
 export const CoreValue: FC = () => {
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-24 relative overflow-hidden bg-ink">
       <div className="container-wide">
-        {/* Bento Grid */}
-        <div className="grid lg:grid-cols-12 gap-6 auto-rows-[minmax(200px,auto)] lg:auto-rows-[300px]">
-          {/* Main Statement - Dark Glass with Noise */}
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-12 gap-6">
+          {/* Main Statement */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -28,30 +26,19 @@ export const CoreValue: FC = () => {
             transition={{ duration: 0.7, ease: smoothEase }}
             className="col-span-1 lg:col-span-8"
           >
-            <GlassCard
-              variant="dark"
-              className="h-full bg-noise p-12 flex flex-col justify-center relative overflow-hidden group shadow-[8px_8px_0px_0px_#1A1A1A]"
-            >
-              <div className="relative z-10">
-                <motion.span
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.2, ease: smoothEase }}
-                  className="inline-block px-3 py-1 rounded-full bg-white/10 text-white/60 text-xs font-bold uppercase tracking-wider mb-6 border border-white/10"
-                >
-                  the insight
-                </motion.span>
-                <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-white leading-[1.1] lowercase">
-                  alpha isn&apos;t scarce.
-                  <br />
-                  <span className="text-white/40">execution speed is.</span>
-                </h2>
-              </div>
-            </GlassCard>
+            <div className="h-full glass-card p-10 md:p-12 flex flex-col justify-center">
+              <span className="inline-block px-3 py-1 rounded-full bg-white/10 text-white/60 text-xs font-medium uppercase tracking-wider mb-6 w-fit">
+                The Insight
+              </span>
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-white leading-[1.15]">
+                Alpha isn&apos;t scarce.
+                <br />
+                <span className="text-white/40">Execution speed is.</span>
+              </h2>
+            </div>
           </motion.div>
 
-          {/* Narrative Card - Pink Accent */}
+          {/* Accent Card */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -59,21 +46,17 @@ export const CoreValue: FC = () => {
             transition={{ duration: 0.7, delay: 0.15, ease: smoothEase }}
             className="col-span-1 lg:col-span-4"
           >
-            <GlassCard
-              variant="pink"
-              className="h-full bg-noise-pink p-10 flex flex-col justify-center group overflow-hidden shadow-[8px_8px_0px_0px_#1A1A1A]"
-            >
-              <h3 className="font-display text-3xl font-bold text-ink mb-4 lowercase">
-                minutes, not days.
+            <div className="h-full accent-card p-8 flex flex-col justify-center">
+              <h3 className="font-display text-2xl font-semibold text-white mb-3">
+                Seconds, Not Days
               </h3>
-              <p className="text-ink/80 font-medium text-lg leading-relaxed lowercase">
-                go from &quot;i think this will happen&quot; to &quot;this is
-                running live&quot; before the opportunity vanishes.
+              <p className="text-white/70 font-normal leading-relaxed">
+                Go from idea to live execution before the opportunity vanishes.
               </p>
-            </GlassCard>
+            </div>
           </motion.div>
 
-          {/* Product Loop - Glass Carousel */}
+          {/* Process Steps */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -81,35 +64,34 @@ export const CoreValue: FC = () => {
             transition={{ duration: 0.7, delay: 0.25, ease: smoothEase }}
             className="col-span-1 lg:col-span-12"
           >
-            <GlassCard
-              variant="panel"
-              className="p-6 md:p-10 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 md:gap-6 overflow-x-auto"
-            >
-              {steps.map((step, i) => (
-                <motion.div
-                  key={step.num}
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{
-                    duration: 0.5,
-                    delay: 0.4 + i * 0.1,
-                    ease: smoothEase,
-                  }}
-                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                  className="flex-1 min-w-[calc(50%-0.5rem)] md:min-w-[200px] p-6 md:p-8 rounded-[1.5rem] border-2 border-ink bg-white transition-shadow cursor-default hover:shadow-[4px_4px_0px_0px_#1A1A1A]"
-                >
-                  <div className="mb-4">
-                    <span className="text-xs font-bold text-ink/40 tracking-wider">
-                      {step.num}
-                    </span>
-                  </div>
-                  <h4 className="font-display text-2xl font-bold text-ink lowercase">
-                    {step.title}
-                  </h4>
-                </motion.div>
-              ))}
-            </GlassCard>
+            <div className="glass-panel p-6 md:p-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {steps.map((step, i) => (
+                  <motion.div
+                    key={step.num}
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{
+                      duration: 0.5,
+                      delay: 0.4 + i * 0.1,
+                      ease: smoothEase,
+                    }}
+                    className="p-5 md:p-6 rounded-lg border border-white/5 bg-white/[0.02] hover:border-claude-orange/30 transition-colors cursor-default group"
+                  >
+                    <div className="mb-3">
+                      <span className="text-xs font-mono text-claude-orange font-medium">
+                        {step.num}
+                      </span>
+                    </div>
+                    <h4 className="font-display text-lg font-semibold text-white mb-1">
+                      {step.title}
+                    </h4>
+                    <p className="text-sm text-white/50">{step.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>
