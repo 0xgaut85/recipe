@@ -420,8 +420,8 @@ let highVolumeNewPairsCache: {
 
 /**
  * Get high-volume NEW tokens (max 3 days old)
- * Uses Token List V3 API with min_listing_time filter to ensure only new tokens
- * Falls back to new_listing endpoint if V3 fails
+ * Uses token_trending endpoint sorted by volume, then filters to recent tokens
+ * This is more reliable than v3/token/list which may have permission issues
  */
 export async function getHighVolumeNewPairs(limit: number = 15): Promise<TrendingToken[]> {
   // Return cached data if available and fresh
@@ -432,52 +432,74 @@ export async function getHighVolumeNewPairs(limit: number = 15): Promise<Trendin
   try {
     const headers = getHeaders();
     
-    // Calculate 3 days ago as Unix timestamp (seconds, not milliseconds)
-    const threeDaysAgoSec = Math.floor((Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000);
+    // Strategy: Get trending by volume, combine with new listings
+    // to find tokens that are both NEW and have high volume
+    const [trendingByVolume, newListings] = await Promise.all([
+      fetchTrendingTokens("volume24hUSD"),
+      getNewListings(50), // Get more new listings to find ones with volume
+    ]);
     
-    // Use Token List V3 API with min_listing_time filter
-    // This ensures we ONLY get tokens listed within the last 3 days
-    const url = new URL(`${BIRDEYE_API_BASE}/defi/v3/token/list`);
-    url.searchParams.set("sort_by", "v24hUSD");  // Sort by 24h volume
-    url.searchParams.set("sort_type", "desc");   // Highest volume first
-    url.searchParams.set("min_listing_time", threeDaysAgoSec.toString());  // Only tokens < 3 days old
-    url.searchParams.set("min_liquidity", "1000");  // At least $1k liquidity
-    url.searchParams.set("offset", "0");
-    url.searchParams.set("limit", Math.min(limit, 50).toString());
-
-    const response = await fetch(url.toString(), { headers });
+    // Create a set of new token addresses (listed in last 3 days)
+    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+    const newTokenAddresses = new Set(
+      newListings
+        .filter(t => {
+          const listedAt = t.listedAt ? new Date(t.listedAt).getTime() : Date.now();
+          return listedAt > threeDaysAgo;
+        })
+        .map(t => t.address.toLowerCase())
+    );
     
-    if (response.ok) {
-      const data = await response.json();
-      
-      if (data.success && data.data?.items && data.data.items.length > 0) {
-        const tokens: TrendingToken[] = data.data.items
-          .filter((token: any) => token.v24hUSD > 0 && token.liquidity > 0)
-          .map((token: any, index: number) => ({
-            address: token.address,
-            symbol: token.symbol || "???",
-            name: token.name || "Unknown",
-            logoURI: token.logoURI || token.logo || "",
-            price: token.price || 0,
-            priceChange24h: token.priceChange24hPercent || token.price24hChangePercent || 0,
-            volume24h: token.v24hUSD || 0,
-            liquidity: token.liquidity || 0,
-            marketCap: token.mc || token.realMc || token.marketCap || 0,
-            rank: index + 1,
-          }));
-
-        if (tokens.length > 0) {
-          highVolumeNewPairsCache = { data: tokens, timestamp: Date.now() };
-          return tokens.slice(0, limit);
-        }
+    // Filter trending tokens to only include new ones
+    const newTrendingTokens = trendingByVolume.filter(t => 
+      newTokenAddresses.has(t.address.toLowerCase())
+    );
+    
+    // Also add new listings that have good volume, sorted by volume
+    const newListingsWithVolume = newListings
+      .filter(t => t.volume24h > 0 && t.liquidity > 100)
+      .sort((a, b) => b.volume24h - a.volume24h)
+      .map((t, index) => ({
+        address: t.address,
+        symbol: t.symbol,
+        name: t.name,
+        logoURI: t.logoURI,
+        price: t.price,
+        priceChange24h: 0,
+        volume24h: t.volume24h,
+        liquidity: t.liquidity,
+        marketCap: t.marketCap,
+        rank: index + 1,
+      }));
+    
+    // Combine: prioritize trending tokens that are new, then add new listings by volume
+    const seen = new Set<string>();
+    const combined: TrendingToken[] = [];
+    
+    for (const token of newTrendingTokens) {
+      if (!seen.has(token.address.toLowerCase())) {
+        seen.add(token.address.toLowerCase());
+        combined.push(token);
       }
-    } else {
-      const errorText = await response.text();
-      console.error("Token List V3 error:", response.status, errorText);
     }
     
-    // Fallback: Use new_listing endpoint (guaranteed recent tokens) and sort by volume
-    console.log("Falling back to new_listing for high volume new pairs");
+    for (const token of newListingsWithVolume) {
+      if (!seen.has(token.address.toLowerCase())) {
+        seen.add(token.address.toLowerCase());
+        combined.push(token);
+      }
+    }
+    
+    // Re-rank
+    const result = combined.map((t, i) => ({ ...t, rank: i + 1 }));
+    
+    if (result.length > 0) {
+      highVolumeNewPairsCache = { data: result, timestamp: Date.now() };
+      return result.slice(0, limit);
+    }
+    
+    // Ultimate fallback: just use new listings sorted by volume
+    console.log("Using new listings fallback for volume section");
     return await getHighVolumeNewPairsFallback(limit);
   } catch (error) {
     console.error("High volume new pairs error:", error);
