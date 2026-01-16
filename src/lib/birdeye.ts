@@ -412,7 +412,7 @@ export async function getTrendingTokens(limit: number = 20): Promise<TrendingTok
 
 /**
  * Get HOT tokens - top gainers with real activity
- * Uses Token List V3 API with quality filters to avoid dead tokens
+ * Uses the trending endpoint sorted by rank (Birdeye's internal algo) then filters by price change
  */
 export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]> {
   // Return cached data if available and fresh
@@ -421,61 +421,42 @@ export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]>
   }
 
   try {
-    const headers = getHeaders();
+    // Get tokens sorted by Birdeye's rank algorithm
+    const trendingByRank = await fetchTrendingTokens("rank");
+    
+    // Filter for quality and sort by absolute price change (biggest movers)
+    const hotTokens = trendingByRank
+      .filter(t => 
+        t.price > 0 && 
+        t.volume24h > 0 && 
+        t.liquidity > 0 &&
+        Math.abs(t.priceChange24h) > 0 // Must have price movement
+      )
+      .sort((a, b) => Math.abs(b.priceChange24h) - Math.abs(a.priceChange24h))
+      .map((t, index) => ({ ...t, rank: index + 1 }));
 
-    // Use Token List V3 for better filtering
-    const url = new URL(`${BIRDEYE_API_BASE}/defi/v3/token/list`);
-    url.searchParams.set("sort_by", "price_change_24h_percent");
-    url.searchParams.set("sort_type", "desc");
-    url.searchParams.set("min_liquidity", "10000"); // Min $10k liquidity
-    url.searchParams.set("min_volume_24h_usd", "50000"); // Min $50k 24h volume
-    url.searchParams.set("offset", "0");
-    url.searchParams.set("limit", "20");
-
-    const response = await fetch(url.toString(), { headers });
-
-    if (response.ok) {
-      const data = await response.json();
-      
-      if (data.success && data.data?.items) {
-        const tokens = data.data.items
-          .filter((token: any) => token.price > 0 && token.v24hUSD > 0)
-          .map((token: any, index: number) => ({
-            address: token.address,
-            symbol: token.symbol || "???",
-            name: token.name || "Unknown",
-            logoURI: token.logoURI || token.logo || "",
-            price: token.price || 0,
-            priceChange24h: token.priceChange24hPercent || token.price24hChangePercent || 0,
-            volume24h: token.v24hUSD || token.volume24hUSD || 0,
-            liquidity: token.liquidity || 0,
-            marketCap: token.mc || token.marketCap || token.fdv || 0,
-            rank: index + 1,
-          }));
-
-        gainersCache = { data: tokens, timestamp: Date.now() };
-        return tokens.slice(0, limit);
-      }
+    // If we got tokens, cache and return
+    if (hotTokens.length > 0) {
+      gainersCache = { data: hotTokens, timestamp: Date.now() };
+      return hotTokens.slice(0, limit);
     }
 
-    // Fallback: use regular trending but filter for quality
-    console.log("Token List V3 failed, falling back to trending");
-    const fallbackTokens = await fetchTrendingTokens("volume24hUSD");
+    // Fallback: use volume-based trending
+    console.log("No hot tokens from rank, trying volume fallback");
+    const volumeTokens = await fetchTrendingTokens("volume24hUSD");
     
-    // Filter out dead tokens: must have price, volume, and liquidity
-    const qualityTokens = fallbackTokens
-      .filter(t => t.price > 0 && t.volume24h > 10000 && t.liquidity > 5000)
-      .sort((a, b) => b.priceChange24h - a.priceChange24h);
+    const filteredVolume = volumeTokens
+      .filter(t => t.price > 0 && t.volume24h > 0)
+      .sort((a, b) => Math.abs(b.priceChange24h) - Math.abs(a.priceChange24h))
+      .map((t, index) => ({ ...t, rank: index + 1 }));
 
-    gainersCache = { data: qualityTokens, timestamp: Date.now() };
-    return qualityTokens.slice(0, limit);
+    gainersCache = { data: filteredVolume, timestamp: Date.now() };
+    return filteredVolume.slice(0, limit);
   } catch (error) {
     console.error("Birdeye hot tokens error:", error);
     
-    // Ultimate fallback
-    const fallbackTokens = await fetchTrendingTokens("volume24hUSD");
-    const filtered = fallbackTokens.filter(t => t.price > 0 && t.volume24h > 0);
-    return filtered.slice(0, limit);
+    // Ultimate fallback - just return empty and let UI handle it
+    return [];
   }
 }
 

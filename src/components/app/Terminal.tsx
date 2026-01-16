@@ -110,8 +110,10 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
     try {
       // Clear session cookie
       document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      // Redirect to landing
-      window.location.href = "/";
+      // Stay on app page so user can reconnect with a different wallet
+      toast.success("Disconnected! Connect a new wallet to continue.");
+      // Force page reload to reset state and show WalletGate
+      window.location.reload();
     } catch (error) {
       console.error("Failed to disconnect:", error);
       toast.error("Failed to disconnect");
