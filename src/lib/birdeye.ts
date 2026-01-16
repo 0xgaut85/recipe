@@ -161,13 +161,14 @@ export async function getTokenOverview(tokenAddress: string): Promise<TokenOverv
       symbol: token.symbol,
       name: token.name,
       decimals: token.decimals,
-      price: token.price,
-      priceChange24h: token.priceChange24hPercent,
-      volume24h: token.v24hUSD,
-      liquidity: token.liquidity,
-      marketCap: token.mc,
-      supply: token.supply,
-      holder: token.holder,
+      price: token.price || 0,
+      priceChange24h: token.priceChange24hPercent || 0,
+      volume24h: token.v24hUSD || token.volume24hUSD || 0,
+      liquidity: token.liquidity || 0,
+      // Market cap: mc is the primary field from Birdeye, realMc and fdv as fallbacks
+      marketCap: token.mc || token.realMc || token.fdv || 0,
+      supply: token.supply || 0,
+      holder: token.holder || 0,
     };
   } catch (error) {
     console.error("Birdeye token overview error:", error);
@@ -206,16 +207,16 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
       
       return fallbackData.data.items.map((token: any) => ({
         address: token.address,
-        symbol: token.symbol,
-        name: token.name,
-        decimals: token.decimals,
-        price: token.price,
-        priceChange24h: token.priceChange24hPercent,
-        volume24h: token.v24hUSD,
-        liquidity: token.liquidity,
-        marketCap: token.mc,
-        supply: token.supply,
-        holder: token.holder,
+        symbol: token.symbol || "???",
+        name: token.name || "Unknown",
+        decimals: token.decimals || 9,
+        price: token.price || 0,
+        priceChange24h: token.priceChange24hPercent || 0,
+        volume24h: token.v24hUSD || token.volume24hUSD || 0,
+        liquidity: token.liquidity || 0,
+        marketCap: token.mc || token.realMc || token.fdv || 0,
+        supply: token.supply || 0,
+        holder: token.holder || 0,
       }));
     }
 
@@ -227,16 +228,16 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
 
     return data.data.items.map((token: any) => ({
       address: token.address,
-      symbol: token.symbol,
-      name: token.name,
-      decimals: token.decimals,
-      price: token.price,
-      priceChange24h: token.priceChange24hPercent || token.price24hChangePercent,
-      volume24h: token.v24hUSD || token.volume24hUSD,
-      liquidity: token.liquidity,
-      marketCap: token.mc || token.marketCap,
-      supply: token.supply,
-      holder: token.holder,
+      symbol: token.symbol || "???",
+      name: token.name || "Unknown",
+      decimals: token.decimals || 9,
+      price: token.price || 0,
+      priceChange24h: token.priceChange24hPercent || token.price24hChangePercent || 0,
+      volume24h: token.v24hUSD || token.volume24hUSD || 0,
+      liquidity: token.liquidity || 0,
+      marketCap: token.mc || token.realMc || token.fdv || 0,
+      supply: token.supply || 0,
+      holder: token.holder || 0,
     }));
   } catch (error) {
     console.error("Birdeye search error:", error);
@@ -386,7 +387,8 @@ async function fetchTrendingTokens(sortBy: "volume24hUSD" | "rank" | "liquidity"
       priceChange24h: token.priceChange24hPercent || token.price24hChange || 0,
       volume24h: token.volume24hUSD || token.v24hUSD || 0,
       liquidity: token.liquidity || 0,
-      marketCap: token.mc || token.marketCap || 0,
+      // Market cap: mc is primary, realMc and fdv as fallbacks
+      marketCap: token.mc || token.realMc || token.fdv || 0,
       rank: token.rank || index + 1,
     }));
   } catch (error) {
@@ -418,7 +420,8 @@ let highVolumeNewPairsCache: {
 
 /**
  * Get high-volume NEW tokens (max 3 days old)
- * Perfect for finding trending new launches with real activity
+ * Uses Token List V3 API with min_listing_time filter to ensure only new tokens
+ * Falls back to new_listing endpoint if V3 fails
  */
 export async function getHighVolumeNewPairs(limit: number = 15): Promise<TrendingToken[]> {
   // Return cached data if available and fresh
@@ -429,88 +432,69 @@ export async function getHighVolumeNewPairs(limit: number = 15): Promise<Trendin
   try {
     const headers = getHeaders();
     
-    // Get new listings first (these are recent tokens)
-    const newListings = await getNewListings(20);
+    // Calculate 3 days ago as Unix timestamp (seconds, not milliseconds)
+    const threeDaysAgoSec = Math.floor((Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000);
     
-    // Also try to get tokens from the token_list endpoint with time filter
-    // Birdeye's new_listing only shows very recent ones, so we supplement
-    const url = new URL(`${BIRDEYE_API_BASE}/defi/token_trending`);
-    url.searchParams.set("sort_by", "volume24hUSD");
-    url.searchParams.set("sort_type", "desc");
+    // Use Token List V3 API with min_listing_time filter
+    // This ensures we ONLY get tokens listed within the last 3 days
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/v3/token/list`);
+    url.searchParams.set("sort_by", "v24hUSD");  // Sort by 24h volume
+    url.searchParams.set("sort_type", "desc");   // Highest volume first
+    url.searchParams.set("min_listing_time", threeDaysAgoSec.toString());  // Only tokens < 3 days old
+    url.searchParams.set("min_liquidity", "1000");  // At least $1k liquidity
     url.searchParams.set("offset", "0");
-    url.searchParams.set("limit", "20");
+    url.searchParams.set("limit", Math.min(limit, 50).toString());
 
     const response = await fetch(url.toString(), { headers });
     
-    let trendingTokens: TrendingToken[] = [];
     if (response.ok) {
       const data = await response.json();
-      if (data.success && data.data?.tokens) {
-        trendingTokens = data.data.tokens.map((token: any, index: number) => ({
-          address: token.address,
-          symbol: token.symbol || "???",
-          name: token.name || "Unknown",
-          logoURI: token.logoURI || token.logo || "",
-          price: token.price || 0,
-          priceChange24h: token.priceChange24hPercent || token.price24hChange || 0,
-          volume24h: token.volume24hUSD || token.v24hUSD || 0,
-          liquidity: token.liquidity || 0,
-          marketCap: token.mc || token.marketCap || 0,
-          rank: index + 1,
-          listedAt: token.listingTime || token.createdAt,
-        }));
+      
+      if (data.success && data.data?.items && data.data.items.length > 0) {
+        const tokens: TrendingToken[] = data.data.items
+          .filter((token: any) => token.v24hUSD > 0 && token.liquidity > 0)
+          .map((token: any, index: number) => ({
+            address: token.address,
+            symbol: token.symbol || "???",
+            name: token.name || "Unknown",
+            logoURI: token.logoURI || token.logo || "",
+            price: token.price || 0,
+            priceChange24h: token.priceChange24hPercent || token.price24hChangePercent || 0,
+            volume24h: token.v24hUSD || 0,
+            liquidity: token.liquidity || 0,
+            marketCap: token.mc || token.realMc || token.marketCap || 0,
+            rank: index + 1,
+          }));
+
+        if (tokens.length > 0) {
+          highVolumeNewPairsCache = { data: tokens, timestamp: Date.now() };
+          return tokens.slice(0, limit);
+        }
       }
+    } else {
+      const errorText = await response.text();
+      console.error("Token List V3 error:", response.status, errorText);
     }
-
-    // Convert new listings to TrendingToken format
-    const newListingsAsTrending: TrendingToken[] = newListings.map((listing, index) => ({
-      address: listing.address,
-      symbol: listing.symbol,
-      name: listing.name,
-      logoURI: listing.logoURI,
-      price: listing.price,
-      priceChange24h: 0, // New listings might not have price change yet
-      volume24h: listing.volume24h,
-      liquidity: listing.liquidity,
-      marketCap: listing.marketCap,
-      rank: index + 1,
-      listedAt: listing.listedAt,
-    }));
-
-    // Combine both lists, prefer new listings
-    const allTokens = [...newListingsAsTrending, ...trendingTokens];
     
-    // Filter for tokens max 3 days old (4320 minutes) with volume
-    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
-    const cutoffTime = Date.now() - threeDaysMs;
-    
-    const recentHighVolume = allTokens
-      .filter(token => {
-        // Must have volume
-        if (token.volume24h <= 0) return false;
-        // Must have liquidity
-        if (token.liquidity <= 0) return false;
-        // Filter by age if we have listing time
-        if ((token as any).listedAt && (token as any).listedAt < cutoffTime) return false;
-        return true;
-      })
-      // Remove duplicates by address
-      .filter((token, index, self) => 
-        index === self.findIndex(t => t.address === token.address)
-      )
-      // Sort by volume descending
-      .sort((a, b) => b.volume24h - a.volume24h)
-      .map((token, index) => ({ ...token, rank: index + 1 }));
-
-    highVolumeNewPairsCache = { data: recentHighVolume, timestamp: Date.now() };
-    return recentHighVolume.slice(0, limit);
+    // Fallback: Use new_listing endpoint (guaranteed recent tokens) and sort by volume
+    console.log("Falling back to new_listing for high volume new pairs");
+    return await getHighVolumeNewPairsFallback(limit);
   } catch (error) {
     console.error("High volume new pairs error:", error);
-    
-    // Fallback: just use new listings sorted by volume
+    return await getHighVolumeNewPairsFallback(limit);
+  }
+}
+
+/**
+ * Fallback function using new_listing endpoint
+ * Used when Token List V3 is not available or fails
+ */
+async function getHighVolumeNewPairsFallback(limit: number): Promise<TrendingToken[]> {
+  try {
     const newListings = await getNewListings(20);
+    
     const sorted = newListings
-      .filter(t => t.volume24h > 0)
+      .filter(t => t.volume24h > 0 && t.liquidity > 0)
       .sort((a, b) => b.volume24h - a.volume24h)
       .map((listing, index) => ({
         address: listing.address,
@@ -525,7 +509,11 @@ export async function getHighVolumeNewPairs(limit: number = 15): Promise<Trendin
         rank: index + 1,
       }));
     
+    highVolumeNewPairsCache = { data: sorted, timestamp: Date.now() };
     return sorted.slice(0, limit);
+  } catch (error) {
+    console.error("High volume new pairs fallback error:", error);
+    return [];
   }
 }
 
@@ -639,8 +627,9 @@ export async function getNewListings(
       logoURI: token.logoURI || token.logo || "",
       price: token.price || 0,
       liquidity: token.liquidity || 0,
-      volume24h: token.v24hUSD || token.volume24h || 0,
-      marketCap: token.mc || token.marketCap || 0,
+      volume24h: token.v24hUSD || token.volume24hUSD || token.volume24h || 0,
+      // Market cap: mc is primary, realMc and fdv as fallbacks
+      marketCap: token.mc || token.realMc || token.fdv || 0,
       listedAt: token.listingTime || token.createdAt || Date.now(),
       ageMinutes: 0,
       dex: token.source || token.dex || undefined,
