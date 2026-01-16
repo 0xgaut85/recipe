@@ -18,8 +18,11 @@ interface Props {
 }
 
 export const WalletContextProvider: FC<Props> = ({ children }) => {
-  // You can switch to 'mainnet-beta' for production
-  const endpoint = useMemo(() => clusterApiUrl("devnet"), []);
+  // Use environment variable for RPC URL, fallback to mainnet
+  const endpoint = useMemo(
+    () => process.env.NEXT_PUBLIC_RPC_URL || clusterApiUrl("mainnet-beta"),
+    []
+  );
 
   const wallets = useMemo(
     () => [

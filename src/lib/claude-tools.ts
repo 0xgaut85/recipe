@@ -3,8 +3,8 @@
  * These tools are available for Claude to call during conversations
  */
 
-import { getTokenInfo, searchPairs, getTrendingTokens } from "./dexscreener";
-import { getOHLCV, getTokenOverview, TimeFrame } from "./birdeye";
+import { getTokenInfo, searchPairs } from "./dexscreener";
+import { getOHLCV, getTokenOverview, TimeFrame, getTrendingTokens as getBirdeyeTrending } from "./birdeye";
 import { calculateEMA, calculateRSI, getLatestIndicators } from "./indicators";
 import { getNewLaunches, getCoinByMint, filterCoins } from "./pumpfun";
 import { getBalance, getTokenAccounts, isValidPublicKey } from "./wallet";
@@ -360,16 +360,40 @@ export async function executeTool(
 
     case "get_trending_tokens": {
       const limit = (args.limit as number) || 10;
-      const pairs = await getTrendingTokens();
-      return pairs.slice(0, limit).map((pair) => ({
-        symbol: pair.baseToken.symbol,
-        name: pair.baseToken.name,
-        address: pair.baseToken.address,
-        price: pair.priceUsd,
-        priceChange24h: pair.priceChange?.h24,
-        volume24h: pair.volume?.h24,
-        liquidity: pair.liquidity?.usd,
-      }));
+      
+      // Try Birdeye first (better data)
+      try {
+        const tokens = await getBirdeyeTrending(limit);
+        if (tokens.length > 0) {
+          return tokens.map((token) => ({
+            symbol: token.symbol,
+            name: token.name,
+            address: token.address,
+            price: token.price,
+            priceChange24h: token.priceChange24h,
+            volume24h: token.volume24h,
+            liquidity: token.liquidity,
+            rank: token.rank,
+          }));
+        }
+      } catch {
+        // Birdeye API may not be configured
+      }
+      
+      // Fallback to DexScreener search
+      const pairs = await searchPairs("solana");
+      return pairs
+        .sort((a, b) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
+        .slice(0, limit)
+        .map((pair) => ({
+          symbol: pair.baseToken.symbol,
+          name: pair.baseToken.name,
+          address: pair.baseToken.address,
+          price: pair.priceUsd,
+          priceChange24h: pair.priceChange?.h24,
+          volume24h: pair.volume?.h24,
+          liquidity: pair.liquidity?.usd,
+        }));
     }
 
     case "analyze_wallet": {
