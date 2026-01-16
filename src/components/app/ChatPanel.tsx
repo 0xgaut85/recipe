@@ -14,6 +14,7 @@ interface Message {
 interface ChatPanelProps {
   currentStep: CookingStep;
   onStepComplete: (step: CookingStep) => void;
+  onJumpToStep?: (step: CookingStep) => void;
 }
 
 const stepPrompts: Record<CookingStep, string> = {
@@ -26,6 +27,7 @@ const stepPrompts: Record<CookingStep, string> = {
 export const ChatPanel: FC<ChatPanelProps> = ({
   currentStep,
   onStepComplete,
+  onJumpToStep,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -113,9 +115,11 @@ export const ChatPanel: FC<ChatPanelProps> = ({
                     return updated;
                   });
                 }
-                // Handle specific step advancement
-                if (parsed.advanceToStep) {
-                  // Advance to specific step (e.g., "serve" after strategy created in taste)
+                // Handle specific step advancement (jump directly to a step)
+                if (parsed.advanceToStep && onJumpToStep) {
+                  onJumpToStep(parsed.advanceToStep as CookingStep);
+                } else if (parsed.advanceToStep) {
+                  // Fallback if onJumpToStep not provided
                   onStepComplete(currentStep);
                 }
                 // Legacy support for generic step complete

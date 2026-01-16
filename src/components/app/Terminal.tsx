@@ -339,6 +339,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
           <ChatPanel
             currentStep={currentStep}
             onStepComplete={handleStepComplete}
+            onJumpToStep={onStepChange}
           />
         </motion.div>
 

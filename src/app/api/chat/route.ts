@@ -289,16 +289,14 @@ export async function POST(request: NextRequest) {
                     userId || undefined
                   );
 
-                  // Check if strategy was created in taste phase - advance to serve
+                  // Check if strategy was created - advance to serve
                   if (toolUse.name === "create_strategy" && result && typeof result === "object" && "success" in result && (result as any).success) {
-                    if (step === "taste") {
-                      // Strategy created in taste phase - advance to serve
-                      controller.enqueue(
-                        encoder.encode(
-                          `data: ${JSON.stringify({ advanceToStep: "serve" })}\n\n`
-                        )
-                      );
-                    }
+                    // Strategy created - always advance to serve phase
+                    controller.enqueue(
+                      encoder.encode(
+                        `data: ${JSON.stringify({ advanceToStep: "serve" })}\n\n`
+                      )
+                    );
                     shouldAdvanceStep = true;
                   }
 
