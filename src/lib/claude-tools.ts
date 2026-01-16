@@ -404,6 +404,10 @@ export const toolDefinitions = [
           type: "number",
           description: "For SNIPER: Maximum market cap in USD (optional, for microcap plays)",
         },
+        nameFilter: {
+          type: "string",
+          description: "For SNIPER: Filter tokens by name containing this string (e.g., 'claude', 'ai')",
+        },
         slippageBps: {
           type: "number",
           description: "Slippage tolerance in basis points (default: 300 for 3%)",
@@ -912,6 +916,7 @@ export async function executeTool(
         minVolume?: number;
         minMarketCap?: number;
         maxMarketCap?: number;
+        nameFilter?: string;
       } = {
         type: strategyType,
         amount: args.amount as number | undefined,
@@ -945,6 +950,7 @@ export async function executeTool(
           minVolume: args.minVolume as number | undefined,
           minMarketCap: args.minMarketCap as number | undefined,
           maxMarketCap: args.maxMarketCap as number | undefined,
+          nameFilter: args.nameFilter as string | undefined,
           takeProfit: args.takeProfit as number | undefined, // undefined = manual exit
           stopLoss: args.stopLoss as number | undefined,
         };

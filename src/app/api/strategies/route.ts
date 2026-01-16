@@ -10,7 +10,7 @@ const createStrategySchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().min(1).max(1000),
   config: z.object({
-    type: z.enum(["SPOT", "PERP"]),
+    type: z.enum(["SPOT", "PERP", "SNIPER"]),
     token: z.string().optional(),
     inputToken: z.string().optional(),
     outputToken: z.string().optional(),
@@ -23,6 +23,15 @@ const createStrategySchema = z.object({
     })).optional(),
     stopLoss: z.number().optional(),
     takeProfit: z.number().optional(),
+    // SNIPER specific config
+    maxAgeMinutes: z.number().optional(),
+    minLiquidity: z.number().optional(),
+    maxLiquidity: z.number().optional(),
+    minVolume: z.number().optional(),
+    minMarketCap: z.number().optional(),
+    maxMarketCap: z.number().optional(),
+    slippageBps: z.number().optional(),
+    nameFilter: z.string().optional(),
   }),
 });
 

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 interface StrategyConfig {
-  type: "SPOT" | "PERP";
+  type: "SPOT" | "PERP" | "SNIPER";
   token?: string;
   inputToken?: string;
   outputToken?: string;
@@ -27,6 +27,15 @@ interface StrategyConfig {
   conditions?: Array<{ type: string; value: any }>;
   stopLoss?: number;
   takeProfit?: number;
+  // SNIPER specific
+  maxAgeMinutes?: number;
+  minLiquidity?: number;
+  maxLiquidity?: number;
+  minVolume?: number;
+  minMarketCap?: number;
+  maxMarketCap?: number;
+  slippageBps?: number;
+  nameFilter?: string;
 }
 
 interface Strategy {
@@ -247,6 +256,8 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                           className={`text-xs px-2 py-0.5 rounded-full ${
                             strategy.config.type === "SPOT"
                               ? "bg-blue-500/20 text-blue-400"
+                              : strategy.config.type === "SNIPER"
+                              ? "bg-green-500/20 text-green-400"
                               : "bg-purple-500/20 text-purple-400"
                           }`}
                         >
@@ -450,6 +461,47 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                           </span>
                           <span className="text-green-400 text-sm">
                             +{selectedStrategy.config.takeProfit}%
+                          </span>
+                        </div>
+                      )}
+                      {/* SNIPER specific fields */}
+                      {selectedStrategy.config.maxAgeMinutes && (
+                        <div className="flex justify-between">
+                          <span className="text-white/40 text-sm">Max Age</span>
+                          <span className="text-white text-sm">
+                            {selectedStrategy.config.maxAgeMinutes} min
+                          </span>
+                        </div>
+                      )}
+                      {selectedStrategy.config.minLiquidity && (
+                        <div className="flex justify-between">
+                          <span className="text-white/40 text-sm">Min Liquidity</span>
+                          <span className="text-white text-sm">
+                            ${selectedStrategy.config.minLiquidity.toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                      {selectedStrategy.config.minVolume && (
+                        <div className="flex justify-between">
+                          <span className="text-white/40 text-sm">Min Volume</span>
+                          <span className="text-white text-sm">
+                            ${selectedStrategy.config.minVolume.toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                      {selectedStrategy.config.nameFilter && (
+                        <div className="flex justify-between">
+                          <span className="text-white/40 text-sm">Name Filter</span>
+                          <span className="text-white text-sm">
+                            &quot;{selectedStrategy.config.nameFilter}&quot;
+                          </span>
+                        </div>
+                      )}
+                      {selectedStrategy.config.slippageBps && (
+                        <div className="flex justify-between">
+                          <span className="text-white/40 text-sm">Slippage</span>
+                          <span className="text-white text-sm">
+                            {(selectedStrategy.config.slippageBps / 100).toFixed(1)}%
                           </span>
                         </div>
                       )}
