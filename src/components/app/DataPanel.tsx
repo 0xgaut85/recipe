@@ -2,7 +2,7 @@
 
 import { FC, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Copy, Check, QrCode, ExternalLink, Flame, Zap, Clock, TrendingUp } from "lucide-react";
+import { Copy, Check, QrCode, ExternalLink, Flame, Zap, Clock, TrendingUp, Wallet, PieChart, RefreshCw } from "lucide-react";
 import type { CookingStep } from "@/app/app/page";
 
 interface TokenData {
@@ -25,6 +25,24 @@ interface MarketData {
   highVolume: TokenData[];
 }
 
+interface Position {
+  mint: string;
+  symbol: string;
+  name: string;
+  logoURI?: string;
+  balance: number;
+  price: number;
+  value: number;
+  priceChange24h: number;
+}
+
+interface PositionsData {
+  positions: Position[];
+  totalValue: number;
+  solBalance: number;
+  tokenCount: number;
+}
+
 interface WalletData {
   publicKey: string;
   solBalance: number;
@@ -45,14 +63,16 @@ interface DataPanelProps {
 type MarketSection = "hot" | "new" | "volume";
 
 export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
-  const [activeTab, setActiveTab] = useState<"market" | "wallet" | "strategy">("market");
+  const [activeTab, setActiveTab] = useState<"market" | "positions" | "wallet" | "strategy">("market");
   const [marketSection, setMarketSection] = useState<MarketSection>("hot");
   const [marketData, setMarketData] = useState<MarketData>({
     hotTokens: [],
     newPairs: [],
     highVolume: [],
   });
+  const [positionsData, setPositionsData] = useState<PositionsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPositionsLoading, setIsPositionsLoading] = useState(true);
   const [isWalletLoading, setIsWalletLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
@@ -63,6 +83,30 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
       setIsWalletLoading(false);
     }
   }, [walletData]);
+
+  // Fetch positions when positions tab is active
+  const fetchPositions = async () => {
+    setIsPositionsLoading(true);
+    try {
+      const res = await fetch("/api/data/positions");
+      if (res.ok) {
+        const data = await res.json();
+        setPositionsData(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch positions:", error);
+    } finally {
+      setIsPositionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "positions") {
+      fetchPositions();
+      const interval = setInterval(fetchPositions, 30000); // Refresh every 30s
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
 
   // Fetch market data
   useEffect(() => {
@@ -269,6 +313,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
       <div className="flex border-b border-white/10">
         {[
           { id: "market", label: "market" },
+          { id: "positions", label: "positions" },
           { id: "wallet", label: "wallet" },
           { id: "strategy", label: "strategy" },
         ].map((tab) => (
@@ -461,6 +506,133 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* Positions Tab */}
+        {activeTab === "positions" && (
+          <div className="flex flex-col h-full">
+            {/* Header with refresh */}
+            <div className="px-4 py-3 flex items-center justify-between border-b border-white/5">
+              <div>
+                <h3 className="text-white font-bold text-sm">portfolio</h3>
+                {positionsData && (
+                  <p className="text-accent-pink font-bold text-lg">
+                    {formatNumber(positionsData.totalValue)}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={fetchPositions}
+                disabled={isPositionsLoading}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={16} className={`text-white/60 ${isPositionsLoading ? "animate-spin" : ""}`} />
+              </button>
+            </div>
+
+            {/* Positions List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {isPositionsLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white/5 rounded-xl p-4 animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white/10" />
+                        <div className="flex-1">
+                          <div className="h-4 bg-white/10 rounded w-20 mb-2" />
+                          <div className="h-3 bg-white/10 rounded w-32" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : positionsData && positionsData.positions.length > 0 ? (
+                positionsData.positions.map((pos, i) => (
+                  <motion.div
+                    key={pos.mint}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="bg-white/5 rounded-xl p-3 border border-white/5 hover:border-white/10 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Token Logo */}
+                      {pos.logoURI ? (
+                        <img
+                          src={pos.logoURI}
+                          alt={pos.symbol}
+                          className="w-10 h-10 rounded-full bg-white/10"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-pink/50 to-accent-blue/50 flex items-center justify-center text-white text-sm font-bold">
+                          {pos.symbol?.charAt(0) || "?"}
+                        </div>
+                      )}
+
+                      {/* Token Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-white font-bold">{pos.symbol}</span>
+                          <span className="text-white font-bold">
+                            {formatNumber(pos.value)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-white/50 text-xs">
+                            {pos.balance.toFixed(pos.symbol === "SOL" ? 4 : 2)} {pos.symbol}
+                          </span>
+                          <span
+                            className={`text-xs font-medium ${
+                              pos.priceChange24h >= 0 ? "text-green-400" : "text-red-400"
+                            }`}
+                          >
+                            {pos.priceChange24h >= 0 ? "+" : ""}
+                            {pos.priceChange24h.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                      <span className="text-white/40">
+                        Price: <span className="text-white/60">{formatPrice(pos.price)}</span>
+                      </span>
+                      <a
+                        href={`https://jup.ag/swap/${pos.mint}-SOL`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-accent-pink hover:text-accent-pink/80 font-medium"
+                      >
+                        sell
+                      </a>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-12 text-white/40">
+                  <PieChart size={32} className="mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">no positions yet</p>
+                  <p className="text-xs mt-1">deposit SOL to start trading</p>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Trade */}
+            <div className="p-3 border-t border-white/10">
+              <a
+                href="https://jup.ag"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full py-3 bg-accent-pink/20 hover:bg-accent-pink/30 rounded-xl text-center text-accent-pink font-bold transition-colors"
+              >
+                trade on jupiter
+              </a>
+            </div>
           </div>
         )}
 

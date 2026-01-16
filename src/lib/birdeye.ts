@@ -176,12 +176,16 @@ export async function getTokenOverview(tokenAddress: string): Promise<TokenOverv
 }
 
 /**
- * Search tokens
+ * Search tokens by keyword
  */
 export async function searchTokens(query: string, limit: number = 10): Promise<TokenOverview[]> {
   try {
-    const url = new URL(`${BIRDEYE_API_BASE}/defi/token_search`);
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/v3/search`);
     url.searchParams.set("keyword", query);
+    url.searchParams.set("target", "token");
+    url.searchParams.set("sort_by", "volume_24h_usd");
+    url.searchParams.set("sort_type", "desc");
+    url.searchParams.set("offset", "0");
     url.searchParams.set("limit", limit.toString());
 
     const response = await fetch(url.toString(), {
@@ -189,7 +193,30 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
     });
 
     if (!response.ok) {
-      return [];
+      // Fallback to old endpoint
+      const fallbackUrl = new URL(`${BIRDEYE_API_BASE}/defi/token_search`);
+      fallbackUrl.searchParams.set("keyword", query);
+      fallbackUrl.searchParams.set("limit", limit.toString());
+      
+      const fallbackRes = await fetch(fallbackUrl.toString(), { headers: getHeaders() });
+      if (!fallbackRes.ok) return [];
+      
+      const fallbackData = await fallbackRes.json();
+      if (!fallbackData.success || !fallbackData.data?.items) return [];
+      
+      return fallbackData.data.items.map((token: any) => ({
+        address: token.address,
+        symbol: token.symbol,
+        name: token.name,
+        decimals: token.decimals,
+        price: token.price,
+        priceChange24h: token.priceChange24hPercent,
+        volume24h: token.v24hUSD,
+        liquidity: token.liquidity,
+        marketCap: token.mc,
+        supply: token.supply,
+        holder: token.holder,
+      }));
     }
 
     const data = await response.json();
@@ -204,10 +231,10 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
       name: token.name,
       decimals: token.decimals,
       price: token.price,
-      priceChange24h: token.priceChange24hPercent,
-      volume24h: token.v24hUSD,
+      priceChange24h: token.priceChange24hPercent || token.price24hChangePercent,
+      volume24h: token.v24hUSD || token.volume24hUSD,
       liquidity: token.liquidity,
-      marketCap: token.mc,
+      marketCap: token.mc || token.marketCap,
       supply: token.supply,
       holder: token.holder,
     }));
@@ -215,6 +242,91 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
     console.error("Birdeye search error:", error);
     return [];
   }
+}
+
+/**
+ * Advanced token search with multiple filters
+ * Use this for complex queries like "tokens starting with X" or "tokens with mcap > Y"
+ */
+export async function advancedTokenSearch(options: {
+  keyword?: string;
+  symbolStartsWith?: string;
+  nameContains?: string;
+  minMarketCap?: number;
+  maxMarketCap?: number;
+  minLiquidity?: number;
+  maxLiquidity?: number;
+  minVolume24h?: number;
+  minHolders?: number;
+  limit?: number;
+}): Promise<TokenOverview[]> {
+  const {
+    keyword,
+    symbolStartsWith,
+    nameContains,
+    minMarketCap,
+    maxMarketCap,
+    minLiquidity,
+    maxLiquidity,
+    minVolume24h,
+    minHolders,
+    limit = 20,
+  } = options;
+
+  // Start with a search if we have a keyword
+  let tokens: TokenOverview[] = [];
+  
+  if (keyword || symbolStartsWith) {
+    const searchQuery = keyword || symbolStartsWith || "";
+    tokens = await searchTokens(searchQuery, 50); // Get more to filter
+  } else {
+    // If no keyword, get trending tokens as base
+    const trending = await getTrendingTokens(50);
+    tokens = trending.map(t => ({
+      address: t.address,
+      symbol: t.symbol,
+      name: t.name,
+      decimals: 9, // default
+      price: t.price,
+      priceChange24h: t.priceChange24h,
+      volume24h: t.volume24h,
+      liquidity: t.liquidity,
+      marketCap: t.marketCap,
+      supply: 0,
+      holder: 0,
+    }));
+  }
+
+  // Apply filters
+  let filtered = tokens.filter(token => {
+    // Symbol starts with filter
+    if (symbolStartsWith && !token.symbol.toUpperCase().startsWith(symbolStartsWith.toUpperCase())) {
+      return false;
+    }
+    
+    // Name contains filter
+    if (nameContains && !token.name.toLowerCase().includes(nameContains.toLowerCase())) {
+      return false;
+    }
+    
+    // Market cap filters
+    if (minMarketCap && token.marketCap < minMarketCap) return false;
+    if (maxMarketCap && token.marketCap > maxMarketCap) return false;
+    
+    // Liquidity filters
+    if (minLiquidity && token.liquidity < minLiquidity) return false;
+    if (maxLiquidity && token.liquidity > maxLiquidity) return false;
+    
+    // Volume filter
+    if (minVolume24h && token.volume24h < minVolume24h) return false;
+    
+    // Holders filter
+    if (minHolders && token.holder < minHolders) return false;
+    
+    return true;
+  });
+
+  return filtered.slice(0, limit);
 }
 
 export interface TrendingToken {
@@ -238,8 +350,9 @@ const CACHE_TTL_MS = 30000; // 30 seconds cache
 
 /**
  * Fetch tokens from Birdeye token_trending endpoint
+ * Valid sort_by options: rank, volume24hUSD, liquidity
  */
-async function fetchTrendingTokens(sortBy: "volume24hUSD" | "priceChange24hPercent"): Promise<TrendingToken[]> {
+async function fetchTrendingTokens(sortBy: "volume24hUSD" | "rank" | "liquidity"): Promise<TrendingToken[]> {
   try {
     const headers = getHeaders();
 
@@ -270,11 +383,11 @@ async function fetchTrendingTokens(sortBy: "volume24hUSD" | "priceChange24hPerce
       name: token.name || "Unknown",
       logoURI: token.logoURI || token.logo || "",
       price: token.price || 0,
-      priceChange24h: token.priceChange24hPercent || 0,
-      volume24h: token.volume24hUSD || 0,
+      priceChange24h: token.priceChange24hPercent || token.price24hChange || 0,
+      volume24h: token.volume24hUSD || token.v24hUSD || 0,
       liquidity: token.liquidity || 0,
       marketCap: token.mc || token.marketCap || 0,
-      rank: index + 1,
+      rank: token.rank || index + 1,
     }));
   } catch (error) {
     console.error("Birdeye trending error:", error);
@@ -298,7 +411,8 @@ export async function getTrendingTokens(limit: number = 20): Promise<TrendingTok
 }
 
 /**
- * Get HOT tokens sorted by 24h PRICE CHANGE (biggest gainers/movers)
+ * Get HOT tokens - trending by rank (Birdeye's algorithm for hot/trending)
+ * Then sorted by absolute price change to show biggest movers
  */
 export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]> {
   // Return cached data if available and fresh
@@ -306,10 +420,16 @@ export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]>
     return gainersCache.data.slice(0, limit);
   }
 
-  const tokens = await fetchTrendingTokens("priceChange24hPercent");
+  // Fetch by rank (Birdeye's trending algorithm)
+  const tokens = await fetchTrendingTokens("rank");
   
-  gainersCache = { data: tokens, timestamp: Date.now() };
-  return tokens.slice(0, limit);
+  // Sort by absolute price change to show biggest movers (pumps & dumps)
+  const sorted = [...tokens].sort((a, b) => 
+    Math.abs(b.priceChange24h) - Math.abs(a.priceChange24h)
+  );
+  
+  gainersCache = { data: sorted, timestamp: Date.now() };
+  return sorted.slice(0, limit);
 }
 
 // Cache for new listings

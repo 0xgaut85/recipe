@@ -9,9 +9,12 @@ import {
   getTokenOverview, 
   TimeFrame, 
   getTrendingTokens as getBirdeyeTrending,
+  getHotTokens,
   getNewListings,
   getNewPairsFiltered,
   getPairOverview,
+  advancedTokenSearch,
+  searchTokens,
   NewPairData
 } from "./birdeye";
 import { calculateEMA, calculateRSI, getLatestIndicators } from "./indicators";
@@ -138,16 +141,51 @@ export const toolDefinitions = [
   },
   {
     name: "search_tokens",
-    description: "Search for tokens by name or symbol",
+    description: "Search for tokens by name, symbol, or apply advanced filters. Can filter by first letter, market cap range, liquidity, volume, holders, and more.",
     input_schema: {
       type: "object",
       properties: {
-        query: {
+        keyword: {
           type: "string",
-          description: "Search query (token name or symbol)",
+          description: "Search keyword (token name or symbol)",
+        },
+        symbolStartsWith: {
+          type: "string",
+          description: "Filter tokens where symbol starts with this letter/string (e.g., 'A' for all tokens starting with A)",
+        },
+        nameContains: {
+          type: "string",
+          description: "Filter tokens where name contains this string",
+        },
+        minMarketCap: {
+          type: "number",
+          description: "Minimum market cap in USD",
+        },
+        maxMarketCap: {
+          type: "number",
+          description: "Maximum market cap in USD",
+        },
+        minLiquidity: {
+          type: "number",
+          description: "Minimum liquidity in USD",
+        },
+        maxLiquidity: {
+          type: "number",
+          description: "Maximum liquidity in USD",
+        },
+        minVolume24h: {
+          type: "number",
+          description: "Minimum 24h volume in USD",
+        },
+        minHolders: {
+          type: "number",
+          description: "Minimum number of holders",
+        },
+        limit: {
+          type: "number",
+          description: "Number of results to return (default: 20)",
         },
       },
-      required: ["query"],
     },
   },
   {
@@ -510,17 +548,67 @@ export async function executeTool(
     }
 
     case "search_tokens": {
-      const query = args.query as string;
+      // Use advanced search if any filters are provided
+      const hasAdvancedFilters = args.symbolStartsWith || args.nameContains || 
+        args.minMarketCap || args.maxMarketCap || args.minLiquidity || 
+        args.maxLiquidity || args.minVolume24h || args.minHolders;
+      
+      if (hasAdvancedFilters || args.keyword) {
+        const tokens = await advancedTokenSearch({
+          keyword: args.keyword as string | undefined,
+          symbolStartsWith: args.symbolStartsWith as string | undefined,
+          nameContains: args.nameContains as string | undefined,
+          minMarketCap: args.minMarketCap as number | undefined,
+          maxMarketCap: args.maxMarketCap as number | undefined,
+          minLiquidity: args.minLiquidity as number | undefined,
+          maxLiquidity: args.maxLiquidity as number | undefined,
+          minVolume24h: args.minVolume24h as number | undefined,
+          minHolders: args.minHolders as number | undefined,
+          limit: (args.limit as number) || 20,
+        });
+        
+        return {
+          tokens: tokens.map(t => ({
+            symbol: t.symbol,
+            name: t.name,
+            address: t.address,
+            price: t.price,
+            priceChange24h: t.priceChange24h,
+            volume24h: t.volume24h,
+            liquidity: t.liquidity,
+            marketCap: t.marketCap,
+            holders: t.holder,
+          })),
+          count: tokens.length,
+          filters: {
+            keyword: args.keyword,
+            symbolStartsWith: args.symbolStartsWith,
+            nameContains: args.nameContains,
+            minMarketCap: args.minMarketCap,
+            maxMarketCap: args.maxMarketCap,
+            minLiquidity: args.minLiquidity,
+            maxLiquidity: args.maxLiquidity,
+            minVolume24h: args.minVolume24h,
+            minHolders: args.minHolders,
+          },
+        };
+      }
+      
+      // Fallback to DexScreener for simple queries
+      const query = (args.keyword || args.query) as string;
       const pairs = await searchPairs(query);
-      return pairs.slice(0, 10).map((pair) => ({
-        symbol: pair.baseToken.symbol,
-        name: pair.baseToken.name,
-        address: pair.baseToken.address,
-        price: pair.priceUsd,
-        priceChange24h: pair.priceChange?.h24,
-        volume24h: pair.volume?.h24,
-        liquidity: pair.liquidity?.usd,
-      }));
+      return {
+        tokens: pairs.slice(0, 10).map((pair) => ({
+          symbol: pair.baseToken.symbol,
+          name: pair.baseToken.name,
+          address: pair.baseToken.address,
+          price: pair.priceUsd,
+          priceChange24h: pair.priceChange?.h24,
+          volume24h: pair.volume?.h24,
+          liquidity: pair.liquidity?.usd,
+        })),
+        count: Math.min(pairs.length, 10),
+      };
     }
 
     case "get_trending_tokens": {
