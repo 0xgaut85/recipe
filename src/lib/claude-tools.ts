@@ -423,14 +423,83 @@ export const toolDefinitions = [
 ];
 
 /**
+ * Check if a string is a valid Solana address (base58, 32-44 chars)
+ */
+function isSolanaAddress(str: string): boolean {
+  // Solana addresses are base58 encoded, typically 32-44 characters
+  const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+  return base58Regex.test(str);
+}
+
+/**
  * Resolve token symbol to mint address
+ * Checks known tokens first, then validates if it's already an address
  */
 function resolveTokenMint(token: string): string {
   const upperToken = token.toUpperCase();
   if (upperToken in TOKEN_MINTS) {
     return TOKEN_MINTS[upperToken as keyof typeof TOKEN_MINTS];
   }
-  return token; // Assume it's already a mint address
+  // If it looks like a Solana address, return as-is
+  if (isSolanaAddress(token)) {
+    return token;
+  }
+  // Otherwise return as-is (will be handled by search or fail gracefully)
+  return token;
+}
+
+/**
+ * Resolve token to mint address, with Birdeye search fallback
+ * Use this for execute_spot_trade to handle any token name/symbol
+ */
+async function resolveTokenMintWithSearch(token: string): Promise<{ address: string; symbol: string; decimals: number } | null> {
+  const upperToken = token.toUpperCase();
+  
+  // Check known tokens first
+  if (upperToken in TOKEN_MINTS) {
+    const address = TOKEN_MINTS[upperToken as keyof typeof TOKEN_MINTS];
+    const decimals = getTokenDecimals(address);
+    return { address, symbol: upperToken, decimals };
+  }
+  
+  // If it's already a valid Solana address, use it directly
+  if (isSolanaAddress(token)) {
+    try {
+      const overview = await getTokenOverview(token);
+      if (overview) {
+        return { 
+          address: token, 
+          symbol: overview.symbol, 
+          decimals: overview.decimals 
+        };
+      }
+    } catch {
+      // Continue with the address anyway
+    }
+    const decimals = getTokenDecimals(token);
+    return { address: token, symbol: "???", decimals };
+  }
+  
+  // Search for the token by name/symbol using Birdeye
+  try {
+    const results = await searchTokens(token, 5);
+    if (results.length > 0) {
+      // Find exact match first, then best match
+      const exactMatch = results.find(
+        r => r.symbol.toUpperCase() === upperToken || r.name.toUpperCase() === upperToken
+      );
+      const bestMatch = exactMatch || results[0];
+      return {
+        address: bestMatch.address,
+        symbol: bestMatch.symbol,
+        decimals: bestMatch.decimals,
+      };
+    }
+  } catch (error) {
+    console.error("Token search error:", error);
+  }
+  
+  return null;
 }
 
 /**
@@ -672,20 +741,29 @@ export async function executeTool(
     }
 
     case "get_swap_quote": {
-      const inputMint = resolveTokenMint(args.inputToken as string);
-      const outputMint = resolveTokenMint(args.outputToken as string);
+      // Resolve tokens with search fallback
+      const inputToken = await resolveTokenMintWithSearch(args.inputToken as string);
+      const outputToken = await resolveTokenMintWithSearch(args.outputToken as string);
+      
+      if (!inputToken) {
+        return { error: `Could not find token: ${args.inputToken}. Try using the contract address (CA).` };
+      }
+      if (!outputToken) {
+        return { error: `Could not find token: ${args.outputToken}. Try using the contract address (CA).` };
+      }
+      
       const amount = args.amount as number;
       const slippageBps = (args.slippageBps as number) || 50;
       
-      const inputDecimals = getTokenDecimals(inputMint);
-      const amountSmallest = toSmallestUnit(amount, inputDecimals);
+      const amountSmallest = toSmallestUnit(amount, inputToken.decimals);
       
-      const quote = await getSwapQuote(inputMint, outputMint, amountSmallest, slippageBps);
-      const outputDecimals = getTokenDecimals(outputMint);
+      const quote = await getSwapQuote(inputToken.address, outputToken.address, amountSmallest, slippageBps);
       
       return {
+        inputToken: inputToken.symbol,
+        outputToken: outputToken.symbol,
         inputAmount: amount,
-        outputAmount: fromSmallestUnit(parseInt(quote.outAmount), outputDecimals),
+        outputAmount: fromSmallestUnit(parseInt(quote.outAmount), outputToken.decimals),
         priceImpact: quote.priceImpactPct,
         route: quote.routePlan.map((r) => r.swapInfo.label).join(" -> "),
       };
@@ -705,18 +783,26 @@ export async function executeTool(
         return { error: "Wallet not found" };
       }
       
-      const inputMint = resolveTokenMint(args.inputToken as string);
-      const outputMint = resolveTokenMint(args.outputToken as string);
-      const amount = args.amount as number;
-      const slippageBps = (args.slippageBps as number) || 50;
+      // Resolve tokens with search fallback
+      const inputToken = await resolveTokenMintWithSearch(args.inputToken as string);
+      const outputToken = await resolveTokenMintWithSearch(args.outputToken as string);
       
-      const inputDecimals = getTokenDecimals(inputMint);
-      const amountSmallest = toSmallestUnit(amount, inputDecimals);
+      if (!inputToken) {
+        return { error: `Could not find token: ${args.inputToken}. Please provide the contract address (CA).` };
+      }
+      if (!outputToken) {
+        return { error: `Could not find token: ${args.outputToken}. Please provide the contract address (CA).` };
+      }
+      
+      const amount = args.amount as number;
+      const slippageBps = (args.slippageBps as number) || 100; // Default 1% for memecoins
+      
+      const amountSmallest = toSmallestUnit(amount, inputToken.decimals);
       
       const result = await executeSwap(
         user.wallet.encryptedPrivateKey,
-        inputMint,
-        outputMint,
+        inputToken.address,
+        outputToken.address,
         amountSmallest,
         slippageBps
       );
@@ -724,8 +810,10 @@ export async function executeTool(
       return {
         success: true,
         signature: result.signature,
+        inputToken: inputToken.symbol,
+        outputToken: outputToken.symbol,
         inputAmount: amount,
-        outputAmount: fromSmallestUnit(parseInt(result.outputAmount), getTokenDecimals(outputMint)),
+        outputAmount: fromSmallestUnit(parseInt(result.outputAmount), outputToken.decimals),
         priceImpact: result.priceImpact,
         explorerUrl: `https://solscan.io/tx/${result.signature}`,
       };

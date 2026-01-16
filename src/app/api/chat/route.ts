@@ -46,11 +46,11 @@ TOOLS:
 - get_balance: check user's SOL and token balances
 - create_strategy: save automated trading strategies
 
-TOKEN ADDRESSES (common ones):
-- SOL: use "SOL" 
-- USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-- BONK: DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263
-- WIF: EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm
+TOKEN RESOLUTION:
+- known tokens work by name: SOL, USDC, BONK, WIF, JUP, RAY, etc.
+- for any other token, just use the name/symbol and i'll search for it (e.g., "POPCAT", "FARTCOIN")
+- if search fails, user can provide the contract address (CA) directly
+- the CA is the solana mint address (e.g., "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr")
 
 be concise, friendly, lowercase. for trades, confirm first then execute.`,
 
