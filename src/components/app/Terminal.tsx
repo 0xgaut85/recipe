@@ -40,12 +40,6 @@ interface TerminalProps {
   onStepChange: (step: CookingStep) => void;
 }
 
-const nextStep: Record<CookingStep, CookingStep | null> = {
-  describe: "cook",
-  cook: "taste",
-  taste: "serve",
-  serve: null,
-};
 
 export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
   const { disconnect, publicKey } = useWallet();
@@ -166,12 +160,6 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
     }
   };
 
-  const handleStepComplete = (step: CookingStep) => {
-    const next = nextStep[step];
-    if (next) {
-      onStepChange(next);
-    }
-  };
 
   const copyAddress = () => {
     if (walletData?.publicKey) {
@@ -338,8 +326,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
         >
           <ChatPanel
             currentStep={currentStep}
-            onStepComplete={handleStepComplete}
-            onJumpToStep={onStepChange}
+            onProgressUpdate={onStepChange}
           />
         </motion.div>
 

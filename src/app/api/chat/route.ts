@@ -5,7 +5,7 @@ import { applyRateLimit, rateLimiters } from "@/lib/rate-limit";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const MAX_TOOL_ITERATIONS = 10; // Prevent infinite tool loops
+const MAX_TOOL_ITERATIONS = 10;
 
 interface Message {
   role: "user" | "assistant";
@@ -24,128 +24,72 @@ interface ContentBlock {
 
 interface ChatRequest {
   messages: Message[];
-  step: "describe" | "cook" | "taste" | "serve";
 }
 
-const systemPrompts: Record<string, string> = {
-  describe: `you are recipe, an ai trading assistant on solana.
+// Single unified system prompt - no more phase switching
+const SYSTEM_PROMPT = `you are recipe, an ai trading assistant on solana.
 
-USER IS DESCRIBING THEIR STRATEGY. your job:
-1. acknowledge what they want
-2. summarize the key details you understood  
-3. end with: "let's set up the details..."
+CAPABILITIES:
+- create trading strategies (snipers, spot trades, conditional triggers)
+- execute immediate trades (buy/sell tokens)
+- check token prices, market data, wallet balances
+- manage existing strategies
 
-EXAMPLE RESPONSE:
-"got it! you want to snipe new pairs with 'claude' in the name, 0.1 SOL per trade, with 2x take profit and -30% stop loss. let's set up the details..."
+STRATEGY CREATION FLOW:
+1. user describes what they want
+2. if anything is unclear, ask 1-2 questions (amount, filters, etc)
+3. show the complete config summary
+4. when user confirms (yes, yeah, do it, go, deploy, ok), call create_strategy tool
+5. after tool succeeds, confirm strategy is live
 
-IMMEDIATE TRADES: if user says "buy X" or "sell X" directly (not a strategy), use execute_spot_trade tool immediately.
+IMMEDIATE TRADES:
+if user says "buy X" or "sell X" directly, use execute_spot_trade tool immediately.
 
-always be concise, lowercase, helpful.`,
+STRATEGY PARAMETERS (for snipers):
+- amount (SOL) - REQUIRED
+- maxAgeMinutes (default 30)
+- minLiquidity (default $5k)
+- minVolume (default $10k)
+- minMarketCap (default $10k)
+- nameFilter (optional - filter by token name)
+- takeProfit % (optional)
+- stopLoss % (optional)
 
-  cook: `you are recipe, an ai trading assistant on solana.
-
-GATHERING STRATEGY PARAMETERS. check what's already provided:
-- trade amount (SOL) - REQUIRED
-- max age (default: 30 min)
-- min liquidity (default: $5k)
-- min volume (default: $10k)
-- min mcap (default: $10k)
-- name filter (optional)
-- take profit % (optional)
-- stop loss % (optional)
-
-IF ALL KEY PARAMS ARE PROVIDED (at least: amount + one filter):
-summarize the complete config and end with: "ready to deploy? just say yes!"
-
-IF MISSING KEY INFO:
-ask 1-2 specific questions to fill the gaps.
-
-EXAMPLE (all params ready):
-"perfect! here's your strategy:
-🎯 claude sniper
-- amount: 0.1 SOL per trade
-- max age: 15 min
-- min liquidity: $5k
-- min volume: $20k
-- min mcap: $15k
-- take profit: 100% (2x)
-- stop loss: -30%
-
-ready to deploy? just say yes!"
-
-always be concise, lowercase, helpful.`,
-
-  taste: `you are recipe, an ai trading assistant on solana.
-
-FINAL CONFIRMATION PHASE.
-
-CRITICAL RULES:
-- When user says YES, YEAH, DO IT, DEPLOY, GO, CONFIRM, OK, SURE, LET'S GO, or similar confirmation:
-  YOU MUST CALL THE create_strategy TOOL IMMEDIATELY.
-- DO NOT just say "strategy deployed" without calling the tool.
-- The strategy is NOT created until you actually call create_strategy.
-- If you don't call the tool, the strategy won't exist.
-
-IF FIRST MESSAGE IN TASTE PHASE (no confirmation yet):
-Show the config summary and ask for confirmation:
+WHEN SHOWING CONFIG:
 "🎯 [strategy name]
 - amount: X SOL
-- [all filters listed]
-- take profit / stop loss
+- max age: X min
+- min liquidity: $Xk
+- min volume: $Xk
+- min mcap: $Xk
+- name filter: [if any]
+- take profit: X% / stop loss: X%
 
-ready to launch? say yes!"
+ready to deploy? say yes!"
 
 WHEN USER CONFIRMS:
-1. Call create_strategy tool with these params:
+call create_strategy with all params. example:
 {
-  "name": "[descriptive name]",
-  "description": "[what it does]", 
+  "name": "claude sniper",
+  "description": "snipes new pairs with claude in name",
   "type": "SNIPER",
-  "amount": [number],
-  "maxAgeMinutes": [number],
-  "minLiquidity": [number],
-  "minVolume": [number],
-  "minMarketCap": [number],
-  "nameFilter": "[string if provided]",
-  "takeProfit": [number if provided],
-  "stopLoss": [number if provided],
+  "amount": 0.1,
+  "maxAgeMinutes": 15,
+  "minLiquidity": 5000,
+  "minVolume": 20000,
+  "minMarketCap": 15000,
+  "nameFilter": "claude",
+  "takeProfit": 100,
+  "stopLoss": 30,
   "slippageBps": 300
 }
-2. After tool succeeds, confirm it's live.
 
-REMEMBER: You MUST call create_strategy tool. No exceptions.`,
+AFTER STRATEGY CREATED:
+"🚀 your [name] is now live! check the strategies panel (📊) to monitor it."
 
-  serve: `you are recipe, an ai trading assistant on solana.
+STYLE: be concise, lowercase, helpful, use emojis sparingly.`;
 
-STRATEGY IS NOW LIVE! your job:
-1. confirm the strategy was created successfully
-2. explain what it will do
-3. tell user next steps
-
-EXAMPLE:
-"🚀 your claude sniper is now live!
-
-it will automatically:
-- scan for new pairs with 'claude' in the name
-- buy 0.1 SOL when filters match
-- sell at 2x profit or -30% loss
-
-you can:
-- view it in the strategies panel (📊 icon)
-- pause or stop it anytime
-- ask me about its status
-
-happy trading! 🍳"
-
-always be concise, lowercase, celebratory.`,
-};
-
-/**
- * Make a non-streaming request to Claude API
- * Used for tool result continuation
- */
 async function makeClaudeRequest(
-  systemPrompt: string,
   messages: Message[]
 ): Promise<{
   content: ContentBlock[];
@@ -161,7 +105,7 @@ async function makeClaudeRequest(
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
       max_tokens: 4096,
-      system: systemPrompt,
+      system: SYSTEM_PROMPT,
       messages,
       tools: toolDefinitions,
     }),
@@ -176,7 +120,6 @@ async function makeClaudeRequest(
 }
 
 export async function POST(request: NextRequest) {
-  // Apply rate limiting for chat (30 per minute)
   const rateLimitResult = applyRateLimit(request, rateLimiters.chat);
   if (rateLimitResult) {
     return rateLimitResult.response;
@@ -191,22 +134,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: ChatRequest = await request.json();
-    const { messages: inputMessages, step } = body;
+    const { messages: inputMessages } = body;
 
-    if (!inputMessages || !step) {
+    if (!inputMessages) {
       return new Response(
-        JSON.stringify({ error: "missing messages or step" }),
+        JSON.stringify({ error: "missing messages" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
     const userId = await getCurrentUserId();
-    const systemPrompt = systemPrompts[step] || systemPrompts.describe;
 
-    // Convert simple messages to Anthropic format, filtering out empty messages
+    // Filter out empty messages
     let conversationMessages: Message[] = inputMessages
       .filter((m) => {
-        // Filter out messages with empty content
         if (!m.content) return false;
         if (typeof m.content === "string" && m.content.trim() === "") return false;
         if (Array.isArray(m.content) && m.content.length === 0) return false;
@@ -228,21 +169,14 @@ export async function POST(request: NextRequest) {
           while (continueLoop && iterations < MAX_TOOL_ITERATIONS) {
             iterations++;
 
-            // Make request to Claude
-            const response = await makeClaudeRequest(
-              systemPrompt,
-              conversationMessages
-            );
+            const response = await makeClaudeRequest(conversationMessages);
 
-            // Process response content
             const toolUses: ContentBlock[] = [];
-            let hasText = false;
-            let shouldAdvanceStep = false;
+            let aiResponseText = "";
 
             for (const block of response.content) {
               if (block.type === "text" && block.text) {
-                hasText = true;
-                // Stream text content to client
+                aiResponseText += block.text;
                 controller.enqueue(
                   encoder.encode(
                     `data: ${JSON.stringify({ content: block.text })}\n\n`
@@ -250,7 +184,6 @@ export async function POST(request: NextRequest) {
                 );
               } else if (block.type === "tool_use") {
                 toolUses.push(block);
-                // Notify client about tool use
                 controller.enqueue(
                   encoder.encode(
                     `data: ${JSON.stringify({
@@ -262,15 +195,29 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            // If there are tool uses, execute them and continue
+            // Detect progress based on conversation content
+            const lowerText = aiResponseText.toLowerCase();
+            
+            // Progress: "cook" - AI showed strategy config
+            if (lowerText.includes("🎯") || lowerText.includes("here's your strategy") || lowerText.includes("strategy config")) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ progress: "cook" })}\n\n`)
+              );
+            }
+            
+            // Progress: "taste" - AI asked for confirmation
+            if (lowerText.includes("ready to deploy") || lowerText.includes("say yes") || lowerText.includes("ready to launch")) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ progress: "taste" })}\n\n`)
+              );
+            }
+
             if (toolUses.length > 0) {
-              // Add assistant message with tool uses
               conversationMessages.push({
                 role: "assistant",
                 content: response.content,
               });
 
-              // Execute tools and collect results
               const toolResults: ContentBlock[] = [];
 
               for (const toolUse of toolUses) {
@@ -281,18 +228,13 @@ export async function POST(request: NextRequest) {
                     userId || undefined
                   );
 
-                  // Check if strategy was created - advance to serve
-                  if (toolUse.name === "create_strategy" && result && typeof result === "object" && "success" in result && (result as any).success) {
-                    // Strategy created - always advance to serve phase
+                  // Progress: "serve" - strategy was created
+                  if (toolUse.name === "create_strategy" && result && typeof result === "object" && "success" in result && (result as { success: boolean }).success) {
                     controller.enqueue(
-                      encoder.encode(
-                        `data: ${JSON.stringify({ advanceToStep: "serve" })}\n\n`
-                      )
+                      encoder.encode(`data: ${JSON.stringify({ progress: "serve" })}\n\n`)
                     );
-                    shouldAdvanceStep = true;
                   }
 
-                  // Send tool result to client
                   controller.enqueue(
                     encoder.encode(
                       `data: ${JSON.stringify({
@@ -303,7 +245,6 @@ export async function POST(request: NextRequest) {
                     )
                   );
 
-                  // Ensure tool result content is never empty
                   const resultContent = result ? JSON.stringify(result) : JSON.stringify({ success: true });
                   toolResults.push({
                     type: "tool_result",
@@ -313,16 +254,12 @@ export async function POST(request: NextRequest) {
                 } catch (toolError) {
                   console.error(`Tool ${toolUse.name} error:`, toolError);
 
-                  // Send error to client
                   controller.enqueue(
                     encoder.encode(
                       `data: ${JSON.stringify({
                         type: "tool_error",
                         tool: toolUse.name,
-                        error:
-                          toolError instanceof Error
-                            ? toolError.message
-                            : "Tool execution failed",
+                        error: toolError instanceof Error ? toolError.message : "Tool execution failed",
                       })}\n\n`
                     )
                   );
@@ -331,81 +268,34 @@ export async function POST(request: NextRequest) {
                     type: "tool_result",
                     tool_use_id: toolUse.id,
                     content: JSON.stringify({
-                      error:
-                        toolError instanceof Error
-                          ? toolError.message
-                          : "Tool execution failed",
+                      error: toolError instanceof Error ? toolError.message : "Tool execution failed",
                     }),
                   });
                 }
               }
-              
-              // Send step complete signal if strategy was created or trade executed
-              if (shouldAdvanceStep) {
-                controller.enqueue(
-                  encoder.encode(
-                    `data: ${JSON.stringify({ stepComplete: true })}\n\n`
-                  )
-                );
-              }
 
-              // Add user message with tool results
               conversationMessages.push({
                 role: "user",
                 content: toolResults,
               });
 
-              // Continue loop to get Claude's response to tool results
               continueLoop = true;
             } else {
-              // No tool uses, we're done
               continueLoop = false;
             }
 
-            // Check stop reason
             if (response.stop_reason === "end_turn") {
               continueLoop = false;
               
-              // Auto-advance phases (only if not already advanced via tool)
-              if (!shouldAdvanceStep) {
-                if (step === "describe") {
-                  // describe -> cook: always advance after AI responds
-                  controller.enqueue(
-                    encoder.encode(
-                      `data: ${JSON.stringify({ advanceToStep: "cook" })}\n\n`
-                    )
-                  );
-                } else if (step === "cook") {
-                  // cook -> taste: check if AI's response indicates config is complete
-                  // Look for phrases like "ready to deploy", "say yes", "confirm"
-                  const aiText = response.content
-                    .filter((b): b is { type: "text"; text: string } => b.type === "text" && !!b.text)
-                    .map((b) => b.text)
-                    .join(" ")
-                    .toLowerCase();
-                  
-                  const configComplete = 
-                    aiText.includes("ready to deploy") ||
-                    aiText.includes("say yes") ||
-                    aiText.includes("confirm to") ||
-                    aiText.includes("ready to launch") ||
-                    aiText.includes("just say yes");
-                  
-                  if (configComplete) {
-                    controller.enqueue(
-                      encoder.encode(
-                        `data: ${JSON.stringify({ advanceToStep: "taste" })}\n\n`
-                      )
-                    );
-                  }
-                }
-                // taste -> serve happens via create_strategy tool call
-                // serve is the final phase, no more advances
+              // Progress: "describe" - AI responded to user's first message
+              if (conversationMessages.length <= 2) {
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ progress: "describe" })}\n\n`)
+                );
               }
             }
           }
 
-          // Send done signal
           controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
         } catch (error) {
           console.error("Chat stream error:", error);
@@ -413,10 +303,7 @@ export async function POST(request: NextRequest) {
             encoder.encode(
               `data: ${JSON.stringify({
                 type: "error",
-                error:
-                  error instanceof Error
-                    ? error.message
-                    : "An error occurred",
+                error: error instanceof Error ? error.message : "An error occurred",
               })}\n\n`
             )
           );

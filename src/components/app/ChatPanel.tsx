@@ -6,47 +6,25 @@ import type { CookingStep } from "@/app/app/page";
 
 interface Message {
   id: string;
-  role: "user" | "assistant" | "system";
+  role: "user" | "assistant";
   content: string;
   timestamp: Date;
 }
 
 interface ChatPanelProps {
   currentStep: CookingStep;
-  onStepComplete: (step: CookingStep) => void;
-  onJumpToStep?: (step: CookingStep) => void;
+  onProgressUpdate: (step: CookingStep) => void;
 }
-
-const stepPrompts: Record<CookingStep, string> = {
-  describe: "describe your trading strategy or what you want to achieve...",
-  cook: "refining your strategy...",
-  taste: "verifying your strategy...",
-  serve: "your strategy is live!",
-};
-
-const stepNames: Record<CookingStep, string> = {
-  describe: "describe",
-  cook: "cook",
-  taste: "taste",
-  serve: "serve",
-};
 
 export const ChatPanel: FC<ChatPanelProps> = ({
   currentStep,
-  onStepComplete,
-  onJumpToStep,
+  onProgressUpdate,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  
-  // Use a ref to always have the latest step value for API calls
-  const effectiveStepRef = useRef<CookingStep>(currentStep);
-  
-  // Track the previous step to show transition messages
-  const prevStepRef = useRef<CookingStep>(currentStep);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,23 +34,9 @@ export const ChatPanel: FC<ChatPanelProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Update the ref whenever currentStep changes from props
   useEffect(() => {
-    effectiveStepRef.current = currentStep;
     inputRef.current?.focus();
-    
-    // Show simple phase indicator (Claude provides the guidance)
-    if (prevStepRef.current !== currentStep && messages.length > 0) {
-      const transitionMessage: Message = {
-        id: `transition-${Date.now()}`,
-        role: "system",
-        content: `— ${stepNames[currentStep]} —`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, transitionMessage]);
-    }
-    prevStepRef.current = currentStep;
-  }, [currentStep, messages.length]);
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -89,56 +53,50 @@ export const ChatPanel: FC<ChatPanelProps> = ({
     setInput("");
     setIsLoading(true);
 
-    // Use the ref to get the current step (most up-to-date value)
-    const stepToUse = effectiveStepRef.current;
-
     try {
-      // Filter out system messages for the API call
-      const apiMessages = [...messages, userMessage]
-        .filter((m) => m.role !== "system")
-        .map((m) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        }));
+      // Send all messages to the API (single continuous chat)
+      const apiMessages = [...messages, userMessage].map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
 
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: apiMessages,
-          step: stepToUse,
-        }),
+        body: JSON.stringify({ messages: apiMessages }),
       });
 
       if (!response.ok) throw new Error("Failed to get response");
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: "",
         timestamp: new Date(),
       };
-      
+
       setMessages((prev) => [...prev, assistantMessage]);
 
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
+
           const chunk = decoder.decode(value);
           const lines = chunk.split("\n");
-          
+
           for (const line of lines) {
             if (line.startsWith("data: ")) {
               const data = line.slice(6);
               if (data === "[DONE]") continue;
-              
+
               try {
                 const parsed = JSON.parse(data);
+                
+                // Append content to the assistant message
                 if (parsed.content) {
                   setMessages((prev) => {
                     const updated = [...prev];
@@ -149,21 +107,10 @@ export const ChatPanel: FC<ChatPanelProps> = ({
                     return updated;
                   });
                 }
-                // Handle specific step advancement (jump directly to a step)
-                if (parsed.advanceToStep) {
-                  const newStep = parsed.advanceToStep as CookingStep;
-                  // Update the ref immediately so next API call uses new step
-                  effectiveStepRef.current = newStep;
-                  
-                  if (onJumpToStep) {
-                    onJumpToStep(newStep);
-                  } else {
-                    onStepComplete(stepToUse);
-                  }
-                }
-                // Legacy support for generic step complete
-                if (parsed.stepComplete) {
-                  onStepComplete(stepToUse);
+                
+                // Update progress indicator based on signals from backend
+                if (parsed.progress) {
+                  onProgressUpdate(parsed.progress as CookingStep);
                 }
               } catch {
                 // Skip invalid JSON
@@ -206,25 +153,19 @@ export const ChatPanel: FC<ChatPanelProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-12"
           >
-            <div className="font-mono text-white/30 text-xs mb-4">
-              step {currentStep === "describe" ? "01" : currentStep === "cook" ? "02" : currentStep === "taste" ? "03" : "04"}
-            </div>
+            <div className="text-4xl mb-4">🍳</div>
             <h3 className="font-display text-2xl font-bold text-white mb-3 lowercase">
-              {currentStep === "describe" && "what do you want to cook?"}
-              {currentStep === "cook" && "let's refine the recipe"}
-              {currentStep === "taste" && "time to taste test"}
-              {currentStep === "serve" && "ready to serve?"}
+              what do you want to cook?
             </h3>
             <p className="text-white/50 max-w-md mx-auto lowercase">
-              {currentStep === "describe" &&
-                "describe your trading idea in natural language. be specific about tokens, conditions, and goals."}
-              {currentStep === "cook" &&
-                "i'll help you refine the parameters and logic of your strategy."}
-              {currentStep === "taste" &&
-                "let's test your strategy against live market data before executing."}
-              {currentStep === "serve" &&
-                "review the final strategy and confirm to execute on solana."}
+              describe your trading strategy in natural language. i&apos;ll help you set it up and deploy it on solana.
             </p>
+            <div className="mt-6 text-white/30 text-sm space-y-1">
+              <p>examples:</p>
+              <p className="text-white/50">snipe new pairs with &apos;ai&apos; in the name, 0.1 SOL each</p>
+              <p className="text-white/50">buy 0.5 SOL of BONK</p>
+              <p className="text-white/50">create a strategy to buy when RSI drops below 30</p>
+            </div>
           </motion.div>
         )}
 
@@ -236,43 +177,29 @@ export const ChatPanel: FC<ChatPanelProps> = ({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className={`flex ${
-                message.role === "user" 
-                  ? "justify-end" 
-                  : message.role === "system" 
-                  ? "justify-center" 
-                  : "justify-start"
-              }`}
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {message.role === "system" ? (
-                <div className="text-center py-2 px-4">
-                  <span className="text-xs text-accent-pink/70 font-mono uppercase tracking-wider">
-                    {message.content}
-                  </span>
-                </div>
-              ) : (
+              <div
+                className={`max-w-[80%] rounded-2xl px-5 py-3 ${
+                  message.role === "user"
+                    ? "bg-accent-pink text-black"
+                    : "bg-white/10 text-white"
+                }`}
+              >
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {message.content}
+                </p>
                 <div
-                  className={`max-w-[80%] rounded-2xl px-5 py-3 ${
-                    message.role === "user"
-                      ? "bg-accent-pink text-black"
-                      : "bg-white/10 text-white"
+                  className={`text-xs mt-2 ${
+                    message.role === "user" ? "text-black/40" : "text-white/30"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {message.content}
-                  </p>
-                  <div
-                    className={`text-xs mt-2 ${
-                      message.role === "user" ? "text-black/40" : "text-white/30"
-                    }`}
-                  >
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
+                  {message.timestamp.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </div>
-              )}
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>
@@ -314,7 +241,7 @@ export const ChatPanel: FC<ChatPanelProps> = ({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={stepPrompts[currentStep]}
+            placeholder="describe your trading strategy..."
             disabled={isLoading}
             rows={1}
             className="w-full bg-white/5 border-2 border-white/10 rounded-xl px-5 py-4 pr-14 text-white placeholder-white/30 resize-none focus:outline-none focus:border-accent-pink/50 transition-colors disabled:opacity-50"
