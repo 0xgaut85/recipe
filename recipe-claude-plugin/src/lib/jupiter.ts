@@ -114,7 +114,7 @@ export async function getQuote(
     throw new Error(`Jupiter quote error: ${error}`);
   }
 
-  const quote: QuoteResponse = await response.json();
+  const quote = await response.json() as QuoteResponse;
 
   const inputAmount = fromSmallestUnit(parseInt(quote.inAmount), inputDecimals);
   const outputAmount = fromSmallestUnit(parseInt(quote.outAmount), outputDecimals);
@@ -167,7 +167,7 @@ export async function executeSwap(
   if (!quoteResponse.ok) {
     throw new Error(`Jupiter quote error: ${quoteResponse.status}`);
   }
-  const quote: QuoteResponse = await quoteResponse.json();
+  const quote = await quoteResponse.json() as QuoteResponse;
 
   // Get swap transaction
   const swapResponse = await fetch(`${JUPITER_API}/swap`, {
@@ -187,7 +187,8 @@ export async function executeSwap(
     throw new Error(`Jupiter swap error: ${error}`);
   }
 
-  const { swapTransaction } = await swapResponse.json();
+  const swapResult = await swapResponse.json() as { swapTransaction: string };
+  const { swapTransaction } = swapResult;
 
   // Deserialize and sign
   const swapTransactionBuf = Buffer.from(swapTransaction, "base64");
@@ -241,7 +242,7 @@ export async function getTokenPrice(token: string): Promise<number> {
       return 0;
     }
 
-    const quote: QuoteResponse = await response.json();
+    const quote = await response.json() as QuoteResponse;
     return parseInt(quote.outAmount) / 1e6; // USDC has 6 decimals
   } catch {
     return 0;

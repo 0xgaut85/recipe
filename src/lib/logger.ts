@@ -102,7 +102,7 @@ export function logExternalApi(
  * Log a trade execution
  */
 export function logTrade(
-  type: "spot" | "perp",
+  type: "spot",
   action: "execute" | "quote",
   userId: string,
   details: Record<string, unknown>,

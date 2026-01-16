@@ -64,7 +64,7 @@ export async function getTrending(): Promise<TrendingData> {
     throw new Error(`Failed to fetch trending data: ${response.status}`);
   }
 
-  return response.json();
+  return response.json() as Promise<TrendingData>;
 }
 
 /**
@@ -77,7 +77,24 @@ export async function getWalletBalances(address: string): Promise<WalletData> {
     throw new Error(`Failed to fetch wallet data: ${response.status}`);
   }
 
-  return response.json();
+  return response.json() as Promise<WalletData>;
+}
+
+interface DexScreenerResponse {
+  pairs?: DexScreenerPair[];
+}
+
+interface DexScreenerPair {
+  chainId: string;
+  baseToken: { symbol: string; name: string; address: string };
+  priceUsd: string;
+  priceChange?: { h24?: number };
+  volume?: { h24?: number };
+  liquidity?: { usd?: number };
+  marketCap?: number;
+  fdv?: number;
+  dexId: string;
+  url: string;
 }
 
 /**
@@ -103,20 +120,10 @@ export async function searchTokens(query: string): Promise<Array<{
     throw new Error(`DexScreener search failed: ${response.status}`);
   }
 
-  const data = await response.json();
-  const pairs = (data.pairs || []).filter((p: { chainId: string }) => p.chainId === "solana");
+  const data = await response.json() as DexScreenerResponse;
+  const pairs = (data.pairs || []).filter((p) => p.chainId === "solana");
 
-  return pairs.slice(0, 10).map((pair: {
-    baseToken: { symbol: string; name: string; address: string };
-    priceUsd: string;
-    priceChange?: { h24?: number };
-    volume?: { h24?: number };
-    liquidity?: { usd?: number };
-    marketCap?: number;
-    fdv?: number;
-    dexId: string;
-    url: string;
-  }) => ({
+  return pairs.slice(0, 10).map((pair) => ({
     symbol: pair.baseToken.symbol,
     name: pair.baseToken.name,
     address: pair.baseToken.address,
@@ -153,8 +160,8 @@ export async function getTokenInfo(address: string): Promise<{
     return null;
   }
 
-  const data = await response.json();
-  const pairs = (data.pairs || []).filter((p: { chainId: string }) => p.chainId === "solana");
+  const data = await response.json() as DexScreenerResponse;
+  const pairs = (data.pairs || []).filter((p) => p.chainId === "solana");
 
   if (pairs.length === 0) {
     return null;
@@ -173,6 +180,20 @@ export async function getTokenInfo(address: string): Promise<{
     dex: pair.dexId,
     url: pair.url,
   };
+}
+
+interface PumpFunToken {
+  symbol: string;
+  name: string;
+  mint: string;
+  description: string;
+  usd_market_cap: number;
+  complete: boolean;
+  creator: string;
+  created_timestamp: number;
+  twitter: string | null;
+  telegram: string | null;
+  website: string | null;
 }
 
 /**
@@ -199,21 +220,9 @@ export async function getNewLaunches(limit: number = 10): Promise<Array<{
     throw new Error(`Pump.fun API failed: ${response.status}`);
   }
 
-  const tokens = await response.json();
+  const tokens = await response.json() as PumpFunToken[];
 
-  return tokens.map((token: {
-    symbol: string;
-    name: string;
-    mint: string;
-    description: string;
-    usd_market_cap: number;
-    complete: boolean;
-    creator: string;
-    created_timestamp: number;
-    twitter: string | null;
-    telegram: string | null;
-    website: string | null;
-  }) => ({
+  return tokens.map((token) => ({
     symbol: token.symbol,
     name: token.name,
     mint: token.mint,

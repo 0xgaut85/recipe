@@ -20,7 +20,6 @@ import {
 import { calculateEMA, calculateRSI, getLatestIndicators } from "./indicators";
 import { getBalance, getTokenAccounts, isValidPublicKey } from "./wallet";
 import { getSwapQuote, executeSwap, TOKEN_MINTS, getTokenDecimals, toSmallestUnit, fromSmallestUnit } from "./jupiter";
-import { getDriftMarketData, getAllDriftMarkets, placeDriftOrder, DriftMarket, DRIFT_MARKETS } from "./drift";
 import prisma from "./prisma";
 
 /**
@@ -269,41 +268,6 @@ export const toolDefinitions = [
       required: ["inputToken", "outputToken", "amount"],
     },
   },
-  {
-    name: "get_perp_markets",
-    description: "Get available perpetual markets on Drift",
-    input_schema: {
-      type: "object",
-      properties: {},
-    },
-  },
-  {
-    name: "execute_perp_trade",
-    description: "Open a perpetual position on Drift. Note: Full execution requires SDK on compatible platform.",
-    input_schema: {
-      type: "object",
-      properties: {
-        market: {
-          type: "string",
-          description: "Market symbol (e.g., 'SOL-PERP', 'BTC-PERP')",
-        },
-        direction: {
-          type: "string",
-          enum: ["long", "short"],
-          description: "Trade direction",
-        },
-        size: {
-          type: "number",
-          description: "Position size in base asset",
-        },
-        leverage: {
-          type: "number",
-          description: "Leverage (1-20x)",
-        },
-      },
-      required: ["market", "direction", "size", "leverage"],
-    },
-  },
 
   // Wallet Tools
   {
@@ -334,7 +298,7 @@ export const toolDefinitions = [
   },
   {
     name: "create_strategy",
-    description: "Create and save a trading strategy for the user. Supports spot trades, perp trades, new pair sniping, and conditional/indicator-based strategies. Call this when the user confirms they want to save/deploy a strategy.",
+    description: "Create and save a trading strategy for the user. Supports spot trades, new pair sniping, and conditional/indicator-based strategies. Call this when the user confirms they want to save/deploy a strategy.",
     input_schema: {
       type: "object",
       properties: {
@@ -348,8 +312,8 @@ export const toolDefinitions = [
         },
         type: {
           type: "string",
-          enum: ["SPOT", "PERP", "SNIPER", "CONDITIONAL"],
-          description: "Type of strategy: SPOT for swaps, PERP for perpetuals, SNIPER for new pair sniping, CONDITIONAL for indicator-based triggers",
+          enum: ["SPOT", "SNIPER", "CONDITIONAL"],
+          description: "Type of strategy: SPOT for swaps, SNIPER for new pair sniping, CONDITIONAL for indicator-based triggers",
         },
         inputToken: {
           type: "string",
@@ -365,12 +329,8 @@ export const toolDefinitions = [
         },
         direction: {
           type: "string",
-          enum: ["buy", "sell", "long", "short"],
+          enum: ["buy", "sell"],
           description: "Trade direction",
-        },
-        leverage: {
-          type: "number",
-          description: "Leverage for perp trades (1-20)",
         },
         stopLoss: {
           type: "number",
@@ -852,41 +812,6 @@ export async function executeTool(
       };
     }
 
-    case "get_perp_markets": {
-      const markets = await getAllDriftMarkets();
-      return { markets };
-    }
-
-    case "execute_perp_trade": {
-      if (!userId) {
-        return { error: "Authentication required" };
-      }
-      
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { wallet: true },
-      });
-      
-      if (!user?.wallet) {
-        return { error: "Wallet not found" };
-      }
-      
-      const market = args.market as DriftMarket;
-      if (!(market in DRIFT_MARKETS)) {
-        return { error: "Invalid market" };
-      }
-      
-      const result = await placeDriftOrder(
-        user.wallet.encryptedPrivateKey,
-        market,
-        args.direction as "long" | "short",
-        args.size as number,
-        args.leverage as number
-      );
-      
-      return result;
-    }
-
     case "get_balance": {
       if (!userId) {
         return { error: "Authentication required" };
@@ -938,7 +863,6 @@ export async function executeTool(
         direction?: string;
         stopLoss?: number;
         takeProfit?: number;
-        leverage?: number;
         maxAgeMinutes?: number;
         minLiquidity?: number;
         maxLiquidity?: number;
@@ -965,15 +889,6 @@ export async function executeTool(
           inputToken: args.inputToken as string,
           outputToken: args.outputToken as string,
           direction: args.direction as string,
-          stopLoss: args.stopLoss as number | undefined,
-          takeProfit: args.takeProfit as number | undefined,
-        };
-      } else if (strategyType === "PERP") {
-        config = {
-          ...config,
-          inputToken: args.inputToken as string,
-          direction: args.direction as string,
-          leverage: args.leverage as number,
           stopLoss: args.stopLoss as number | undefined,
           takeProfit: args.takeProfit as number | undefined,
         };
@@ -1026,7 +941,7 @@ export async function executeTool(
         },
       });
 
-      const typeEmoji = strategyType === "SNIPER" ? "🎯" : strategyType === "PERP" ? "📈" : strategyType === "CONDITIONAL" ? "📊" : "💱";
+      const typeEmoji = strategyType === "SNIPER" ? "🎯" : strategyType === "CONDITIONAL" ? "📊" : "💱";
       
       return {
         success: true,

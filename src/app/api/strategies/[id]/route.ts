@@ -10,19 +10,35 @@ const updateStrategySchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().min(1).max(1000).optional(),
   config: z.object({
-    type: z.enum(["SPOT", "PERP"]),
+    type: z.enum(["SPOT", "SNIPER", "CONDITIONAL"]),
     token: z.string().optional(),
     inputToken: z.string().optional(),
     outputToken: z.string().optional(),
     amount: z.number().positive().optional(),
-    leverage: z.number().min(1).max(20).optional(),
-    direction: z.enum(["long", "short", "buy", "sell"]).optional(),
+    direction: z.enum(["buy", "sell"]).optional(),
     conditions: z.array(z.object({
       type: z.string(),
       value: z.any(),
     })).optional(),
     stopLoss: z.number().optional(),
     takeProfit: z.number().optional(),
+    // SNIPER specific
+    maxAgeMinutes: z.number().optional(),
+    minLiquidity: z.number().optional(),
+    maxLiquidity: z.number().optional(),
+    minVolume: z.number().optional(),
+    minMarketCap: z.number().optional(),
+    maxMarketCap: z.number().optional(),
+    slippageBps: z.number().optional(),
+    nameFilter: z.string().optional(),
+    // CONDITIONAL specific
+    condition: z.object({
+      indicator: z.enum(["EMA", "RSI", "SMA", "PRICE"]),
+      period: z.number().optional(),
+      timeframe: z.enum(["1m", "5m", "15m", "1H", "4H", "1D"]).optional(),
+      trigger: z.enum(["price_above", "price_below", "price_touches", "crosses_above", "crosses_below"]),
+      value: z.number().optional(),
+    }).optional(),
   }).optional(),
   isActive: z.boolean().optional(),
 });

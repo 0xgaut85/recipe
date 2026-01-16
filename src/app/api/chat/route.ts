@@ -109,7 +109,7 @@ Before saying ANYTHING about the strategy being live or deployed, you MUST call 
 DO NOT say "strategy is live" or "deployed" until AFTER the tool returns success.
 
 Look at the conversation history and extract ALL parameters the user specified:
-- strategy type (SPOT, PERP, SNIPER, or CONDITIONAL)
+- strategy type (SPOT, SNIPER, or CONDITIONAL)
 - trade amount
 - tokens involved
 - conditions/filters
@@ -120,8 +120,7 @@ Then call create_strategy with those parameters.
 STRATEGY TYPES:
 1. SNIPER - for new pair sniping with filters (name, age, liquidity, mcap)
 2. SPOT - for token swaps (buy/sell specific tokens)
-3. PERP - for leverage trading (long/short with leverage)
-4. CONDITIONAL - for indicator-based triggers (buy when EMA crosses, RSI levels, price targets)
+3. CONDITIONAL - for indicator-based triggers (buy when EMA crosses, RSI levels, price targets)
 
 Example SNIPER call:
 {
@@ -163,19 +162,6 @@ Example SPOT call:
   "outputToken": "BONK",
   "amount": 0.5,
   "direction": "buy"
-}
-
-Example PERP call:
-{
-  "name": "SOL 5x Long",
-  "description": "Long SOL with 5x leverage",
-  "type": "PERP",
-  "inputToken": "SOL",
-  "amount": 10,
-  "direction": "long",
-  "leverage": 5,
-  "stopLoss": 10,
-  "takeProfit": 50
 }
 
 ONLY after create_strategy returns success, tell user the strategy is live.

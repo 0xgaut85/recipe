@@ -73,8 +73,8 @@ model Trade {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   signature     String    @unique
-  type          String    // "SPOT" | "PERP"
-  direction     String    // "BUY" | "SELL" | "LONG" | "SHORT"
+  type          String    // "SPOT"
+  direction     String    // "BUY" | "SELL"
   inputToken    String
   outputToken   String
   inputAmount   Float

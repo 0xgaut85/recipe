@@ -25,12 +25,11 @@ interface ConditionConfig {
 }
 
 interface StrategyConfig {
-  type: "SPOT" | "PERP" | "SNIPER" | "CONDITIONAL";
+  type: "SPOT" | "SNIPER" | "CONDITIONAL";
   token?: string;
   inputToken?: string;
   outputToken?: string;
   amount?: number;
-  leverage?: number;
   direction?: string;
   conditions?: Array<{ type: string; value: any }>;
   stopLoss?: number;
@@ -268,9 +267,7 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                               ? "bg-blue-500/20 text-blue-400"
                               : strategy.config.type === "SNIPER"
                               ? "bg-green-500/20 text-green-400"
-                              : strategy.config.type === "CONDITIONAL"
-                              ? "bg-amber-500/20 text-amber-400"
-                              : "bg-purple-500/20 text-purple-400"
+                              : "bg-amber-500/20 text-amber-400"
                           }`}
                         >
                           {strategy.config.type}
@@ -447,14 +444,6 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                           <span className="text-white/40 text-sm">Amount</span>
                           <span className="text-white text-sm">
                             {selectedStrategy.config.amount}
-                          </span>
-                        </div>
-                      )}
-                      {selectedStrategy.config.leverage && (
-                        <div className="flex justify-between">
-                          <span className="text-white/40 text-sm">Leverage</span>
-                          <span className="text-white text-sm">
-                            {selectedStrategy.config.leverage}x
                           </span>
                         </div>
                       )}

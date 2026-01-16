@@ -1,53 +1,9 @@
-import { Tool } from "@modelcontextprotocol/sdk/types.js";
+/**
+ * Strategy MCP Tools
+ * Strategy templates and configuration
+ */
 
-export const strategyTools: Tool[] = [
-  {
-    name: "recipe_strategy_templates",
-    description: "Get available strategy templates for common trading patterns. Each template includes description, parameters, and example configuration.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        category: {
-          type: "string",
-          description: "Filter by category: 'momentum', 'mean_reversion', 'arbitrage', 'copy_trading', or 'all'",
-          enum: ["momentum", "mean_reversion", "arbitrage", "copy_trading", "all"],
-        },
-      },
-    },
-  },
-  {
-    name: "recipe_strategy_create",
-    description: "Create a new strategy configuration from a template with custom parameters.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        template: {
-          type: "string",
-          description: "Template name to use",
-        },
-        parameters: {
-          type: "object",
-          description: "Custom parameters for the strategy",
-        },
-      },
-      required: ["template"],
-    },
-  },
-  {
-    name: "recipe_strategy_validate",
-    description: "Validate a strategy configuration for completeness and safety.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        strategy: {
-          type: "object",
-          description: "Strategy configuration to validate",
-        },
-      },
-      required: ["strategy"],
-    },
-  },
-];
+import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface StrategyTemplate {
   name: string;
@@ -63,7 +19,7 @@ interface StrategyTemplate {
   example: Record<string, unknown>;
 }
 
-const templates: StrategyTemplate[] = [
+const STRATEGY_TEMPLATES: StrategyTemplate[] = [
   {
     name: "volume_spike_entry",
     category: "momentum",
@@ -88,7 +44,7 @@ const templates: StrategyTemplate[] = [
   {
     name: "new_token_sniper",
     category: "momentum",
-    description: "Automatically enter new Pump.fun launches based on criteria like creator history, initial liquidity, and social signals.",
+    description: "Automatically enter new Pump.fun launches based on criteria like market cap and social signals.",
     parameters: [
       { name: "minMarketCap", type: "number", description: "Minimum market cap to enter", required: false, default: 5000 },
       { name: "maxMarketCap", type: "number", description: "Maximum market cap to enter", required: false, default: 100000 },
@@ -144,6 +100,77 @@ const templates: StrategyTemplate[] = [
       onlyBuys: true,
     },
   },
+  {
+    name: "grid_trading",
+    category: "range_trading",
+    description: "Place buy and sell orders at regular intervals within a price range.",
+    parameters: [
+      { name: "token", type: "string", description: "Token to trade", required: true },
+      { name: "lowerPrice", type: "number", description: "Lower bound of price range", required: true },
+      { name: "upperPrice", type: "number", description: "Upper bound of price range", required: true },
+      { name: "gridLevels", type: "number", description: "Number of grid levels", required: true, default: 10 },
+      { name: "positionSize", type: "number", description: "Total position size in SOL", required: true },
+    ],
+    example: {
+      token: "SOL",
+      lowerPrice: 100,
+      upperPrice: 200,
+      gridLevels: 10,
+      positionSize: 5,
+    },
+  },
+];
+
+export const strategyTools: Tool[] = [
+  {
+    name: "recipe_strategy_list",
+    description:
+      "Get available strategy templates for common trading patterns. Each template includes description, parameters, and example configuration.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          enum: ["momentum", "mean_reversion", "copy_trading", "range_trading", "all"],
+          description: "Filter by category or 'all' for all templates",
+        },
+      },
+    },
+  },
+  {
+    name: "recipe_strategy_create",
+    description:
+      "Create a strategy configuration from a template with custom parameters. Returns a complete strategy config.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        template: {
+          type: "string",
+          description: "Template name to use (e.g., 'volume_spike_entry', 'new_token_sniper')",
+        },
+        parameters: {
+          type: "object",
+          description: "Custom parameters for the strategy",
+        },
+      },
+      required: ["template"],
+    },
+  },
+  {
+    name: "recipe_strategy_validate",
+    description:
+      "Validate a strategy configuration for completeness and safety.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        strategy: {
+          type: "object",
+          description: "Strategy configuration to validate",
+        },
+      },
+      required: ["strategy"],
+    },
+  },
 ];
 
 export async function handleStrategyTool(
@@ -151,36 +178,28 @@ export async function handleStrategyTool(
   args: Record<string, unknown> | undefined
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
   switch (name) {
-    case "recipe_strategy_templates": {
+    case "recipe_strategy_list": {
       const category = (args?.category as string) || "all";
 
-      const filtered =
-        category === "all"
-          ? templates
-          : templates.filter((t) => t.category === category);
+      const filtered = category === "all"
+        ? STRATEGY_TEMPLATES
+        : STRATEGY_TEMPLATES.filter((t) => t.category === category);
 
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                count: filtered.length,
-                templates: filtered.map((t) => ({
-                  name: t.name,
-                  category: t.category,
-                  description: t.description,
-                  requiredParams: t.parameters
-                    .filter((p) => p.required)
-                    .map((p) => p.name),
-                  optionalParams: t.parameters
-                    .filter((p) => !p.required)
-                    .map((p) => p.name),
-                })),
-              },
-              null,
-              2
-            ),
+            text: JSON.stringify({
+              count: filtered.length,
+              templates: filtered.map((t) => ({
+                name: t.name,
+                category: t.category,
+                description: t.description,
+                requiredParams: t.parameters.filter((p) => p.required).map((p) => p.name),
+                optionalParams: t.parameters.filter((p) => !p.required).map((p) => p.name),
+                example: t.example,
+              })),
+            }, null, 2),
           },
         ],
       };
@@ -197,14 +216,17 @@ export async function handleStrategyTool(
         };
       }
 
-      const template = templates.find((t) => t.name === templateName);
+      const template = STRATEGY_TEMPLATES.find((t) => t.name === templateName);
 
       if (!template) {
         return {
           content: [
             {
               type: "text",
-              text: `Template '${templateName}' not found. Available: ${templates.map((t) => t.name).join(", ")}`,
+              text: JSON.stringify({
+                error: `Template '${templateName}' not found`,
+                available: STRATEGY_TEMPLATES.map((t) => t.name),
+              }, null, 2),
             },
           ],
           isError: true,
@@ -231,7 +253,12 @@ export async function handleStrategyTool(
           content: [
             {
               type: "text",
-              text: `Missing required parameters: ${missing.join(", ")}`,
+              text: JSON.stringify({
+                error: "Missing required parameters",
+                missing,
+                template: template.name,
+                example: template.example,
+              }, null, 2),
             },
           ],
           isError: true,
@@ -242,17 +269,14 @@ export async function handleStrategyTool(
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                template: template.name,
-                category: template.category,
-                description: template.description,
-                config,
-                status: "ready_to_deploy",
-              },
-              null,
-              2
-            ),
+            text: JSON.stringify({
+              template: template.name,
+              category: template.category,
+              description: template.description,
+              config,
+              status: "ready",
+              note: "This is a strategy configuration. Use the Recipe.money web app to deploy and run strategies.",
+            }, null, 2),
           },
         ],
       };
@@ -284,24 +308,24 @@ export async function handleStrategyTool(
         warnings.push("No stop loss defined - unlimited downside risk");
       }
 
+      if (strategy.leverage && (strategy.leverage as number) > 5) {
+        warnings.push("High leverage (>5x) - increased liquidation risk");
+      }
+
       const isValid = issues.length === 0;
 
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                valid: isValid,
-                issues,
-                warnings,
-                recommendation: isValid
-                  ? "Strategy passes basic validation. Review warnings before deploying."
-                  : "Fix issues before deploying strategy.",
-              },
-              null,
-              2
-            ),
+            text: JSON.stringify({
+              valid: isValid,
+              issues,
+              warnings,
+              recommendation: isValid
+                ? "Strategy passes basic validation. Review warnings before deploying."
+                : "Fix issues before deploying strategy.",
+            }, null, 2),
           },
         ],
       };

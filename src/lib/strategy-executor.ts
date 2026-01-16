@@ -18,7 +18,7 @@ export interface ConditionConfig {
 }
 
 export interface StrategyConfig {
-  type: "SNIPER" | "SPOT" | "PERP" | "CONDITIONAL";
+  type: "SNIPER" | "SPOT" | "CONDITIONAL";
   // Sniper config
   maxAgeMinutes?: number;
   minLiquidity?: number;
@@ -35,8 +35,6 @@ export interface StrategyConfig {
   direction?: string;
   stopLoss?: number;
   takeProfit?: number;
-  // Perp specific
-  leverage?: number;
   // Conditional specific
   condition?: ConditionConfig;
 }

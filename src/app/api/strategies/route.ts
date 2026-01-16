@@ -19,13 +19,12 @@ const createStrategySchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().min(1).max(1000),
   config: z.object({
-    type: z.enum(["SPOT", "PERP", "SNIPER", "CONDITIONAL"]),
+    type: z.enum(["SPOT", "SNIPER", "CONDITIONAL"]),
     token: z.string().optional(),
     inputToken: z.string().optional(),
     outputToken: z.string().optional(),
     amount: z.number().positive().optional(),
-    leverage: z.number().min(1).max(20).optional(),
-    direction: z.enum(["long", "short", "buy", "sell"]).optional(),
+    direction: z.enum(["buy", "sell"]).optional(),
     conditions: z.array(z.object({
       type: z.string(),
       value: z.any(),
