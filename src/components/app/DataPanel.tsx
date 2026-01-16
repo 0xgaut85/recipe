@@ -85,6 +85,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
     createdAt: string;
   } | null>(null);
   const [isStrategyLoading, setIsStrategyLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Update wallet loading state when walletData changes
   useEffect(() => {
@@ -194,6 +195,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
             newPairs,
             highVolume,
           });
+          setLastUpdated(new Date());
         }
       } catch (error) {
         console.error("Failed to fetch market data:", error);
@@ -203,7 +205,8 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
     };
 
     fetchMarketData();
-    const interval = setInterval(fetchMarketData, 30000);
+    // Auto-refresh every 60 seconds (1 minute)
+    const interval = setInterval(fetchMarketData, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -413,7 +416,64 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                 {marketSection === "new" && "🆕 just launched"}
                 {marketSection === "volume" && "📊 high volume"}
               </h3>
-              <span className="text-white/30 text-xs">solana</span>
+              <div className="flex items-center gap-2">
+                {lastUpdated && (
+                  <span className="text-white/20 text-[10px]">
+                    {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    setIsLoading(true);
+                    fetch("/api/data/trending")
+                      .then(res => res.json())
+                      .then(data => {
+                        const hotTokens = (data.hotTokens || []).slice(0, 10).map((t: any) => ({
+                          symbol: t.symbol,
+                          name: t.name,
+                          address: t.address,
+                          logoURI: t.logoURI,
+                          price: t.price || 0,
+                          priceChange24h: t.priceChange24h || 0,
+                          volume24h: t.volume24h || 0,
+                          liquidity: t.liquidity || 0,
+                          marketCap: t.marketCap || 0,
+                        }));
+                        const highVolume = (data.volumeTokens || []).slice(0, 10).map((t: any) => ({
+                          symbol: t.symbol,
+                          name: t.name,
+                          address: t.address,
+                          logoURI: t.logoURI,
+                          price: t.price || 0,
+                          priceChange24h: t.priceChange24h || 0,
+                          volume24h: t.volume24h || 0,
+                          liquidity: t.liquidity || 0,
+                          marketCap: t.marketCap || 0,
+                        }));
+                        const newPairs = (data.newLaunches || []).slice(0, 10).map((t: any) => ({
+                          symbol: t.symbol,
+                          name: t.name,
+                          address: t.mint || t.address,
+                          logoURI: t.logoURI,
+                          price: t.price || 0,
+                          priceChange24h: t.priceChange24h || 0,
+                          volume24h: t.volume24h || 0,
+                          liquidity: t.liquidity || 0,
+                          marketCap: t.marketCap || 0,
+                          listedAt: t.listedAt,
+                        }));
+                        setMarketData({ hotTokens, newPairs, highVolume });
+                        setLastUpdated(new Date());
+                      })
+                      .catch(console.error)
+                      .finally(() => setIsLoading(false));
+                  }}
+                  className="text-white/30 hover:text-white/60 transition-colors"
+                  title="Refresh data"
+                >
+                  <RefreshCw size={12} className={isLoading ? "animate-spin" : ""} />
+                </button>
+              </div>
             </div>
 
             {/* Token List */}
