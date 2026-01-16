@@ -4,7 +4,7 @@
  */
 
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
-import { getQuote, executeSwap, listTokens, TOKEN_MINTS } from "../lib/jupiter.js";
+import { getQuote, executeSwap, listTokens } from "../lib/jupiter.js";
 import { loadWallet, getSolBalance } from "../lib/wallet.js";
 
 export const tradeTools: Tool[] = [

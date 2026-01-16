@@ -308,10 +308,6 @@ export async function handleStrategyTool(
         warnings.push("No stop loss defined - unlimited downside risk");
       }
 
-      if (strategy.leverage && (strategy.leverage as number) > 5) {
-        warnings.push("High leverage (>5x) - increased liquidation risk");
-      }
-
       const isValid = issues.length === 0;
 
       return {

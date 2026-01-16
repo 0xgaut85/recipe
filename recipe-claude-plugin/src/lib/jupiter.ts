@@ -3,7 +3,7 @@
  * Direct Jupiter calls for swaps - no API key needed
  */
 
-import { Connection, VersionedTransaction, PublicKey } from "@solana/web3.js";
+import { VersionedTransaction } from "@solana/web3.js";
 import { getKeypair, getConnection } from "./wallet.js";
 
 const JUPITER_API = "https://quote-api.jup.ag/v6";
