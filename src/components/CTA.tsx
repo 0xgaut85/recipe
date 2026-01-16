@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,13 +15,6 @@ const socialLinks = [
 const smoothEase = [0.22, 1, 0.36, 1];
 
 export const CTA: FC = () => {
-  const [showBetaToast, setShowBetaToast] = useState(false);
-
-  const handleStartCooking = () => {
-    setShowBetaToast(true);
-    setTimeout(() => setShowBetaToast(false), 3000);
-  };
-
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="container-wide relative z-10">
@@ -86,12 +79,12 @@ export const CTA: FC = () => {
               transition={{ duration: 0.6, delay: 0.3, ease: smoothEase }}
               className="flex flex-col sm:flex-row items-center justify-center gap-6"
             >
-              <button
-                onClick={handleStartCooking}
+              <Link
+                href="/app"
                 className="px-8 py-3.5 rounded-full bg-ink text-white font-bold hover:bg-black transition-all duration-200 border-2 border-ink shadow-[4px_4px_0px_0px_#1A1A1A] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#1A1A1A] lowercase"
               >
                 start cooking
-              </button>
+              </Link>
 
               <Link
                 href="/docs"
@@ -141,22 +134,6 @@ export const CTA: FC = () => {
           </GlassCard>
         </motion.div>
       </div>
-
-      {/* Beta Toast */}
-      <motion.div
-        initial={{ opacity: 0, y: 50, scale: 0.9 }}
-        animate={{
-          opacity: showBetaToast ? 1 : 0,
-          y: showBetaToast ? 0 : 50,
-          scale: showBetaToast ? 1 : 0.9,
-        }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 bg-accent-blue border-2 border-ink rounded-2xl shadow-[6px_6px_0px_0px_#1A1A1A] pointer-events-none"
-      >
-        <p className="font-display font-bold text-ink text-lg lowercase">
-          beta coming soon
-        </p>
-      </motion.div>
     </section>
   );
 };
