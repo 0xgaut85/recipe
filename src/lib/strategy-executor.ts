@@ -333,30 +333,64 @@ async function executeConditionalStrategy(
     }
 
     // Check trigger conditions
-    switch (trigger) {
-      case "price_above":
-        conditionMet = currentPrice > indicatorValue;
-        break;
-      case "price_below":
-        conditionMet = currentPrice < indicatorValue;
-        break;
-      case "price_touches":
-        // Within 0.5% of indicator value
-        conditionMet = Math.abs(currentPrice - indicatorValue) / indicatorValue < 0.005;
-        break;
-      case "crosses_above":
-        // Current price above, previous below
-        if (closePrices.length >= 2) {
-          const prevPrice = closePrices[closePrices.length - 2];
-          conditionMet = currentPrice > indicatorValue && prevPrice <= indicatorValue;
-        }
-        break;
-      case "crosses_below":
-        if (closePrices.length >= 2) {
-          const prevPrice = closePrices[closePrices.length - 2];
-          conditionMet = currentPrice < indicatorValue && prevPrice >= indicatorValue;
-        }
-        break;
+    // For RSI, triggers compare the RSI value itself (0-100) not price
+    if (indicator === "RSI") {
+      // RSI-specific triggers - compare RSI value to thresholds
+      const rsiValue = indicatorValue;
+      const threshold = value || 30; // Default oversold threshold
+      
+      switch (trigger) {
+        case "price_above": // RSI above threshold (overbought)
+          conditionMet = rsiValue > threshold;
+          break;
+        case "price_below": // RSI below threshold (oversold)
+          conditionMet = rsiValue < threshold;
+          break;
+        case "price_touches": // RSI near threshold
+          conditionMet = Math.abs(rsiValue - threshold) < 2;
+          break;
+        case "crosses_above": // RSI crosses above threshold
+          if (closePrices.length >= 2) {
+            const prevRsi = calculateRSI(closePrices.slice(0, -1), period || 14);
+            const prevRsiValue = prevRsi[prevRsi.length - 1];
+            conditionMet = rsiValue > threshold && prevRsiValue <= threshold;
+          }
+          break;
+        case "crosses_below": // RSI crosses below threshold
+          if (closePrices.length >= 2) {
+            const prevRsi = calculateRSI(closePrices.slice(0, -1), period || 14);
+            const prevRsiValue = prevRsi[prevRsi.length - 1];
+            conditionMet = rsiValue < threshold && prevRsiValue >= threshold;
+          }
+          break;
+      }
+    } else {
+      // For EMA/SMA/PRICE, compare price to indicator value
+      switch (trigger) {
+        case "price_above":
+          conditionMet = currentPrice > indicatorValue;
+          break;
+        case "price_below":
+          conditionMet = currentPrice < indicatorValue;
+          break;
+        case "price_touches":
+          // Within 0.5% of indicator value
+          conditionMet = Math.abs(currentPrice - indicatorValue) / indicatorValue < 0.005;
+          break;
+        case "crosses_above":
+          // Current price above, previous below
+          if (closePrices.length >= 2) {
+            const prevPrice = closePrices[closePrices.length - 2];
+            conditionMet = currentPrice > indicatorValue && prevPrice <= indicatorValue;
+          }
+          break;
+        case "crosses_below":
+          if (closePrices.length >= 2) {
+            const prevPrice = closePrices[closePrices.length - 2];
+            conditionMet = currentPrice < indicatorValue && prevPrice >= indicatorValue;
+          }
+          break;
+      }
     }
 
     if (!conditionMet) {
@@ -375,20 +409,33 @@ async function executeConditionalStrategy(
 
     let inputMint: string;
     let outputMint: string;
+    let inputDecimals: number;
 
     if (direction === "buy") {
       inputMint = TOKEN_MINTS.SOL;
       outputMint = tokenAddress;
+      inputDecimals = 9; // SOL always has 9 decimals
     } else {
       inputMint = tokenAddress;
       outputMint = TOKEN_MINTS.SOL;
+      // For selling, we need to determine the token's decimals
+      // Common tokens: USDC/USDT have 6, most SPL tokens have 9
+      // Check known tokens first
+      if (inputMint === "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" || 
+          inputMint === "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB") {
+        inputDecimals = 6; // USDC/USDT
+      } else if (inputMint === "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263") {
+        inputDecimals = 5; // BONK
+      } else {
+        inputDecimals = 9; // Default for most SPL tokens
+      }
     }
 
     const result = await executeSwap(
       encryptedPrivateKey,
       inputMint,
       outputMint,
-      toSmallestUnit(solAmount, 9),
+      toSmallestUnit(solAmount, inputDecimals),
       slippageBps
     );
 

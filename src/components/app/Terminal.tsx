@@ -172,8 +172,8 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
 
   const handleDisconnect = async () => {
     try {
-      // Clear session cookie first
-      document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      // Clear session cookie - must match the name in src/lib/session.ts
+      document.cookie = "recipe_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       
       // Disconnect the Solana wallet adapter
       await disconnect();

@@ -2,7 +2,7 @@
 
 import { FC, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Copy, Check, QrCode, ExternalLink, Flame, Zap, Clock, TrendingUp, Wallet, PieChart, RefreshCw } from "lucide-react";
+import { Copy, Check, QrCode, ExternalLink, Flame, Zap, Clock, TrendingUp, PieChart, RefreshCw } from "lucide-react";
 import type { CookingStep } from "@/app/app/page";
 
 interface TokenData {
@@ -86,6 +86,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
   } | null>(null);
   const [isStrategyLoading, setIsStrategyLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [solPrice, setSolPrice] = useState<number>(0);
 
   // Update wallet loading state when walletData changes
   useEffect(() => {
@@ -93,6 +94,33 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
       setIsWalletLoading(false);
     }
   }, [walletData]);
+
+  // Fetch SOL price on mount and periodically
+  useEffect(() => {
+    const fetchSolPrice = async () => {
+      try {
+        // Use CoinGecko simple price API (free, no key required)
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.solana?.usd) {
+            setSolPrice(data.solana.usd);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch SOL price:", error);
+        // Fallback to a reasonable estimate if API fails
+        setSolPrice(200);
+      }
+    };
+
+    fetchSolPrice();
+    // Refresh price every 60 seconds
+    const interval = setInterval(fetchSolPrice, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch positions when positions tab is active
   const fetchPositions = async () => {
@@ -124,9 +152,9 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
     try {
       const res = await fetch("/api/strategies");
       if (res.ok) {
-        const strategies = await res.json();
-        if (strategies.length > 0) {
-          setLatestStrategy(strategies[0]); // Most recent first
+        const data = await res.json();
+        if (data.strategies?.length > 0) {
+          setLatestStrategy(data.strategies[0]); // Most recent first
         }
       }
     } catch (error) {
@@ -574,7 +602,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                     <span className="text-white/60">SOL</span>
                   </div>
                   <p className="text-white/40 text-sm mt-1">
-                    ≈ ${((walletData?.solBalance || 0) * 200).toFixed(2)} USD
+                    ≈ ${((walletData?.solBalance || 0) * (solPrice || 200)).toFixed(2)} USD
                   </p>
                 </div>
 

@@ -79,8 +79,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Check if this wallet has been used before (find existing user)
-    const existingWalletUser = await prisma.session.findFirst({
+    // Check if this wallet has been used before
+    // First, check active sessions
+    let existingUserId: string | null = null;
+    
+    const existingSession = await prisma.session.findFirst({
       where: {
         connectedWallet,
         expiresAt: { gt: new Date() },
@@ -89,12 +92,34 @@ export async function POST(req: NextRequest) {
       orderBy: { lastUsedAt: "desc" },
     });
 
+    if (existingSession) {
+      existingUserId = existingSession.userId;
+    } else {
+      // Fallback: check expired sessions too (user returning after session expired)
+      const expiredSession = await prisma.session.findFirst({
+        where: { connectedWallet },
+        select: { userId: true },
+        orderBy: { lastUsedAt: "desc" },
+      });
+      
+      if (expiredSession) {
+        // Verify the user still exists with a wallet
+        const existingUser = await prisma.user.findUnique({
+          where: { id: expiredSession.userId },
+          include: { wallet: true },
+        });
+        if (existingUser?.wallet) {
+          existingUserId = existingUser.id;
+        }
+      }
+    }
+
     let userId: string;
     let isNew = false;
 
-    if (existingWalletUser) {
+    if (existingUserId) {
       // User has connected with this wallet before
-      userId = existingWalletUser.userId;
+      userId = existingUserId;
     } else {
       // New wallet - create new user
       const user = await prisma.user.create({

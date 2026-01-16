@@ -35,6 +35,7 @@ interface ParsedStrategyConfig {
   minLiquidity: number;
   minVolume: number;
   minMarketCap: number;
+  maxMarketCap?: number;
   nameFilter?: string;
   takeProfit?: number;
   stopLoss?: number;
@@ -101,7 +102,7 @@ function alreadyHasStrategy(messages: Message[]): boolean {
     if (msg.role !== "assistant") continue;
     const content = typeof msg.content === "string" 
       ? msg.content 
-      : msg.content.filter(b => b.type === "text").map(b => b.text).join("");
+      : msg.content.filter(b => b.type === "text").map(b => b.text || "").join("");
     
     // Check for strategy ID patterns that indicate it was already created
     if (content.includes("strategy id:") || 
@@ -185,6 +186,7 @@ function parseStrategyConfig(messages: Message[]): ParsedStrategyConfig | null {
           minLiquidity,
           minVolume,
           minMarketCap,
+          maxMarketCap: maxMarketCap > 0 ? maxMarketCap : undefined,
           nameFilter,
           takeProfit,
           stopLoss,
@@ -214,6 +216,7 @@ async function createStrategyDirectly(userId: string, config: ParsedStrategyConf
           minLiquidity: config.minLiquidity,
           minVolume: config.minVolume,
           minMarketCap: config.minMarketCap,
+          maxMarketCap: config.maxMarketCap,
           nameFilter: config.nameFilter,
           takeProfit: config.takeProfit,
           stopLoss: config.stopLoss,
