@@ -414,7 +414,7 @@ export async function getTrendingTokens(limit: number = 20): Promise<TrendingTok
     // Use Token List V3 API - different endpoint from token_trending
     // This gives us tokens sorted purely by volume
     const url = new URL(`${BIRDEYE_API_BASE}/defi/v3/token/list`);
-    url.searchParams.set("sort_by", "v24hUSD");  // Sort by 24h volume
+    url.searchParams.set("sort_by", "volume_24h_usd");  // Sort by 24h volume (official Birdeye V3 parameter)
     url.searchParams.set("sort_type", "desc");
     url.searchParams.set("offset", "0");
     url.searchParams.set("limit", Math.min(limit + 10, 50).toString());
