@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { User, Trophy, ArrowDownToLine, RefreshCw, BarChart3, LogOut, Copy, Check, ExternalLink, X } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { StepIndicator } from "./StepIndicator";
 import { ChatPanel } from "./ChatPanel";
 import { DataPanel } from "./DataPanel";
@@ -47,6 +48,7 @@ const nextStep: Record<CookingStep, CookingStep | null> = {
 };
 
 export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
+  const { disconnect } = useWallet();
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
@@ -108,12 +110,17 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
 
   const handleDisconnect = async () => {
     try {
-      // Clear session cookie
+      // Clear session cookie first
       document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      // Stay on app page so user can reconnect with a different wallet
+      
+      // Disconnect the Solana wallet adapter
+      await disconnect();
+      
+      // Show success message
       toast.success("Disconnected! Connect a new wallet to continue.");
-      // Force page reload to reset state and show WalletGate
-      window.location.reload();
+      
+      // Clear wallet data state
+      setWalletData(null);
     } catch (error) {
       console.error("Failed to disconnect:", error);
       toast.error("Failed to disconnect");
