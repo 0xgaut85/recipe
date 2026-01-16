@@ -216,6 +216,109 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
 }
 
 /**
+ * Get trending tokens from Birdeye
+ */
+export async function getTrendingTokens(
+  limit: number = 20,
+  offset: number = 0
+): Promise<Array<{
+  address: string;
+  symbol: string;
+  name: string;
+  price: number;
+  priceChange24h: number;
+  volume24h: number;
+  liquidity: number;
+  rank: number;
+}>> {
+  try {
+    const headers = getHeaders();
+    // Add chain header for Solana
+    (headers as Record<string, string>)["x-chain"] = "solana";
+
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/token_trending`);
+    url.searchParams.set("sort_by", "rank");
+    url.searchParams.set("sort_type", "asc");
+    url.searchParams.set("limit", limit.toString());
+    url.searchParams.set("offset", offset.toString());
+
+    const response = await fetch(url.toString(), { headers });
+
+    if (!response.ok) {
+      console.error("Birdeye trending error:", response.status);
+      return [];
+    }
+
+    const data = await response.json();
+
+    if (!data.success || !data.data?.tokens) {
+      return [];
+    }
+
+    return data.data.tokens.map((token: any, index: number) => ({
+      address: token.address,
+      symbol: token.symbol || "???",
+      name: token.name || "Unknown",
+      price: token.price || 0,
+      priceChange24h: token.priceChange24hPercent || 0,
+      volume24h: token.v24hUSD || 0,
+      liquidity: token.liquidity || 0,
+      rank: offset + index + 1,
+    }));
+  } catch (error) {
+    console.error("Birdeye trending error:", error);
+    return [];
+  }
+}
+
+/**
+ * Get new token listings from Birdeye
+ */
+export async function getNewListings(
+  limit: number = 20
+): Promise<Array<{
+  address: string;
+  symbol: string;
+  name: string;
+  price: number;
+  liquidity: number;
+  listedAt: number;
+}>> {
+  try {
+    const headers = getHeaders();
+    (headers as Record<string, string>)["x-chain"] = "solana";
+
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/token_new_listing`);
+    url.searchParams.set("limit", limit.toString());
+
+    const response = await fetch(url.toString(), { headers });
+
+    if (!response.ok) {
+      console.error("Birdeye new listings error:", response.status);
+      return [];
+    }
+
+    const data = await response.json();
+
+    if (!data.success || !data.data?.items) {
+      return [];
+    }
+
+    return data.data.items.map((token: any) => ({
+      address: token.address,
+      symbol: token.symbol || "???",
+      name: token.name || "Unknown",
+      price: token.price || 0,
+      liquidity: token.liquidity || 0,
+      listedAt: token.listingTime || Date.now(),
+    }));
+  } catch (error) {
+    console.error("Birdeye new listings error:", error);
+    return [];
+  }
+}
+
+/**
  * Convert timeframe to milliseconds
  */
 function getTimeframeMs(timeframe: TimeFrame): number {
