@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibetrading Twitter Post</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Quicksand:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1A1A1A;
+            --ink-light: #6B6B6B;
+            --white: #FEFEFE;
+            --accent-pink: #F5D6E0;
+            --accent-blue: #B8D4E3;
+            --font-display: 'Fredoka', sans-serif;
+            --font-body: 'Quicksand', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            background: #f4f4f5;
+            font-family: var(--font-body);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--ink);
+        }
+
+        .post-container {
+            width: 1920px;
+            height: 1080px;
+            position: relative;
+            background: var(--white);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--ink);
+        }
+
+        /* Gradient Hues */
+        .blob {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.6;
+            z-index: 0;
+        }
+
+        .blob-pink {
+            bottom: -200px;
+            left: -200px;
+            background: radial-gradient(circle, #F5D6E0, transparent 70%);
+        }
+
+        .blob-blue {
+            top: -200px;
+            right: -200px;
+            background: radial-gradient(circle, #B8D4E3, transparent 70%);
+        }
+
+        /* Liquid Glass Box */
+        .glass-box {
+            position: relative;
+            z-index: 10;
+            padding: 40px 60px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 32px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.05),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+                inset 0 0 20px rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            transform: translateY(0);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Inner Content */
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            object-fit: cover;
+            /* Box shadow for depth */
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .recipe-text {
+            font-family: var(--font-display);
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--ink);
+            letter-spacing: -0.02em;
+        }
+
+        .separator {
+            width: 1px;
+            height: 60px;
+            background: rgba(26, 26, 26, 0.1); /* Thin subtle line */
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .claude-logo {
+            width: 50px;
+            height: auto;
+            opacity: 0.9;
+        }
+
+        /* Extra shine effect on glass */
+        .glass-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 32px;
+            background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 70%);
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="post-container">
+        <div class="blob blob-pink"></div>
+        <div class="blob blob-blue"></div>
+
+        <div class="glass-box">
+            <div class="left-section">
+                <!-- Using logo.jpg -->
+                <img src="logo.jpg" alt="Vibetrading Logo" class="logo-img">
+                <span class="recipe-text">recipe</span>
+            </div>
+            
+            <div class="separator"></div>
+
+            <div class="right-section">
+                <!-- Using claude.png -->
+                <img src="claude.png" alt="Claude Logo" class="claude-logo">
+            </div>
+        </div>
+    </div>
+</body>
+</html>

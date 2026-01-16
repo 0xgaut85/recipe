@@ -8,9 +8,10 @@ import { getKeypair, getConnection } from "./wallet.js";
 
 const JUPITER_API = "https://quote-api.jup.ag/v6";
 
-// Common token mints
+// Common token mints - matches main app's src/lib/jupiter.ts
 export const TOKEN_MINTS: Record<string, string> = {
   SOL: "So11111111111111111111111111111111111111112",
+  WSOL: "So11111111111111111111111111111111111111112",
   USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
   USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
   BONK: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
@@ -19,9 +20,16 @@ export const TOKEN_MINTS: Record<string, string> = {
   POPCAT: "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
   WEN: "WENWENvqqNya429ubCdR81ZmD69brwQaaBYY6p3LCpk",
   PYTH: "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3",
+  // Added from main app
+  RAY: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+  ORCA: "orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE",
+  MANGO: "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac",
+  SAMO: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+  RENDER: "rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof",
+  JITO: "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL",
 };
 
-// Token decimals
+// Token decimals - matches main app
 const TOKEN_DECIMALS: Record<string, number> = {
   [TOKEN_MINTS.SOL]: 9,
   [TOKEN_MINTS.USDC]: 6,
@@ -29,6 +37,15 @@ const TOKEN_DECIMALS: Record<string, number> = {
   [TOKEN_MINTS.BONK]: 5,
   [TOKEN_MINTS.WIF]: 6,
   [TOKEN_MINTS.JUP]: 6,
+  [TOKEN_MINTS.RAY]: 6,
+  [TOKEN_MINTS.ORCA]: 6,
+  [TOKEN_MINTS.MANGO]: 6,
+  [TOKEN_MINTS.SAMO]: 9,
+  [TOKEN_MINTS.RENDER]: 8,
+  [TOKEN_MINTS.JITO]: 9,
+  [TOKEN_MINTS.PYTH]: 6,
+  [TOKEN_MINTS.POPCAT]: 9,
+  [TOKEN_MINTS.WEN]: 5,
 };
 
 export interface QuoteResponse {

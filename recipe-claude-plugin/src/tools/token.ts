@@ -177,7 +177,10 @@ export async function handleTokenTool(
       try {
         const data = await getTrending();
 
-        const result: Record<string, unknown> = { timestamp: data.timestamp };
+        const result: Record<string, unknown> = { 
+          timestamp: data.timestamp,
+          source: "birdeye",  // Indicate data comes from Birdeye via recipe.money backend
+        };
 
         const formatToken = (t: { symbol: string; name: string; address: string; price: number; priceChange24h: number; volume24h: number }) => ({
           symbol: t.symbol,
@@ -193,7 +196,9 @@ export async function handleTokenTool(
         }
 
         if (category === "volume" || category === "all") {
-          result.volumeLeaders = data.volumeTokens.slice(0, 10).map(formatToken);
+          // Use volumeTokens, fallback to trendingPairs for backward compatibility
+          const volumeData = data.volumeTokens || data.trendingPairs || [];
+          result.volumeLeaders = volumeData.slice(0, 10).map(formatToken);
         }
 
         if (category === "new" || category === "all") {
@@ -218,7 +223,8 @@ export async function handleTokenTool(
             {
               type: "text",
               text: JSON.stringify({
-                note: "Trending API unavailable, showing Pump.fun launches",
+                note: "Birdeye trending API unavailable, showing Pump.fun launches",
+                source: "pump.fun",
                 newLaunches: newTokens.map((t) => ({
                   symbol: t.symbol,
                   name: t.name,

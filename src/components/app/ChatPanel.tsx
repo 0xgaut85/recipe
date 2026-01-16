@@ -63,10 +63,18 @@ export const ChatPanel: FC<ChatPanelProps> = ({
     
     // Show phase transition message (but not on initial render)
     if (prevStepRef.current !== currentStep && messages.length > 0) {
+      // Get helpful guidance for each phase
+      const phaseGuidance: Record<CookingStep, string> = {
+        describe: "tell me what strategy you want to create",
+        cook: "gathering the details for your strategy",
+        taste: "review your strategy config before deploying",
+        serve: "your strategy is being deployed",
+      };
+      
       const transitionMessage: Message = {
         id: `transition-${Date.now()}`,
         role: "system",
-        content: `— moving to ${stepNames[currentStep]} phase —`,
+        content: `— ${stepNames[currentStep]} — ${phaseGuidance[currentStep]}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, transitionMessage]);
