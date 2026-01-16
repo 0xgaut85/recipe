@@ -5,13 +5,14 @@ import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { User, Trophy, ArrowDownToLine, RefreshCw } from "lucide-react";
+import { User, Trophy, ArrowDownToLine, RefreshCw, BarChart3 } from "lucide-react";
 import { StepIndicator } from "./StepIndicator";
 import { ChatPanel } from "./ChatPanel";
 import { DataPanel } from "./DataPanel";
 import { ProfileModal } from "./ProfileModal";
 import { LeaderboardPanel } from "./LeaderboardPanel";
 import { WithdrawModal } from "./WithdrawModal";
+import { StrategyPanel } from "./StrategyPanel";
 import type { CookingStep } from "@/app/app/page";
 
 const WalletMultiButtonDynamic = dynamic(
@@ -49,6 +50,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  const [isStrategyOpen, setIsStrategyOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Fetch wallet data on mount
@@ -145,6 +147,13 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsStrategyOpen(true)}
+              className="p-2 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+              title="My Strategies"
+            >
+              <BarChart3 size={18} />
+            </button>
             <button
               onClick={() => setIsWithdrawOpen(true)}
               className="p-2 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
@@ -253,6 +262,11 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
         isOpen={isWithdrawOpen}
         onClose={() => setIsWithdrawOpen(false)}
         onSuccess={refreshBalance}
+      />
+
+      <StrategyPanel
+        isOpen={isStrategyOpen}
+        onClose={() => setIsStrategyOpen(false)}
       />
     </div>
   );

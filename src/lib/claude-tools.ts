@@ -260,6 +260,66 @@ export const toolDefinitions = [
       required: ["amount", "destination"],
     },
   },
+  {
+    name: "create_strategy",
+    description: "Create and save a trading strategy for the user. Call this when the user confirms they want to save/deploy a strategy.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "Short name for the strategy",
+        },
+        description: {
+          type: "string",
+          description: "Detailed description of what the strategy does",
+        },
+        type: {
+          type: "string",
+          enum: ["SPOT", "PERP"],
+          description: "Type of trade: SPOT for swaps, PERP for perpetuals",
+        },
+        inputToken: {
+          type: "string",
+          description: "Input token mint address (for spot) or base token",
+        },
+        outputToken: {
+          type: "string",
+          description: "Output token mint address (for spot)",
+        },
+        amount: {
+          type: "number",
+          description: "Amount to trade",
+        },
+        direction: {
+          type: "string",
+          enum: ["buy", "sell", "long", "short"],
+          description: "Trade direction",
+        },
+        leverage: {
+          type: "number",
+          description: "Leverage for perp trades (1-20)",
+        },
+        stopLoss: {
+          type: "number",
+          description: "Stop loss percentage",
+        },
+        takeProfit: {
+          type: "number",
+          description: "Take profit percentage",
+        },
+      },
+      required: ["name", "description", "type"],
+    },
+  },
+  {
+    name: "get_my_strategies",
+    description: "Get the user's saved trading strategies",
+    input_schema: {
+      type: "object",
+      properties: {},
+    },
+  },
 ];
 
 /**
@@ -544,6 +604,62 @@ export async function executeTool(
         message: "To withdraw SOL, please use the withdrawal modal in the app UI or call the /api/wallet/withdraw endpoint directly.",
         amount: args.amount,
         destination: args.destination,
+      };
+    }
+
+    case "create_strategy": {
+      if (!userId) {
+        return { error: "Authentication required" };
+      }
+
+      const strategy = await prisma.strategy.create({
+        data: {
+          userId,
+          name: args.name as string,
+          description: args.description as string,
+          config: {
+            type: args.type as string,
+            inputToken: args.inputToken as string | undefined,
+            outputToken: args.outputToken as string | undefined,
+            amount: args.amount as number | undefined,
+            direction: args.direction as string | undefined,
+            leverage: args.leverage as number | undefined,
+            stopLoss: args.stopLoss as number | undefined,
+            takeProfit: args.takeProfit as number | undefined,
+          },
+          isActive: false,
+        },
+      });
+
+      return {
+        success: true,
+        strategyId: strategy.id,
+        name: strategy.name,
+        message: `Strategy "${strategy.name}" created successfully! You can view and manage it in the Strategies panel (chart icon in the header).`,
+      };
+    }
+
+    case "get_my_strategies": {
+      if (!userId) {
+        return { error: "Authentication required" };
+      }
+
+      const strategies = await prisma.strategy.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
+
+      return {
+        strategies: strategies.map((s) => ({
+          id: s.id,
+          name: s.name,
+          description: s.description,
+          isActive: s.isActive,
+          type: (s.config as any).type,
+          createdAt: s.createdAt.toISOString(),
+        })),
+        total: strategies.length,
       };
     }
 

@@ -7,3 +7,4 @@ export { LoadingOverlay } from "./LoadingOverlay";
 export { ProfileModal } from "./ProfileModal";
 export { LeaderboardPanel } from "./LeaderboardPanel";
 export { WithdrawModal } from "./WithdrawModal";
+export { StrategyPanel } from "./StrategyPanel";
