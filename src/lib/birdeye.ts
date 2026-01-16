@@ -611,12 +611,13 @@ export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]>
     
     console.log(`getHotTokens (token_trending rank): got ${trendingByRank.length} trending tokens`);
     
-    // Filter for quality tokens with real activity
+    // Filter for quality tokens with real activity and min 100k market cap
     const hotTokens = trendingByRank
       .filter(t => 
         t.price > 0 && 
         t.volume24h > 0 && 
-        t.liquidity > 0
+        t.liquidity > 0 &&
+        t.marketCap >= 100000 // Minimum $100k market cap
       )
       .map((t, index) => ({ ...t, rank: index + 1 }));
 
