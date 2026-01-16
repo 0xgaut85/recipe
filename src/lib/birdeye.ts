@@ -217,33 +217,7 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
   }
 }
 
-// Simple in-memory cache to prevent rate limiting
-let trendingCache: {
-  data: Array<{
-    address: string;
-    symbol: string;
-    name: string;
-    logoURI: string;
-    price: number;
-    priceChange24h: number;
-    volume24h: number;
-    liquidity: number;
-    marketCap: number;
-    rank: number;
-  }>;
-  timestamp: number;
-} | null = null;
-
-const CACHE_TTL_MS = 30000; // 30 seconds cache
-
-/**
- * Get trending tokens from Birdeye using token_trending endpoint
- * Returns tokens with logos, accurate prices, and volume data
- */
-export async function getTrendingTokens(
-  limit: number = 20,
-  offset: number = 0
-): Promise<Array<{
+export interface TrendingToken {
   address: string;
   symbol: string;
   name: string;
@@ -254,18 +228,23 @@ export async function getTrendingTokens(
   liquidity: number;
   marketCap: number;
   rank: number;
-}>> {
-  // Return cached data if available and fresh
-  if (trendingCache && Date.now() - trendingCache.timestamp < CACHE_TTL_MS) {
-    return trendingCache.data.slice(offset, offset + limit);
-  }
+}
 
+// Simple in-memory caches to prevent rate limiting
+let volumeCache: { data: TrendingToken[]; timestamp: number } | null = null;
+let gainersCache: { data: TrendingToken[]; timestamp: number } | null = null;
+
+const CACHE_TTL_MS = 30000; // 30 seconds cache
+
+/**
+ * Fetch tokens from Birdeye token_trending endpoint
+ */
+async function fetchTrendingTokens(sortBy: "volume24hUSD" | "priceChange24hPercent"): Promise<TrendingToken[]> {
   try {
     const headers = getHeaders();
 
-    // Use token_trending endpoint - the correct one for trending tokens
     const url = new URL(`${BIRDEYE_API_BASE}/defi/token_trending`);
-    url.searchParams.set("sort_by", "volume24hUSD"); // Sort by 24h volume
+    url.searchParams.set("sort_by", sortBy);
     url.searchParams.set("sort_type", "desc");
     url.searchParams.set("offset", "0");
     url.searchParams.set("limit", "20"); // Birdeye max is 20
@@ -285,7 +264,7 @@ export async function getTrendingTokens(
       return [];
     }
 
-    const tokens = data.data.tokens.map((token: any, index: number) => ({
+    return data.data.tokens.map((token: any, index: number) => ({
       address: token.address,
       symbol: token.symbol || "???",
       name: token.name || "Unknown",
@@ -294,21 +273,43 @@ export async function getTrendingTokens(
       priceChange24h: token.priceChange24hPercent || 0,
       volume24h: token.volume24hUSD || 0,
       liquidity: token.liquidity || 0,
-      marketCap: token.mc || 0,
+      marketCap: token.mc || token.marketCap || 0,
       rank: index + 1,
     }));
-
-    // Update cache
-    trendingCache = {
-      data: tokens,
-      timestamp: Date.now(),
-    };
-
-    return tokens.slice(offset, offset + limit);
   } catch (error) {
     console.error("Birdeye trending error:", error);
     return [];
   }
+}
+
+/**
+ * Get trending tokens sorted by 24h VOLUME (high volume plays)
+ */
+export async function getTrendingTokens(limit: number = 20): Promise<TrendingToken[]> {
+  // Return cached data if available and fresh
+  if (volumeCache && Date.now() - volumeCache.timestamp < CACHE_TTL_MS) {
+    return volumeCache.data.slice(0, limit);
+  }
+
+  const tokens = await fetchTrendingTokens("volume24hUSD");
+  
+  volumeCache = { data: tokens, timestamp: Date.now() };
+  return tokens.slice(0, limit);
+}
+
+/**
+ * Get HOT tokens sorted by 24h PRICE CHANGE (biggest gainers/movers)
+ */
+export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]> {
+  // Return cached data if available and fresh
+  if (gainersCache && Date.now() - gainersCache.timestamp < CACHE_TTL_MS) {
+    return gainersCache.data.slice(0, limit);
+  }
+
+  const tokens = await fetchTrendingTokens("priceChange24hPercent");
+  
+  gainersCache = { data: tokens, timestamp: Date.now() };
+  return tokens.slice(0, limit);
 }
 
 // Cache for new listings

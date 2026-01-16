@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { getTrendingTokens, getNewListings } from "@/lib/birdeye";
+import { getTrendingTokens, getHotTokens, getNewListings } from "@/lib/birdeye";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 /**
  * GET /api/data/trending
- * Get trending tokens and new listings from Birdeye
- * Birdeye covers all major launchpads including Pump.fun, Raydium, etc.
+ * Get market data from Birdeye:
+ * - hotTokens: Biggest gainers (sorted by 24h price change)
+ * - volumeTokens: High volume tokens (sorted by 24h volume)
+ * - newLaunches: Recently launched tokens
  */
 export async function GET() {
   try {
@@ -16,20 +18,23 @@ export async function GET() {
 
     if (!hasBirdeyeKey) {
       return NextResponse.json({
-        trendingPairs: [],
+        hotTokens: [],
+        volumeTokens: [],
         newLaunches: [],
         message: "Birdeye API key not configured",
         timestamp: new Date().toISOString(),
       });
     }
 
-    // Fetch trending tokens and new listings in parallel
-    const [trendingTokens, newListings] = await Promise.all([
+    // Fetch all data in parallel
+    const [hotTokens, volumeTokens, newListings] = await Promise.all([
+      getHotTokens(15).catch(() => []),
       getTrendingTokens(15).catch(() => []),
       getNewListings(10).catch(() => []),
     ]);
 
-    const trendingPairs = trendingTokens.map((token) => ({
+    // Format hot tokens (gainers by price change)
+    const formattedHotTokens = hotTokens.map((token) => ({
       symbol: token.symbol,
       name: token.name,
       address: token.address,
@@ -42,19 +47,41 @@ export async function GET() {
       rank: token.rank,
     }));
 
-    const newLaunches = newListings.map((token) => ({
+    // Format volume tokens (high volume)
+    const formattedVolumeTokens = volumeTokens.map((token) => ({
+      symbol: token.symbol,
+      name: token.name,
+      address: token.address,
+      logoURI: token.logoURI,
+      price: token.price,
+      priceChange24h: token.priceChange24h,
+      volume24h: token.volume24h,
+      liquidity: token.liquidity,
+      marketCap: token.marketCap,
+      rank: token.rank,
+    }));
+
+    // Format new launches
+    const formattedNewLaunches = newListings.map((token) => ({
       mint: token.address,
+      address: token.address,
       symbol: token.symbol,
       name: token.name,
       logoURI: token.logoURI,
       price: token.price,
       liquidity: token.liquidity,
-      created: token.listedAt,
+      marketCap: token.marketCap,
+      volume24h: token.volume24h,
+      listedAt: token.listedAt,
+      ageMinutes: token.ageMinutes,
     }));
 
     return NextResponse.json({
-      trendingPairs,
-      newLaunches,
+      hotTokens: formattedHotTokens,
+      volumeTokens: formattedVolumeTokens,
+      newLaunches: formattedNewLaunches,
+      // Keep trendingPairs for backward compatibility
+      trendingPairs: formattedVolumeTokens,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -62,8 +89,10 @@ export async function GET() {
     return NextResponse.json(
       {
         error: "Failed to fetch trending data",
-        trendingPairs: [],
+        hotTokens: [],
+        volumeTokens: [],
         newLaunches: [],
+        trendingPairs: [],
       },
       { status: 500 }
     );

@@ -71,37 +71,45 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
         const res = await fetch("/api/data/trending");
         if (res.ok) {
           const data = await res.json();
-          const tokens = data.trendingPairs || [];
-          const newListings = data.newLaunches || [];
+          
+          // Hot tokens come pre-sorted by price change from API
+          const hotTokens = (data.hotTokens || []).slice(0, 10).map((t: any) => ({
+            symbol: t.symbol,
+            name: t.name,
+            address: t.address,
+            logoURI: t.logoURI,
+            price: t.price || 0,
+            priceChange24h: t.priceChange24h || 0,
+            volume24h: t.volume24h || 0,
+            liquidity: t.liquidity || 0,
+            marketCap: t.marketCap || 0,
+          }));
 
-          // Filter out major tokens (SOL, USDC, etc) for "hot" section - we want trenches!
-          const majorTokens = ["SOL", "USDC", "USDT", "RAY", "JUP", "BONK", "WIF"];
-          const trenchTokens = tokens.filter(
-            (t: TokenData) => !majorTokens.includes(t.symbol?.toUpperCase())
-          );
-
-          // Hot tokens: High price change (pumping/dumping)
-          const hotTokens = [...trenchTokens]
-            .sort((a, b) => Math.abs(b.priceChange24h || 0) - Math.abs(a.priceChange24h || 0))
-            .slice(0, 10);
-
-          // High volume tokens from trenches
-          const highVolume = [...trenchTokens]
-            .sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))
-            .slice(0, 10);
+          // Volume tokens come pre-sorted by volume from API
+          const highVolume = (data.volumeTokens || []).slice(0, 10).map((t: any) => ({
+            symbol: t.symbol,
+            name: t.name,
+            address: t.address,
+            logoURI: t.logoURI,
+            price: t.price || 0,
+            priceChange24h: t.priceChange24h || 0,
+            volume24h: t.volume24h || 0,
+            liquidity: t.liquidity || 0,
+            marketCap: t.marketCap || 0,
+          }));
 
           // New pairs from new listings
-          const newPairs = newListings.slice(0, 10).map((t: any) => ({
+          const newPairs = (data.newLaunches || []).slice(0, 10).map((t: any) => ({
             symbol: t.symbol,
             name: t.name,
             address: t.mint || t.address,
-            logoURI: t.logoURI || t.imageUri,
+            logoURI: t.logoURI,
             price: t.price || 0,
-            priceChange24h: 0,
-            volume24h: 0,
+            priceChange24h: t.priceChange24h || 0,
+            volume24h: t.volume24h || 0,
             liquidity: t.liquidity || 0,
             marketCap: t.marketCap || 0,
-            listedAt: t.created || t.listedAt,
+            listedAt: t.listedAt,
           }));
 
           setMarketData({
@@ -239,23 +247,18 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
 
       {/* Stats Row */}
       <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-xs">
-        <div className="flex items-center gap-3">
-          {token.marketCap && token.marketCap > 0 && (
-            <span className="text-white/40">
-              MC: <span className="text-white/60">{formatNumber(token.marketCap)}</span>
-            </span>
-          )}
-          {token.volume24h > 0 && (
-            <span className="text-white/40">
-              Vol: <span className="text-white/60">{formatNumber(token.volume24h)}</span>
-            </span>
-          )}
-        </div>
-        {token.liquidity > 0 && (
+        <div className="flex items-center gap-2">
           <span className="text-white/40">
-            Liq: <span className="text-white/60">{formatNumber(token.liquidity)}</span>
+            MC: <span className="text-white/70 font-medium">{token.marketCap ? formatNumber(token.marketCap) : "—"}</span>
           </span>
-        )}
+          <span className="text-white/20">•</span>
+          <span className="text-white/40">
+            Vol: <span className="text-white/60">{token.volume24h ? formatNumber(token.volume24h) : "—"}</span>
+          </span>
+        </div>
+        <span className="text-white/40">
+          Liq: <span className="text-white/60">{token.liquidity ? formatNumber(token.liquidity) : "—"}</span>
+        </span>
       </div>
     </motion.a>
   );
