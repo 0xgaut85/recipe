@@ -399,6 +399,7 @@ async function fetchTrendingTokens(sortBy: "volume24hUSD" | "rank" | "liquidity"
 
 /**
  * Get trending tokens sorted by 24h VOLUME (high volume plays)
+ * Uses Birdeye's token_trending endpoint with sort_by=volume24hUSD
  */
 export async function getTrendingTokens(limit: number = 20): Promise<TrendingToken[]> {
   // Return cached data if available and fresh
@@ -406,10 +407,32 @@ export async function getTrendingTokens(limit: number = 20): Promise<TrendingTok
     return volumeCache.data.slice(0, limit);
   }
 
-  const tokens = await fetchTrendingTokens("volume24hUSD");
-  
-  volumeCache = { data: tokens, timestamp: Date.now() };
-  return tokens.slice(0, limit);
+  try {
+    const tokens = await fetchTrendingTokens("volume24hUSD");
+    
+    // Filter to ensure we have valid volume data
+    const validTokens = tokens.filter(t => t.volume24h > 0 && t.price > 0);
+    
+    console.log(`getTrendingTokens: fetched ${tokens.length} tokens, ${validTokens.length} with valid volume`);
+    
+    if (validTokens.length > 0) {
+      volumeCache = { data: validTokens, timestamp: Date.now() };
+      return validTokens.slice(0, limit);
+    }
+    
+    // If volume sort didn't work well, try liquidity sort as fallback
+    console.log("Volume sort returned no valid tokens, trying liquidity fallback");
+    const liquidityTokens = await fetchTrendingTokens("liquidity");
+    const validLiquidityTokens = liquidityTokens
+      .filter(t => t.volume24h > 0 && t.price > 0)
+      .sort((a, b) => b.volume24h - a.volume24h); // Re-sort by volume client-side
+    
+    volumeCache = { data: validLiquidityTokens, timestamp: Date.now() };
+    return validLiquidityTokens.slice(0, limit);
+  } catch (error) {
+    console.error("getTrendingTokens error:", error);
+    return [];
+  }
 }
 
 // Cache for high volume new pairs

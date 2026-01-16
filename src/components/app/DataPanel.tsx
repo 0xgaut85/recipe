@@ -411,7 +411,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
               <h3 className="text-white/50 text-xs font-medium">
                 {marketSection === "hot" && "🔥 pumping & dumping"}
                 {marketSection === "new" && "🆕 just launched"}
-                {marketSection === "volume" && "📊 high volume (new)"}
+                {marketSection === "volume" && "📊 high volume"}
               </h3>
               <span className="text-white/30 text-xs">solana</span>
             </div>

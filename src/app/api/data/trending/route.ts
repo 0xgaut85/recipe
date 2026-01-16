@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getHotTokens, getNewListings, getHighVolumeNewPairs } from "@/lib/birdeye";
+import { getHotTokens, getNewListings, getTrendingTokens } from "@/lib/birdeye";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -7,9 +7,9 @@ export const revalidate = 0;
 /**
  * GET /api/data/trending
  * Get market data from Birdeye:
- * - hotTokens: Biggest gainers/movers (sorted by 24h price change)
- * - volumeTokens: High volume NEW tokens (max 3 days old, sorted by volume)
- * - newLaunches: Recently launched tokens (very fresh, < 30 min)
+ * - hotTokens: Biggest gainers/movers (sorted by rank/price change via Birdeye algo)
+ * - volumeTokens: Tokens sorted by 24h trading volume (high volume plays)
+ * - newLaunches: Recently launched tokens
  */
 export async function GET() {
   try {
@@ -26,14 +26,14 @@ export async function GET() {
       });
     }
 
-    // Fetch all data in parallel
-    // - Hot: biggest price movers
-    // - Volume: high volume NEW tokens (max 3 days old)
-    // - New: very fresh launches
+    // Fetch all data in parallel from Birdeye token_trending endpoint
+    // - Hot: sorted by rank (Birdeye's trending algorithm - price movers with volume)
+    // - Volume: sorted by volume24hUSD (highest trading volume)
+    // - New: recently launched tokens from new_listing endpoint
     const [hotTokens, volumeTokens, newListings] = await Promise.all([
-      getHotTokens(15).catch(() => []),
-      getHighVolumeNewPairs(15).catch(() => []), // Changed to high volume new pairs
-      getNewListings(10).catch(() => []),
+      getHotTokens(15).catch((e) => { console.error("Hot tokens error:", e); return []; }),
+      getTrendingTokens(15).catch((e) => { console.error("Volume tokens error:", e); return []; }),
+      getNewListings(10).catch((e) => { console.error("New listings error:", e); return []; }),
     ]);
 
     // Format hot tokens (gainers by price change)
