@@ -167,12 +167,13 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-white">
+    <div className="h-full w-full flex flex-col" style={{ backgroundColor: "#0A0A0A" }}>
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-ink/10 bg-white"
+        className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-white/10"
+        style={{ backgroundColor: "#000000" }}
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 sm:gap-3 group">
@@ -181,9 +182,12 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
             alt="Claude Trade"
             width={28}
             height={28}
-            className="rounded-lg"
+            style={{ borderRadius: 0 }}
           />
-          <span className="font-display font-semibold text-ink text-base sm:text-lg group-hover:text-ink/70 transition-colors">
+          <span
+            className="text-white text-base sm:text-lg group-hover:text-white/70 transition-colors"
+            style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+          >
             CLAUDE TRADE
           </span>
         </Link>
@@ -197,14 +201,20 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Balance Display */}
           {walletData && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-ink/5 border border-ink/10">
-              <span className="text-ink font-mono text-sm">
+            <div
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-white/20"
+              style={{ borderRadius: 0 }}
+            >
+              <span
+                className="text-white text-sm"
+                style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+              >
                 {walletData.solBalance.toFixed(4)} SOL
               </span>
               <button
                 onClick={refreshBalance}
                 disabled={isRefreshing}
-                className="text-ink/40 hover:text-ink transition-colors"
+                className="text-white/40 hover:text-white transition-colors"
               >
                 <RefreshCw
                   size={14}
@@ -218,29 +228,33 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsStrategyOpen(true)}
-              className="p-2 rounded-lg hover:bg-ink/5 transition-colors text-ink/50 hover:text-ink"
+              className="p-2 hover:bg-white/10 transition-colors text-white/50 hover:text-white"
               title="My Strategies"
+              style={{ borderRadius: 0 }}
             >
               <BarChart3 size={18} />
             </button>
             <button
               onClick={() => setIsWithdrawOpen(true)}
-              className="p-2 rounded-lg hover:bg-ink/5 transition-colors text-ink/50 hover:text-ink"
+              className="p-2 hover:bg-white/10 transition-colors text-white/50 hover:text-white"
               title="Withdraw"
+              style={{ borderRadius: 0 }}
             >
               <ArrowDownToLine size={18} />
             </button>
             <button
               onClick={() => setIsLeaderboardOpen(true)}
-              className="p-2 rounded-lg hover:bg-ink/5 transition-colors text-ink/50 hover:text-ink"
+              className="p-2 hover:bg-white/10 transition-colors text-white/50 hover:text-white"
               title="Leaderboard"
+              style={{ borderRadius: 0 }}
             >
               <Trophy size={18} />
             </button>
             <button
               onClick={() => setIsProfileOpen(true)}
-              className="p-2 rounded-lg hover:bg-ink/5 transition-colors text-ink/50 hover:text-ink"
+              className="p-2 hover:bg-white/10 transition-colors text-white/50 hover:text-white"
               title="Profile"
+              style={{ borderRadius: 0 }}
             >
               <User size={18} />
             </button>
@@ -250,7 +264,8 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
           {walletData && (
             <button
               onClick={() => setIsWalletModalOpen(true)}
-              className="hidden md:flex items-center gap-2 text-ink/40 hover:text-ink/60 text-xs font-mono px-2 py-1 rounded-lg hover:bg-ink/5 transition-colors"
+              className="hidden md:flex items-center gap-2 text-white/40 hover:text-white/60 text-xs px-2 py-1 hover:bg-white/10 transition-colors"
+              style={{ fontFamily: "TWKEverettMono-Regular, monospace", borderRadius: 0 }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
               <span>
@@ -263,22 +278,36 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
       </motion.header>
 
       {/* Mobile Step Indicator */}
-      <div className="lg:hidden px-4 py-2 border-b border-ink/10 overflow-x-auto bg-white">
+      <div
+        className="lg:hidden px-4 py-2 border-b border-white/10 overflow-x-auto"
+        style={{ backgroundColor: "#0A0A0A" }}
+      >
         <StepIndicator currentStep={currentStep} />
       </div>
 
       {/* Mobile Balance */}
       {walletData && (
-        <div className="sm:hidden px-4 py-2 border-b border-ink/10 flex items-center justify-between bg-white">
-          <span className="text-ink/50 text-sm">Balance</span>
+        <div
+          className="sm:hidden px-4 py-2 border-b border-white/10 flex items-center justify-between"
+          style={{ backgroundColor: "#0A0A0A" }}
+        >
+          <span
+            className="text-white/50 text-sm"
+            style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+          >
+            Balance
+          </span>
           <div className="flex items-center gap-2">
-            <span className="text-ink font-mono text-sm">
+            <span
+              className="text-white text-sm"
+              style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+            >
               {walletData.solBalance.toFixed(4)} SOL
             </span>
             <button
               onClick={refreshBalance}
               disabled={isRefreshing}
-              className="text-ink/40 hover:text-ink transition-colors"
+              className="text-white/40 hover:text-white transition-colors"
             >
               <RefreshCw
                 size={14}
@@ -290,7 +319,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden bg-ink/[0.02]">
+      <div className="flex-1 flex overflow-hidden" style={{ backgroundColor: "#0A0A0A" }}>
         {/* Chat Panel - Left Side */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -356,14 +385,20 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white border border-ink/10 rounded-xl p-6 w-full max-w-sm"
+              className="bg-[#0A0A0A] border border-white/10 p-6 w-full max-w-sm"
+              style={{ borderRadius: 0 }}
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-ink">Wallet</h2>
+                <h2
+                  className="text-xl text-white"
+                  style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+                >
+                  WALLET
+                </h2>
                 <button
                   onClick={() => setIsWalletModalOpen(false)}
-                  className="text-ink/40 hover:text-ink transition-colors"
+                  className="text-white/40 hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -372,22 +407,50 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
               {/* Connected Status */}
               <div className="flex items-center gap-2 mb-4">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-green-600 text-sm font-medium">Connected</span>
+                <span
+                  className="text-green-400 text-sm"
+                  style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+                >
+                  Connected
+                </span>
               </div>
 
               {/* Address */}
-              <div className="bg-ink/5 rounded-lg p-4 mb-4">
-                <p className="text-ink/40 text-xs mb-2 uppercase tracking-wider">Address</p>
-                <p className="text-ink font-mono text-sm break-all">
+              <div
+                className="bg-white/5 p-4 mb-4 border border-white/10"
+                style={{ borderRadius: 0 }}
+              >
+                <p
+                  className="text-white/50 text-xs mb-2 uppercase tracking-wider"
+                  style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+                >
+                  Address
+                </p>
+                <p
+                  className="text-white text-sm break-all"
+                  style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+                >
                   {walletData.publicKey}
                 </p>
               </div>
 
               {/* Balance */}
-              <div className="bg-ink/5 rounded-lg p-4 mb-6">
-                <p className="text-ink/40 text-xs mb-2 uppercase tracking-wider">Balance</p>
-                <p className="text-ink font-semibold text-2xl">
-                  {walletData.solBalance.toFixed(4)} <span className="text-ink/50 text-lg">SOL</span>
+              <div
+                className="bg-white/5 p-4 mb-6 border border-white/10"
+                style={{ borderRadius: 0 }}
+              >
+                <p
+                  className="text-white/50 text-xs mb-2 uppercase tracking-wider"
+                  style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+                >
+                  Balance
+                </p>
+                <p
+                  className="text-white text-2xl"
+                  style={{ fontFamily: "TWKEverett-Regular, sans-serif" }}
+                >
+                  {walletData.solBalance.toFixed(4)}{" "}
+                  <span className="text-white/50 text-lg">SOL</span>
                 </p>
               </div>
 
@@ -395,28 +458,31 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
               <div className="space-y-2">
                 <button
                   onClick={copyAddress}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-ink/5 hover:bg-ink/10 rounded-lg text-ink/70 hover:text-ink transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors border border-white/10"
+                  style={{ borderRadius: 0, fontFamily: "TWKEverettMono-Regular, monospace" }}
                 >
                   {addressCopied ? <Check size={18} /> : <Copy size={18} />}
-                  <span>{addressCopied ? "Copied!" : "Copy Address"}</span>
+                  <span>{addressCopied ? "COPIED!" : "COPY ADDRESS"}</span>
                 </button>
 
                 <a
                   href={`https://solscan.io/account/${walletData.publicKey}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-ink/5 hover:bg-ink/10 rounded-lg text-ink/70 hover:text-ink transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors border border-white/10"
+                  style={{ borderRadius: 0, fontFamily: "TWKEverettMono-Regular, monospace" }}
                 >
                   <ExternalLink size={18} />
-                  <span>View on Solscan</span>
+                  <span>VIEW ON SOLSCAN</span>
                 </a>
 
                 <button
                   onClick={handleDisconnect}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 hover:bg-red-100 rounded-lg text-red-600 hover:text-red-700 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-red-500/20"
+                  style={{ borderRadius: 0, fontFamily: "TWKEverettMono-Regular, monospace" }}
                 >
                   <LogOut size={18} />
-                  <span>Disconnect</span>
+                  <span>DISCONNECT</span>
                 </button>
               </div>
             </motion.div>

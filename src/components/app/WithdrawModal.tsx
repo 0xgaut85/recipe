@@ -123,7 +123,7 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
             href={data.explorerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-claude-orange hover:underline flex items-center gap-1"
+            className="text-[#E57B3A] hover:underline flex items-center gap-1"
           >
             View on Solscan <ExternalLink size={12} />
           </a>
@@ -165,19 +165,19 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white border border-ink/10 rounded-xl w-full max-w-md overflow-hidden"
+            className="bg-[#0A0A0A] border border-white/10 rounded-xl w-full max-w-md overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-ink/10">
-              <h2 className="font-display text-xl font-semibold text-ink">
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h2 className="font-display text-xl font-semibold text-white">
                 Withdraw SOL
               </h2>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-ink/5 transition-colors"
+                className="p-2 rounded-lg hover:bg-white/5 transition-colors"
               >
-                <X size={20} className="text-ink/50" />
+                <X size={20} className="text-white/50" />
               </button>
             </div>
 
@@ -185,41 +185,41 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
             {withdrawInfo ? (
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {/* Balance Display */}
-                <div className="p-4 rounded-lg bg-claude-orange/5 border border-claude-orange/20">
+                <div className="p-4 rounded-lg bg-[#E57B3A]/5 border border-[#E57B3A]/20">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-ink/60">Available Balance</span>
-                    <span className="font-display text-xl text-ink">
+                    <span className="text-sm text-white/60">Available Balance</span>
+                    <span className="font-display text-xl text-white">
                       {withdrawInfo.solBalance.toFixed(4)} SOL
                     </span>
                   </div>
                   <div className="flex justify-between items-center mt-1">
-                    <span className="text-xs text-ink/40">Max Withdrawable</span>
-                    <span className="text-sm text-ink/60">
+                    <span className="text-xs text-white/40">Max Withdrawable</span>
+                    <span className="text-sm text-white/60">
                       {withdrawInfo.maxWithdrawable.toFixed(4)} SOL
                     </span>
                   </div>
                 </div>
 
                 {/* Deposit Address */}
-                <div className="p-3 rounded-lg bg-ink/5 border border-ink/5">
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-ink/40">Your Deposit Address</span>
+                    <span className="text-xs text-white/40">Your Deposit Address</span>
                     <button
                       type="button"
                       onClick={copyAddress}
-                      className="text-ink/50 hover:text-claude-orange transition-colors"
+                      className="text-white/50 hover:text-[#E57B3A] transition-colors"
                     >
                       {copied ? <Check size={14} /> : <Copy size={14} />}
                     </button>
                   </div>
-                  <p className="text-xs text-ink/60 font-mono mt-1 break-all">
+                  <p className="text-xs text-white/60 font-mono mt-1 break-all">
                     {withdrawInfo.publicKey}
                   </p>
                 </div>
 
                 {/* Amount Input */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-ink/70">
+                  <label className="text-sm font-medium text-white/70">
                     Amount (SOL)
                   </label>
                   <div className="relative">
@@ -231,12 +231,12 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
                       step="0.0001"
                       min={withdrawInfo.minWithdrawal}
                       max={withdrawInfo.maxWithdrawable}
-                      className="w-full p-3 pr-16 rounded-lg border border-ink/10 focus:border-claude-orange focus:outline-none transition-colors"
+                      className="w-full p-3 pr-16 rounded-lg border border-white/10 focus:border-[#E57B3A] focus:outline-none transition-colors"
                     />
                     <button
                       type="button"
                       onClick={handleMaxClick}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 rounded-md bg-claude-orange/10 text-claude-orange text-sm font-medium hover:bg-claude-orange/20 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 rounded-md bg-[#E57B3A]/10 text-[#E57B3A] text-sm font-medium hover:bg-[#E57B3A]/20 transition-colors"
                     >
                       Max
                     </button>
@@ -245,7 +245,7 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
 
                 {/* Destination Address */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-ink/70">
+                  <label className="text-sm font-medium text-white/70">
                     Destination Address
                   </label>
                   <input
@@ -255,7 +255,7 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
                     placeholder="Enter Solana wallet address"
                     className={`w-full p-3 rounded-lg border focus:outline-none transition-colors ${
                       isValidAddress === null
-                        ? "border-ink/10 focus:border-claude-orange"
+                        ? "border-white/10 focus:border-[#E57B3A]"
                         : isValidAddress
                         ? "border-green-500 focus:border-green-500"
                         : "border-red-500 focus:border-red-500"
@@ -270,18 +270,18 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
                 </div>
 
                 {/* Fee Breakdown */}
-                <div className="p-4 rounded-lg bg-ink/5 space-y-2">
+                <div className="p-4 rounded-lg bg-white/5 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-ink/60">Network Fee</span>
-                    <span className="text-ink">{withdrawInfo.networkFee} SOL</span>
+                    <span className="text-white/60">Network Fee</span>
+                    <span className="text-white">{withdrawInfo.networkFee} SOL</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-ink/60">Platform Fee</span>
-                    <span className="text-ink">{withdrawInfo.platformFee} SOL</span>
+                    <span className="text-white/60">Platform Fee</span>
+                    <span className="text-white">{withdrawInfo.platformFee} SOL</span>
                   </div>
-                  <div className="border-t border-ink/10 pt-2 flex justify-between">
-                    <span className="font-medium text-ink">You Receive</span>
-                    <span className={`font-medium ${isValidAmount ? "text-green-600" : "text-ink"}`}>
+                  <div className="border-t border-white/10 pt-2 flex justify-between">
+                    <span className="font-medium text-white">You Receive</span>
+                    <span className={`font-medium ${isValidAmount ? "text-green-400" : "text-white"}`}>
                       {amountNum > 0 ? amountNum.toFixed(4) : "0.0000"} SOL
                     </span>
                   </div>
@@ -289,7 +289,7 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
 
                 {/* Daily Limit Warning */}
                 {withdrawInfo.withdrawalsToday > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-ink/50">
+                  <div className="flex items-center gap-2 text-sm text-white/50">
                     <AlertCircle size={14} />
                     <span>
                       {withdrawInfo.withdrawalsToday}/{withdrawInfo.maxDailyWithdrawals} withdrawals today
@@ -301,7 +301,7 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
                 <motion.button
                   type="submit"
                   disabled={isLoading || !withdrawInfo.canWithdraw || !isValidAddress}
-                  className="w-full p-4 rounded-lg bg-ink text-white font-medium flex items-center justify-center gap-2 hover:bg-ink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full p-4 rounded-lg bg-[#E57B3A] text-white font-medium flex items-center justify-center gap-2 hover:bg-[#E57B3A]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   whileTap={{ scale: 0.98 }}
                 >
                   <Send size={18} />
@@ -310,7 +310,7 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({
               </form>
             ) : (
               <div className="p-6 flex items-center justify-center h-40">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-claude-orange border-t-transparent" />
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E57B3A] border-t-transparent" />
               </div>
             )}
           </motion.div>

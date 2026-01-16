@@ -6,7 +6,7 @@ const steps = [
     num: "01",
     title: "Describe",
     desc: "User describes what they want to happen in natural language.",
-    color: "bg-claude-orange/10",
+    color: "bg-[#E57B3A]/10",
   },
   {
     num: "02",

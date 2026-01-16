@@ -39,20 +39,19 @@ export const WalletGate: FC<WalletGateProps> = ({ children }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="h-screen w-screen bg-white flex items-center justify-center relative overflow-hidden"
+          className="h-screen w-screen flex items-center justify-center relative overflow-hidden"
+          style={{ backgroundColor: "#0A0A0A" }}
         >
-          {/* Grid background */}
-          <div className="absolute inset-0 bg-grid" />
-          
           {/* Subtle gradient */}
           <div className="absolute inset-0 overflow-hidden">
             <motion.div
               animate={{
                 scale: [1, 1.1, 1],
-                opacity: [0.05, 0.1, 0.05],
+                opacity: [0.1, 0.2, 0.1],
               }}
               transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-claude-orange/20 rounded-full blur-[150px]"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] blur-[150px]"
+              style={{ backgroundColor: "rgba(229, 123, 58, 0.3)" }}
             />
           </div>
 
@@ -71,12 +70,16 @@ export const WalletGate: FC<WalletGateProps> = ({ children }) => {
                   alt="Claude Trade"
                   width={72}
                   height={72}
-                  className="rounded-2xl"
+                  style={{ borderRadius: 0 }}
                 />
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-4 border border-ink/10 rounded-3xl"
+                  className="absolute -inset-4 border border-[#E57B3A]/30"
+                  style={{
+                    clipPath:
+                      "polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px)",
+                  }}
                 />
               </div>
             </motion.div>
@@ -86,7 +89,8 @@ export const WalletGate: FC<WalletGateProps> = ({ children }) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="font-display text-3xl md:text-4xl font-semibold text-ink mb-4"
+              className="text-3xl md:text-4xl text-white mb-4"
+              style={{ fontFamily: "TWKEverett-Regular, sans-serif" }}
             >
               Connect to Trade
             </motion.h1>
@@ -96,7 +100,8 @@ export const WalletGate: FC<WalletGateProps> = ({ children }) => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="text-ink/50 text-lg mb-10 font-normal"
+              className="text-white/60 text-lg mb-10"
+              style={{ fontFamily: "BaselGrotesk-Regular, sans-serif" }}
             >
               Connect your wallet to start trading with AI
             </motion.p>
@@ -115,17 +120,24 @@ export const WalletGate: FC<WalletGateProps> = ({ children }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="mt-8 text-ink/30 text-xs"
+              className="mt-8 text-white/40 text-xs"
+              style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
             >
               Your keys, your crypto. We never store private keys.
             </motion.p>
           </div>
 
           {/* Corner Decorations */}
-          <div className="absolute top-8 left-8 text-ink/20 font-mono text-xs">
+          <div
+            className="absolute top-8 left-8 text-white/40 text-xs"
+            style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+          >
             CLAUDE TRADE
           </div>
-          <div className="absolute bottom-8 right-8 text-ink/20 font-mono text-xs">
+          <div
+            className="absolute bottom-8 right-8 text-white/40 text-xs"
+            style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+          >
             v1.0.0
           </div>
         </motion.div>

@@ -24,7 +24,7 @@ export const DocsWhatIsRecipe: FC = () => {
         {strategyDefinitions.map((item) => (
           <div
             key={item.label}
-            className="p-5 bg-white/[0.02] border border-white/10 rounded-lg hover:border-claude-orange/30 transition-colors"
+            className="p-5 bg-white/[0.02] border border-white/10 rounded-lg hover:border-[#E57B3A]/30 transition-colors"
           >
             <h4 className="font-semibold text-white mb-1">
               {item.label}

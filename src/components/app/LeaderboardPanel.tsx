@@ -52,14 +52,14 @@ export const LeaderboardPanel: FC<LeaderboardPanelProps> = ({
     if (rank === 1) return "text-yellow-500";
     if (rank === 2) return "text-gray-400";
     if (rank === 3) return "text-amber-600";
-    return "text-ink/50";
+    return "text-white/50";
   };
 
   const getRankBg = (rank: number) => {
-    if (rank === 1) return "bg-yellow-50 border-yellow-200";
-    if (rank === 2) return "bg-gray-50 border-gray-200";
-    if (rank === 3) return "bg-amber-50 border-amber-200";
-    return "bg-white border-ink/10";
+    if (rank === 1) return "bg-yellow-500/10 border-yellow-500/30";
+    if (rank === 2) return "bg-white/5 border-white/20";
+    if (rank === 3) return "bg-amber-500/10 border-amber-500/30";
+    return "bg-white/5 border-white/10";
   };
 
   return (
@@ -76,37 +76,37 @@ export const LeaderboardPanel: FC<LeaderboardPanelProps> = ({
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="bg-white border border-ink/10 rounded-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+            className="bg-[#0A0A0A] border border-white/10 rounded-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-ink/10">
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-claude-orange/10 flex items-center justify-center">
-                  <Trophy className="text-claude-orange" size={20} />
+                <div className="w-10 h-10 rounded-lg bg-[#E57B3A]/10 flex items-center justify-center">
+                  <Trophy className="text-[#E57B3A]" size={20} />
                 </div>
-                <h2 className="font-display text-xl font-semibold text-ink">
+                <h2 className="font-display text-xl font-semibold text-white">
                   Leaderboard
                 </h2>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-ink/5 transition-colors"
+                className="p-2 rounded-lg hover:bg-white/5 transition-colors"
               >
-                <X size={20} className="text-ink/50" />
+                <X size={20} className="text-white/50" />
               </button>
             </div>
 
             {/* Sort Tabs */}
-            <div className="flex gap-2 p-4 border-b border-ink/10">
+            <div className="flex gap-2 p-4 border-b border-white/10">
               {(["pnl", "trades", "winRate"] as const).map((sort) => (
                 <button
                   key={sort}
                   onClick={() => setSortBy(sort)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     sortBy === sort
-                      ? "bg-claude-orange text-white"
-                      : "bg-ink/5 text-ink/60 hover:bg-ink/10"
+                      ? "bg-[#E57B3A] text-white"
+                      : "bg-white/5 text-white/60 hover:bg-white/10"
                   }`}
                 >
                   {sort === "pnl" && "By PnL"}
@@ -120,10 +120,10 @@ export const LeaderboardPanel: FC<LeaderboardPanelProps> = ({
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {isLoading ? (
                 <div className="flex items-center justify-center h-40">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-claude-orange border-t-transparent" />
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E57B3A] border-t-transparent" />
                 </div>
               ) : leaderboard.length === 0 ? (
-                <div className="text-center py-12 text-ink/50">
+                <div className="text-center py-12 text-white/50">
                   <Activity size={48} className="mx-auto mb-4 opacity-40" />
                   <p>No traders on the leaderboard yet</p>
                 </div>
@@ -158,13 +158,13 @@ export const LeaderboardPanel: FC<LeaderboardPanelProps> = ({
                             className="w-8 h-8 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-claude-orange/10 flex items-center justify-center">
-                            <span className="text-sm font-medium text-claude-orange">
+                          <div className="w-8 h-8 rounded-full bg-[#E57B3A]/10 flex items-center justify-center">
+                            <span className="text-sm font-medium text-[#E57B3A]">
                               {entry.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         )}
-                        <span className="font-medium text-ink truncate">
+                        <span className="font-medium text-white truncate">
                           {entry.name}
                         </span>
                         {entry.xHandle && (
@@ -172,7 +172,7 @@ export const LeaderboardPanel: FC<LeaderboardPanelProps> = ({
                             href={`https://x.com/${entry.xHandle}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-ink/30 hover:text-claude-orange transition-colors"
+                            className="text-white/30 hover:text-[#E57B3A] transition-colors"
                           >
                             <ExternalLink size={14} />
                           </a>
@@ -185,7 +185,7 @@ export const LeaderboardPanel: FC<LeaderboardPanelProps> = ({
                       <div className="text-right">
                         <div
                           className={`font-medium flex items-center gap-1 ${
-                            entry.totalPnl >= 0 ? "text-green-600" : "text-red-500"
+                            entry.totalPnl >= 0 ? "text-green-400" : "text-red-500"
                           }`}
                         >
                           {entry.totalPnl >= 0 ? (
@@ -195,19 +195,19 @@ export const LeaderboardPanel: FC<LeaderboardPanelProps> = ({
                           )}
                           ${Math.abs(entry.totalPnl).toLocaleString()}
                         </div>
-                        <div className="text-ink/40 text-xs">PnL</div>
+                        <div className="text-white/40 text-xs">PnL</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-medium text-ink">
+                        <div className="font-medium text-white">
                           {entry.totalTrades}
                         </div>
-                        <div className="text-ink/40 text-xs">Trades</div>
+                        <div className="text-white/40 text-xs">Trades</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-medium text-ink">
+                        <div className="font-medium text-white">
                           {entry.winRate}%
                         </div>
-                        <div className="text-ink/40 text-xs">Win</div>
+                        <div className="text-white/40 text-xs">Win</div>
                       </div>
                     </div>
                   </motion.div>

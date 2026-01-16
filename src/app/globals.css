@@ -2,13 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* R1X Custom Fonts */
+@font-face {
+  font-family: 'BaselGrotesk-Regular';
+  src: url('https://nillion.com/wp-content/themes/nillion/assets/fonts/BaselGrotesk-Regular.woff') format('woff'),
+       url('https://nillion.com/wp-content/themes/nillion/assets/fonts/BaselGrotesk-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TWKEverett-Regular';
+  src: url('https://nillion.com/wp-content/themes/nillion/assets/fonts/TWKEverett-Regular.woff') format('woff'),
+       url('https://nillion.com/wp-content/themes/nillion/assets/fonts/TWKEverett-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TWKEverettMono-Regular';
+  src: url('https://nillion.com/wp-content/themes/nillion/assets/fonts/TWKEverettMono-Regular.woff') format('woff'),
+       url('https://nillion.com/wp-content/themes/nillion/assets/fonts/TWKEverettMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --ink: #0A0A0A;
-  --ink-light: #525252;
+  --background: #F7F7F7;
+  --foreground: #000000;
+  --primary: #000000;
+  --accent: #E57B3A;
   --white: #FFFFFF;
   --black: #000000;
-  --claude-orange: #E57B3A;
-  --claude-orange-light: #F59E5E;
+  --gray-light: #F7F7F7;
 }
 
 * {
@@ -19,70 +48,373 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
 }
 
-/* Landing pages - Dark theme (robalabs style) */
 html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  background: var(--ink);
-  color: var(--white);
+  background: var(--background);
+  color: var(--foreground);
+  font-family: BaselGrotesk-Regular, sans-serif;
 }
 
-/* Dark Glass Panel */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
+section {
+  scroll-snap-align: start;
 }
 
-/* Dark Glass Card */
-.glass-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.75rem;
+/* Hide scrollbars but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
-/* Light Glass Card (for app terminal) */
-.glass-card-light {
-  background: var(--white);
-  border: 1px solid rgba(10, 10, 10, 0.08);
-  color: var(--ink);
-  border-radius: 0.75rem;
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Tech Card - Dark with subtle border */
-.tech-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 1rem;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 77, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 77, 0, 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes text-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+/* Intersection Observer fade-in */
+.fade-in-section {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fade-in-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Button hover effects */
+.button-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.button-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: left 0.3s ease;
+}
+
+.button-hover:hover::before {
+  left: 100%;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.47, 0, 0.745, 0.715);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+}
+
+/* Link hover effects */
+.link-hover {
   transition: all 0.2s ease;
+  position: relative;
 }
 
-.tech-card:hover {
-  border-color: rgba(255, 255, 255, 0.12);
+.link-hover::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: 0;
+  left: 0;
+  background-color: currentColor;
+  transition: width 0.3s ease;
 }
 
-/* Accent Card with Orange */
-.accent-card {
-  background: rgba(229, 123, 58, 0.08);
-  border: 1px solid rgba(229, 123, 58, 0.2);
-  border-radius: 0.75rem;
+.link-hover:hover::after {
+  width: 100%;
 }
 
-/* Wallet Adapter Overrides - Dark theme */
+/* Header transitions */
+.header-link {
+  transition: transform 0.4s ease-in-out;
+}
+
+.header-link:hover {
+  transform: translateY(-2px);
+}
+
+/* Icon transitions */
+.icon-transition {
+  transition: transform 0.2s ease-in-out;
+}
+
+.icon-transition:hover {
+  transform: scale(1.1);
+}
+
+/* Magnetic button effects */
+.magnetic-button {
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Accent glow */
+.accent-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Parallax container */
+.parallax-container {
+  will-change: transform;
+}
+
+/* Smooth reveal animations */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.reveal-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Enhanced button hover with orange accent */
+.button-accent-hover {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.button-accent-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 77, 0, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.button-accent-hover:hover::before {
+  left: 100%;
+}
+
+.button-accent-hover:hover {
+  box-shadow: 0 0 30px rgba(255, 77, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Text reveal animation */
+.text-reveal {
+  animation: text-reveal 0.8s ease-out forwards;
+}
+
+/* Gradient text effect */
+.gradient-text {
+  background: linear-gradient(135deg, #E57B3A 0%, #FF6B35 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Shimmer effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 77, 0, 0.2) 50%,
+    transparent 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* R1X Card Styles */
+.r1x-card {
+  background: transparent;
+  border: 1px solid #E5E7EB;
+  border-radius: 0;
+  transition: all 0.3s ease;
+}
+
+.r1x-card:hover {
+  border-color: var(--accent);
+}
+
+/* R1X Button - Clipped corners */
+.r1x-button {
+  clip-path: polygon(8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px);
+  border-radius: 0;
+  font-family: 'TWKEverettMono-Regular', monospace;
+  text-transform: uppercase;
+  letter-spacing: -0.56px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.r1x-button-primary {
+  background: var(--accent);
+  color: var(--black);
+  box-shadow: 0 0 20px rgba(255, 77, 0, 0.3);
+}
+
+.r1x-button-primary:hover {
+  box-shadow: 0 0 30px rgba(255, 77, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.r1x-button-secondary {
+  background: transparent;
+  color: var(--white);
+  border: 2px solid var(--white);
+}
+
+.r1x-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Text scramble animation container */
+.text-scramble {
+  position: relative;
+}
+
+.text-scramble__symbol {
+  display: inline-block;
+  transition: all;
+}
+
+/* Enhanced focus states */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* Smooth transitions for all interactive elements */
+a, button, input, textarea {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure touch targets are at least 44x44px */
+a, button {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Prevent text overflow */
+* {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Wallet Adapter Overrides - R1X style */
 .wallet-adapter-button {
   background: var(--white) !important;
-  border-radius: 0.5rem !important;
-  font-family: var(--font-inter), system-ui, sans-serif !important;
-  color: var(--ink) !important;
-  font-weight: 600 !important;
+  border-radius: 0 !important;
+  font-family: 'TWKEverettMono-Regular', monospace !important;
+  color: var(--black) !important;
+  font-weight: 400 !important;
   padding: 12px 24px !important;
   transition: all 0.2s ease !important;
   border: none !important;
-  font-size: 14px !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  clip-path: polygon(8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px) !important;
 }
 
 .wallet-adapter-button:hover {
@@ -101,11 +433,11 @@ body {
 }
 
 .wallet-adapter-modal-wrapper {
-  background: var(--ink) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 1rem !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-  font-family: var(--font-inter), system-ui, sans-serif !important;
+  background: var(--white) !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 0 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  font-family: 'TWKEverettMono-Regular', monospace !important;
   max-width: 380px !important;
   padding: 0 !important;
   overflow: hidden !important;
@@ -117,20 +449,21 @@ body {
 
 /* Modal Title */
 .wallet-adapter-modal-title {
-  color: var(--white) !important;
-  font-family: var(--font-space-grotesk), system-ui, sans-serif !important;
-  font-weight: 600 !important;
-  font-size: 1.125rem !important;
+  color: var(--black) !important;
+  font-family: 'TWKEverettMono-Regular', monospace !important;
+  font-weight: 400 !important;
+  font-size: 1rem !important;
   margin-bottom: 1.25rem !important;
   text-align: center !important;
   line-height: 1.4 !important;
+  text-transform: uppercase !important;
 }
 
 /* Close button */
 .wallet-adapter-modal-button-close {
   background: transparent !important;
   border: none !important;
-  border-radius: 0.5rem !important;
+  border-radius: 0 !important;
   width: 36px !important;
   height: 36px !important;
   display: flex !important;
@@ -142,11 +475,11 @@ body {
 }
 
 .wallet-adapter-modal-button-close:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(0, 0, 0, 0.05) !important;
 }
 
 .wallet-adapter-modal-button-close svg {
-  fill: var(--white) !important;
+  fill: var(--black) !important;
   width: 12px !important;
   height: 12px !important;
 }
@@ -167,21 +500,22 @@ body {
 
 /* Wallet list buttons */
 .wallet-adapter-modal-list .wallet-adapter-button {
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: var(--white) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 0.75rem !important;
+  background: transparent !important;
+  color: var(--black) !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 0 !important;
   padding: 0.875rem 1rem !important;
   width: 100% !important;
   justify-content: flex-start !important;
   gap: 0.875rem !important;
-  font-weight: 500 !important;
+  font-weight: 400 !important;
   transition: all 0.15s ease !important;
+  clip-path: none !important;
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button:hover {
-  background: rgba(229, 123, 58, 0.15) !important;
-  border-color: rgba(229, 123, 58, 0.3) !important;
+  background: rgba(255, 77, 0, 0.1) !important;
+  border-color: var(--accent) !important;
   transform: none !important;
 }
 
@@ -189,34 +523,34 @@ body {
 .wallet-adapter-modal-list .wallet-adapter-button-start-icon {
   width: 28px !important;
   height: 28px !important;
-  border-radius: 0.5rem !important;
+  border-radius: 0 !important;
 }
 
 /* Collapse button */
 .wallet-adapter-modal-collapse-button {
   background: transparent !important;
-  color: var(--white) !important;
+  color: var(--black) !important;
   border: none !important;
   padding: 1rem !important;
-  font-family: var(--font-inter), system-ui, sans-serif !important;
-  font-weight: 500 !important;
+  font-family: 'TWKEverettMono-Regular', monospace !important;
+  font-weight: 400 !important;
   margin-top: 0.5rem !important;
 }
 
 .wallet-adapter-modal-collapse-button:hover {
-  color: var(--claude-orange) !important;
+  color: var(--accent) !important;
 }
 
 .wallet-adapter-modal-collapse-button svg {
-  fill: var(--white) !important;
+  fill: var(--black) !important;
 }
 
 /* Dropdown menu */
 .wallet-adapter-dropdown-list {
-  background: var(--ink) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 0.75rem !important;
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5) !important;
+  background: var(--white) !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 0 !important;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.2) !important;
   padding: 0.5rem !important;
   overflow: hidden !important;
 }
@@ -227,16 +561,16 @@ body {
 
 .wallet-adapter-dropdown-list-item {
   background: transparent !important;
-  color: var(--white) !important;
-  border-radius: 0.5rem !important;
+  color: var(--black) !important;
+  border-radius: 0 !important;
   padding: 0.75rem 1rem !important;
-  font-family: var(--font-inter), system-ui, sans-serif !important;
-  font-weight: 500 !important;
+  font-family: 'TWKEverettMono-Regular', monospace !important;
+  font-weight: 400 !important;
   transition: all 0.15s ease !important;
 }
 
 .wallet-adapter-dropdown-list-item:hover {
-  background: rgba(229, 123, 58, 0.15) !important;
+  background: rgba(255, 77, 0, 0.1) !important;
 }
 
 /* Layout Utilities */
@@ -254,9 +588,9 @@ body {
   }
 }
 
-/* Scrollbar - Dark theme */
+/* Scrollbar - Light theme */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -264,18 +598,44 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* R1X Agent Scrollbar */
+.r1x-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.r1x-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.r1x-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 77, 0, 0.3);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.r1x-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 77, 0, 0.5);
+}
+
+/* Firefox scrollbar */
+.r1x-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 77, 0, 0.3) transparent;
 }
 
 /* Accent underline */
 .underline-accent {
   text-decoration: underline;
-  text-decoration-color: var(--claude-orange);
+  text-decoration-color: var(--accent);
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
   text-decoration-skip-ink: none;
@@ -283,65 +643,35 @@ body {
 
 /* Selection */
 ::selection {
-  background: rgba(229, 123, 58, 0.3);
-  color: var(--white);
+  background: rgba(255, 77, 0, 0.3);
+  color: var(--black);
 }
 
-/* Docs Sidebar */
-.docs-sidebar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+/* Responsive typography */
+@media (max-width: 640px) {
+  h1 {
+    font-size: clamp(28px, 8vw, 46.45px) !important;
+    line-height: 1.1 !important;
+  }
+  
+  h2 {
+    font-size: clamp(28px, 8vw, 46.45px) !important;
+    line-height: 1.1 !important;
+  }
+  
+  h3 {
+    font-size: clamp(18px, 5vw, 24px) !important;
+    line-height: 1.3 !important;
+  }
+  
+  p {
+    font-size: clamp(16px, 4vw, 18px) !important;
+    line-height: 1.5 !important;
+  }
 }
 
-.docs-sidebar::-webkit-scrollbar {
-  width: 2px;
-}
-
-.docs-sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* App Terminal - Light theme override */
-.app-light {
-  background: var(--white) !important;
-  color: var(--ink) !important;
-}
-
-.app-light ::-webkit-scrollbar-thumb {
-  background: rgba(10, 10, 10, 0.15);
-}
-
-.app-light ::-webkit-scrollbar-thumb:hover {
-  background: rgba(10, 10, 10, 0.25);
-}
-
-/* Terminal Scrollbar */
-.terminal-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-}
-
-.terminal-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.terminal-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.terminal-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
-}
-
-.terminal-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-/* Dark Grid Background Pattern */
-.bg-grid-dark {
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 60px 60px;
+/* Prevent text cropping */
+h1, h2, h3, h4, h5, h6, p {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }

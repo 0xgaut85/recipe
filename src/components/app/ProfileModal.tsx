@@ -81,19 +81,19 @@ export const ProfileModal: FC<ProfileModalProps> = ({
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white border border-ink/10 rounded-xl w-full max-w-md overflow-hidden"
+            className="bg-[#0A0A0A] border border-white/10 rounded-xl w-full max-w-md overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-ink/10">
-              <h2 className="font-display text-xl font-semibold text-ink">
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h2 className="font-display text-xl font-semibold text-white">
                 Edit Profile
               </h2>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-ink/5 transition-colors"
+                className="p-2 rounded-lg hover:bg-white/5 transition-colors"
               >
-                <X size={20} className="text-ink/50" />
+                <X size={20} className="text-white/50" />
               </button>
             </div>
 
@@ -101,7 +101,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {/* Name */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-ink/70">
+                <label className="flex items-center gap-2 text-sm font-medium text-white/70">
                   <User size={16} />
                   Name
                 </label>
@@ -112,14 +112,14 @@ export const ProfileModal: FC<ProfileModalProps> = ({
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="Your name"
-                  className="w-full p-3 rounded-lg border border-ink/10 focus:border-claude-orange focus:outline-none transition-colors"
+                  className="w-full p-3 rounded-lg border border-white/10 focus:border-[#E57B3A] focus:outline-none transition-colors"
                   maxLength={50}
                 />
               </div>
 
               {/* Avatar URL */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-ink/70">
+                <label className="flex items-center gap-2 text-sm font-medium text-white/70">
                   <User size={16} />
                   Avatar URL
                 </label>
@@ -133,18 +133,18 @@ export const ProfileModal: FC<ProfileModalProps> = ({
                     })
                   }
                   placeholder="https://example.com/avatar.png"
-                  className="w-full p-3 rounded-lg border border-ink/10 focus:border-claude-orange focus:outline-none transition-colors"
+                  className="w-full p-3 rounded-lg border border-white/10 focus:border-[#E57B3A] focus:outline-none transition-colors"
                 />
               </div>
 
               {/* X Handle */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-ink/70">
+                <label className="flex items-center gap-2 text-sm font-medium text-white/70">
                   <AtSign size={16} />
                   X Handle
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
                     @
                   </span>
                   <input
@@ -157,7 +157,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({
                       })
                     }
                     placeholder="username"
-                    className="w-full p-3 pl-8 rounded-lg border border-ink/10 focus:border-claude-orange focus:outline-none transition-colors"
+                    className="w-full p-3 pl-8 rounded-lg border border-white/10 focus:border-[#E57B3A] focus:outline-none transition-colors"
                     maxLength={50}
                   />
                 </div>
@@ -165,7 +165,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({
 
               {/* Bio */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-ink/70">
+                <label className="flex items-center gap-2 text-sm font-medium text-white/70">
                   <FileText size={16} />
                   Bio
                 </label>
@@ -175,20 +175,20 @@ export const ProfileModal: FC<ProfileModalProps> = ({
                     setFormData({ ...formData, bio: e.target.value || null })
                   }
                   placeholder="Tell us about your trading style..."
-                  className="w-full p-3 rounded-lg border border-ink/10 focus:border-claude-orange focus:outline-none transition-colors resize-none h-24"
+                  className="w-full p-3 rounded-lg border border-white/10 focus:border-[#E57B3A] focus:outline-none transition-colors resize-none h-24"
                   maxLength={500}
                 />
               </div>
 
               {/* Show on Leaderboard */}
-              <div className="flex items-center justify-between p-3 rounded-lg border border-ink/10">
+              <div className="flex items-center justify-between p-3 rounded-lg border border-white/10">
                 <div className="flex items-center gap-2">
                   {formData.showOnLeaderboard ? (
-                    <Eye size={16} className="text-ink/60" />
+                    <Eye size={16} className="text-white/60" />
                   ) : (
-                    <EyeOff size={16} className="text-ink/40" />
+                    <EyeOff size={16} className="text-white/40" />
                   )}
-                  <span className="text-sm font-medium text-ink/70">
+                  <span className="text-sm font-medium text-white/70">
                     Show on Leaderboard
                   </span>
                 </div>
@@ -202,8 +202,8 @@ export const ProfileModal: FC<ProfileModalProps> = ({
                   }
                   className={`w-12 h-6 rounded-full transition-colors ${
                     formData.showOnLeaderboard
-                      ? "bg-claude-orange"
-                      : "bg-ink/20"
+                      ? "bg-[#E57B3A]"
+                      : "bg-white/20"
                   }`}
                 >
                   <motion.div
@@ -219,7 +219,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({
               <motion.button
                 type="submit"
                 disabled={isLoading}
-                className="w-full p-4 rounded-lg bg-ink text-white font-medium flex items-center justify-center gap-2 hover:bg-ink/90 transition-colors disabled:opacity-50"
+                className="w-full p-4 rounded-lg bg-[#E57B3A] text-white font-medium flex items-center justify-center gap-2 hover:bg-[#E57B3A]/90 transition-colors disabled:opacity-50"
                 whileTap={{ scale: 0.98 }}
               >
                 <Save size={18} />

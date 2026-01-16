@@ -10,7 +10,7 @@ export const DocsInsight: FC = () => {
       <GlassCard variant="default" className="p-10 text-center">
         <p className="text-2xl font-display font-semibold text-white mb-6">
           Alpha isn&apos;t scarce. <br />
-          <span className="bg-claude-orange/15 text-claude-orange px-2 rounded">Execution speed is.</span>
+          <span className="bg-[#E57B3A]/15 text-[#E57B3A] px-2 rounded">Execution speed is.</span>
         </p>
         <p className="text-white/70 mb-4">
           The difference between profit and loss is often

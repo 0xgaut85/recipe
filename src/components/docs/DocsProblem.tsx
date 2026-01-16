@@ -25,7 +25,7 @@ export const DocsProblem: FC = () => {
           manually integrating data sources, building pipelines, handling edge
           cases, and maintaining infrastructure.
         </p>
-        <p className="font-display text-xl font-semibold text-white border-l-4 border-claude-orange pl-4">
+        <p className="font-display text-xl font-semibold text-white border-l-4 border-[#E57B3A] pl-4">
           Good ideas die before they ship. Manual trading happens too late.
         </p>
       </GlassCard>

@@ -22,7 +22,7 @@ export const DocsPlugin: FC = () => {
         <ul className="space-y-3 text-white">
           {pluginExamples.map((example, i) => (
             <li key={i} className="flex items-start gap-3">
-              <span className="w-2 h-2 bg-claude-orange rounded-full mt-2 flex-shrink-0" />
+              <span className="w-2 h-2 bg-[#E57B3A] rounded-full mt-2 flex-shrink-0" />
               &quot;{example}&quot;
             </li>
           ))}

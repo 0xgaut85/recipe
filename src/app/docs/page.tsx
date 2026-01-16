@@ -95,12 +95,16 @@ export default function DocsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-ink">
+    <div className="min-h-screen" style={{ backgroundColor: "#F7F7F7" }}>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-ink/90 backdrop-blur-xl border-b border-white/10 px-6 py-4">
+      <div
+        className="lg:hidden fixed top-0 left-0 right-0 z-50 border-b border-gray-200 px-6 py-4"
+        style={{ backgroundColor: "#FFFFFF" }}
+      >
         <a
           href="/"
-          className="flex items-center gap-2 text-white/60 font-medium text-sm"
+          className="flex items-center gap-2 text-gray-600 text-sm"
+          style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
         >
           <span>←</span>
           <span>Back to Home</span>
@@ -122,26 +126,41 @@ export default function DocsPage() {
           >
             {/* Header */}
             <div className="mb-24 text-center">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-claude-orange/10 text-claude-orange text-xs font-medium uppercase tracking-wider mb-6">
+              <span
+                className="inline-block px-4 py-1.5 text-xs uppercase tracking-wider mb-6"
+                style={{
+                  backgroundColor: "rgba(255, 77, 0, 0.1)",
+                  color: "#E57B3A",
+                  fontFamily: "TWKEverettMono-Regular, monospace",
+                  clipPath:
+                    "polygon(8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px)",
+                }}
+              >
                 Documentation
               </span>
-              <h1 className="font-display text-5xl md:text-6xl font-semibold text-white mb-6">
+              <h1
+                className="text-5xl md:text-6xl text-black mb-6"
+                style={{ fontFamily: "TWKEverett-Regular, sans-serif" }}
+              >
                 CLAUDE TRADE
               </h1>
-              <p className="text-lg text-white/60 max-w-lg mx-auto font-normal">
+              <p
+                className="text-lg text-gray-600 max-w-lg mx-auto"
+                style={{ fontFamily: "BaselGrotesk-Regular, sans-serif" }}
+              >
                 Turn intent into execution. The first AI-powered trading platform on Solana.
               </p>
             </div>
 
             {/* Introduction Group */}
-            <div className="relative border-l border-white/10 pl-8 md:pl-12 space-y-24 mb-24">
+            <div className="relative border-l border-gray-200 pl-8 md:pl-12 space-y-24 mb-24">
               <DocsAbstract />
               <DocsProblem />
               <DocsInsight />
             </div>
 
             {/* Platform Group */}
-            <div className="relative border-l border-white/10 pl-8 md:pl-12 space-y-24 mb-24">
+            <div className="relative border-l border-gray-200 pl-8 md:pl-12 space-y-24 mb-24">
               <DocsWhatIsRecipe />
               <DocsClaudeCode />
               <DocsInstantStrategy />
@@ -149,7 +168,7 @@ export default function DocsPage() {
             </div>
 
             {/* Features & Ecosystem Group */}
-            <div className="relative border-l border-white/10 pl-8 md:pl-12 space-y-24 mb-24">
+            <div className="relative border-l border-gray-200 pl-8 md:pl-12 space-y-24 mb-24">
               <DocsPlugin />
               <DocsPrimitive />
               <DocsMarketplace />

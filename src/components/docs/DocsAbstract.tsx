@@ -15,7 +15,7 @@ export const DocsAbstract: FC = () => {
             don&apos;t have time for either.
           </p>
           <p className="text-lg leading-relaxed text-white/90">
-            <strong className="text-white border-b-2 border-claude-orange">
+            <strong className="text-white border-b-2 border-[#E57B3A]">
               CLAUDE TRADE
             </strong>{" "}
             is the first AI-powered trading platform that turns intent into execution

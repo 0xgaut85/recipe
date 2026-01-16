@@ -21,7 +21,7 @@ export const DocsPrimitive: FC = () => {
         {primitives.map((item) => (
           <div
             key={item.title}
-            className="p-4 border border-white/10 rounded-lg bg-white/[0.02] hover:border-claude-orange/30 transition-colors"
+            className="p-4 border border-white/10 rounded-lg bg-white/[0.02] hover:border-[#E57B3A]/30 transition-colors"
           >
             <h4 className="font-semibold text-white">{item.title}</h4>
             <p className="text-sm text-white/60">{item.desc}</p>

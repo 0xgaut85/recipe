@@ -142,7 +142,7 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
   const formatPnl = (pnl: number) => {
     const isPositive = pnl >= 0;
     return (
-      <span className={isPositive ? "text-green-600" : "text-red-500"}>
+      <span className={isPositive ? "text-green-400" : "text-red-500"}>
         {isPositive ? "+" : ""}${pnl.toFixed(2)}
       </span>
     );
@@ -173,27 +173,27 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-white border border-ink/10 rounded-xl w-full max-w-4xl max-h-[80vh] overflow-hidden"
+          className="bg-[#0A0A0A] border border-white/10 rounded-xl w-full max-w-4xl max-h-[80vh] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-ink/10">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-claude-orange/10 flex items-center justify-center">
-                <BarChart3 size={20} className="text-claude-orange" />
+              <div className="w-10 h-10 rounded-lg bg-[#E57B3A]/10 flex items-center justify-center">
+                <BarChart3 size={20} className="text-[#E57B3A]" />
               </div>
               <div>
-                <h2 className="text-ink font-semibold text-lg">
+                <h2 className="text-white font-semibold text-lg">
                   My Strategies
                 </h2>
-                <p className="text-ink/40 text-sm">
+                <p className="text-white/40 text-sm">
                   {strategies.filter((s) => s.isActive).length} active
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-ink/40 hover:text-ink transition-colors text-2xl"
+              className="text-white/40 hover:text-white transition-colors text-2xl"
             >
               ×
             </button>
@@ -202,34 +202,34 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
           {/* Content */}
           <div className="flex h-[calc(80vh-80px)]">
             {/* Strategy List */}
-            <div className="w-1/2 border-r border-ink/10 overflow-y-auto">
+            <div className="w-1/2 border-r border-white/10 overflow-y-auto">
               {isLoading ? (
                 <div className="p-6 space-y-4">
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="bg-ink/5 rounded-lg p-4 animate-pulse"
+                      className="bg-white/5 rounded-lg p-4 animate-pulse"
                     >
-                      <div className="h-5 bg-ink/10 rounded w-2/3 mb-3" />
-                      <div className="h-4 bg-ink/10 rounded w-1/2" />
+                      <div className="h-5 bg-white/10 rounded w-2/3 mb-3" />
+                      <div className="h-4 bg-white/10 rounded w-1/2" />
                     </div>
                   ))}
                 </div>
               ) : strategies.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                  <div className="w-16 h-16 rounded-full bg-ink/5 flex items-center justify-center mb-4">
-                    <AlertCircle size={32} className="text-ink/30" />
+                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                    <AlertCircle size={32} className="text-white/30" />
                   </div>
-                  <h3 className="text-ink font-semibold mb-2">
+                  <h3 className="text-white font-semibold mb-2">
                     No Strategies Yet
                   </h3>
-                  <p className="text-ink/40 text-sm mb-4 max-w-xs">
+                  <p className="text-white/40 text-sm mb-4 max-w-xs">
                     Create your first strategy by chatting with the AI. Describe
                     what you want to trade and it will help you set it up.
                   </p>
                   <button
                     onClick={onClose}
-                    className="px-4 py-2 bg-claude-orange text-white font-medium rounded-lg text-sm hover:bg-claude-orange-dark transition-colors"
+                    className="px-4 py-2 bg-[#E57B3A] text-white font-medium rounded-lg text-sm hover:bg-[#E57B3A]-dark transition-colors"
                   >
                     <Plus size={16} className="inline mr-1" />
                     Create Strategy
@@ -243,8 +243,8 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                       layout
                       className={`rounded-lg p-4 cursor-pointer transition-all ${
                         selectedStrategy?.id === strategy.id
-                          ? "bg-claude-orange/5 border border-claude-orange/30"
-                          : "bg-ink/5 border border-transparent hover:bg-ink/10"
+                          ? "bg-[#E57B3A]/5 border border-[#E57B3A]/30"
+                          : "bg-white/5 border border-transparent hover:bg-white/10"
                       }`}
                       onClick={() => setSelectedStrategy(strategy)}
                     >
@@ -253,41 +253,41 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                           <div
                             className={`w-2 h-2 rounded-full ${
                               strategy.isActive
-                                ? "bg-green-500 animate-pulse"
-                                : "bg-ink/30"
+                                ? "bg-green-500/100 animate-pulse"
+                                : "bg-white/30"
                             }`}
                           />
-                          <h3 className="text-ink font-semibold">
+                          <h3 className="text-white font-semibold">
                             {strategy.name}
                           </h3>
                         </div>
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full ${
                             strategy.config.type === "SPOT"
-                              ? "bg-blue-100 text-blue-600"
+                              ? "bg-blue-500/10 text-blue-400"
                               : strategy.config.type === "SNIPER"
-                              ? "bg-green-100 text-green-600"
-                              : "bg-amber-100 text-amber-600"
+                              ? "bg-green-500/10 text-green-400"
+                              : "bg-amber-500/10 text-amber-400"
                           }`}
                         >
                           {strategy.config.type}
                         </span>
                       </div>
 
-                      <p className="text-ink/50 text-sm line-clamp-2 mb-3">
+                      <p className="text-white/50 text-sm line-clamp-2 mb-3">
                         {strategy.description}
                       </p>
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 text-xs">
-                          <span className="text-ink/40">
+                          <span className="text-white/40">
                             {strategy.stats?.totalTrades || 0} trades
                           </span>
                           {strategy.stats && formatPnl(strategy.stats.totalPnl)}
                         </div>
                         <ChevronRight
                           size={16}
-                          className="text-ink/30"
+                          className="text-white/30"
                         />
                       </div>
                     </motion.div>
@@ -303,10 +303,10 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                   {/* Strategy Header */}
                   <div className="flex items-start justify-between mb-6">
                     <div>
-                      <h3 className="text-ink font-semibold text-xl mb-1">
+                      <h3 className="text-white font-semibold text-xl mb-1">
                         {selectedStrategy.name}
                       </h3>
-                      <p className="text-ink/40 text-sm">
+                      <p className="text-white/40 text-sm">
                         Created {formatDate(selectedStrategy.createdAt)}
                       </p>
                     </div>
@@ -316,8 +316,8 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                         disabled={isUpdating === selectedStrategy.id}
                         className={`p-2.5 rounded-lg transition-colors ${
                           selectedStrategy.isActive
-                            ? "bg-red-50 text-red-500 hover:bg-red-100"
-                            : "bg-green-50 text-green-600 hover:bg-green-100"
+                            ? "bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                            : "bg-green-500/10 text-green-400 hover:bg-green-500/20"
                         } disabled:opacity-50`}
                         title={selectedStrategy.isActive ? "Stop" : "Start"}
                       >
@@ -330,7 +330,7 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                       <button
                         onClick={() => deleteStrategy(selectedStrategy.id)}
                         disabled={isUpdating === selectedStrategy.id}
-                        className="p-2.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors disabled:opacity-50"
+                        className="p-2.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors disabled:opacity-50"
                         title="Delete"
                       >
                         <Trash2 size={18} />
@@ -343,15 +343,15 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                     <span
                       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
                         selectedStrategy.isActive
-                          ? "bg-green-50 text-green-600"
-                          : "bg-ink/5 text-ink/50"
+                          ? "bg-green-500/10 text-green-400"
+                          : "bg-white/5 text-white/50"
                       }`}
                     >
                       <span
                         className={`w-2 h-2 rounded-full ${
                           selectedStrategy.isActive
-                            ? "bg-green-500 animate-pulse"
-                            : "bg-ink/30"
+                            ? "bg-green-500/100 animate-pulse"
+                            : "bg-white/30"
                         }`}
                       />
                       {selectedStrategy.isActive ? "Running" : "Stopped"}
@@ -360,52 +360,52 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
 
                   {/* Description */}
                   <div className="mb-6">
-                    <h4 className="text-ink/60 text-xs uppercase tracking-wider mb-2">
+                    <h4 className="text-white/60 text-xs uppercase tracking-wider mb-2">
                       Description
                     </h4>
-                    <p className="text-ink/80 text-sm leading-relaxed">
+                    <p className="text-white/80 text-sm leading-relaxed">
                       {selectedStrategy.description}
                     </p>
                   </div>
 
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="bg-ink/5 rounded-lg p-4">
+                    <div className="bg-white/5 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
                         {(selectedStrategy.stats?.totalPnl || 0) >= 0 ? (
-                          <TrendingUp size={16} className="text-green-600" />
+                          <TrendingUp size={16} className="text-green-400" />
                         ) : (
                           <TrendingDown size={16} className="text-red-500" />
                         )}
-                        <span className="text-ink/40 text-xs uppercase">
+                        <span className="text-white/40 text-xs uppercase">
                           Total PnL
                         </span>
                       </div>
-                      <p className="text-ink font-semibold text-lg">
+                      <p className="text-white font-semibold text-lg">
                         {selectedStrategy.stats
                           ? formatPnl(selectedStrategy.stats.totalPnl)
                           : "$0.00"}
                       </p>
                     </div>
-                    <div className="bg-ink/5 rounded-lg p-4">
+                    <div className="bg-white/5 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <Target size={16} className="text-claude-orange" />
-                        <span className="text-ink/40 text-xs uppercase">
+                        <Target size={16} className="text-[#E57B3A]" />
+                        <span className="text-white/40 text-xs uppercase">
                           Win Rate
                         </span>
                       </div>
-                      <p className="text-ink font-semibold text-lg">
+                      <p className="text-white font-semibold text-lg">
                         {selectedStrategy.stats?.winRate.toFixed(1) || 0}%
                       </p>
                     </div>
-                    <div className="bg-ink/5 rounded-lg p-4">
+                    <div className="bg-white/5 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <Clock size={16} className="text-claude-orange" />
-                        <span className="text-ink/40 text-xs uppercase">
+                        <Clock size={16} className="text-[#E57B3A]" />
+                        <span className="text-white/40 text-xs uppercase">
                           Trades
                         </span>
                       </div>
-                      <p className="text-ink font-semibold text-lg">
+                      <p className="text-white font-semibold text-lg">
                         {selectedStrategy.stats?.totalTrades || 0}
                       </p>
                     </div>
@@ -413,27 +413,27 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
 
                   {/* Config Details */}
                   <div>
-                    <h4 className="text-ink/60 text-xs uppercase tracking-wider mb-3">
+                    <h4 className="text-white/60 text-xs uppercase tracking-wider mb-3">
                       Configuration
                     </h4>
-                    <div className="bg-ink/5 rounded-lg p-4 space-y-3">
+                    <div className="bg-white/5 rounded-lg p-4 space-y-3">
                       <div className="flex justify-between">
-                        <span className="text-ink/40 text-sm">Type</span>
-                        <span className="text-ink text-sm font-medium">
+                        <span className="text-white/40 text-sm">Type</span>
+                        <span className="text-white text-sm font-medium">
                           {selectedStrategy.config.type}
                         </span>
                       </div>
                       {selectedStrategy.config.amount && (
                         <div className="flex justify-between">
-                          <span className="text-ink/40 text-sm">Amount</span>
-                          <span className="text-ink text-sm">
+                          <span className="text-white/40 text-sm">Amount</span>
+                          <span className="text-white text-sm">
                             {selectedStrategy.config.amount} SOL
                           </span>
                         </div>
                       )}
                       {selectedStrategy.config.stopLoss && (
                         <div className="flex justify-between">
-                          <span className="text-ink/40 text-sm">Stop Loss</span>
+                          <span className="text-white/40 text-sm">Stop Loss</span>
                           <span className="text-red-500 text-sm">
                             -{selectedStrategy.config.stopLoss}%
                           </span>
@@ -441,26 +441,26 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                       )}
                       {selectedStrategy.config.takeProfit && (
                         <div className="flex justify-between">
-                          <span className="text-ink/40 text-sm">
+                          <span className="text-white/40 text-sm">
                             Take Profit
                           </span>
-                          <span className="text-green-600 text-sm">
+                          <span className="text-green-400 text-sm">
                             +{selectedStrategy.config.takeProfit}%
                           </span>
                         </div>
                       )}
                       {selectedStrategy.config.maxAgeMinutes && (
                         <div className="flex justify-between">
-                          <span className="text-ink/40 text-sm">Max Age</span>
-                          <span className="text-ink text-sm">
+                          <span className="text-white/40 text-sm">Max Age</span>
+                          <span className="text-white text-sm">
                             {selectedStrategy.config.maxAgeMinutes} min
                           </span>
                         </div>
                       )}
                       {selectedStrategy.config.minLiquidity && (
                         <div className="flex justify-between">
-                          <span className="text-ink/40 text-sm">Min Liquidity</span>
-                          <span className="text-ink text-sm">
+                          <span className="text-white/40 text-sm">Min Liquidity</span>
+                          <span className="text-white text-sm">
                             ${selectedStrategy.config.minLiquidity.toLocaleString()}
                           </span>
                         </div>
@@ -470,8 +470,8 @@ export const StrategyPanel: FC<StrategyPanelProps> = ({ isOpen, onClose }) => {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                  <BarChart3 size={48} className="text-ink/20 mb-4" />
-                  <p className="text-ink/40 text-sm">
+                  <BarChart3 size={48} className="text-white/20 mb-4" />
+                  <p className="text-white/40 text-sm">
                     Select a strategy to view details
                   </p>
                 </div>

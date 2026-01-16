@@ -6,12 +6,14 @@ import { CTA } from "@/components/CTA";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen overflow-x-hidden" style={{ backgroundColor: "#F7F7F7" }}>
       <Header />
-      <Hero />
-      <CoreValue />
-      <Features />
-      <CTA />
+      <div style={{ paddingTop: "100px" }}>
+        <Hero />
+        <CoreValue />
+        <Features />
+        <CTA />
+      </div>
     </main>
   );
 }

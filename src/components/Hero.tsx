@@ -1,112 +1,246 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import TextScramble from "./TextScramble";
+import MagneticButton from "./MagneticButton";
 
 export const Hero: FC = () => {
+  const glowRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  const scrambleTexts = [
+    "Solana trading.",
+    "AI strategies.",
+    "Instant execution.",
+    "Natural language.",
+  ];
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 bg-ink">
-      {/* Subtle orange gradient glow */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-claude-orange/10 rounded-full blur-[200px]" />
-        <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-claude-orange/5 rounded-full blur-[180px]" />
+    <section
+      ref={sectionRef}
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      style={{
+        backgroundColor: "#000000",
+        position: "relative",
+        zIndex: 0,
+        paddingTop: "100px",
+      }}
+    >
+      {/* Animated background glow */}
+      <motion.div
+        ref={glowRef}
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(255, 77, 0, 0.2) 0%, transparent 70%)",
+          filter: "blur(60px)",
+          zIndex: 1,
+        }}
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0, 0.3, 0],
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      <div
+        className="w-full px-4 sm:px-6 md:px-10 lg:px-[40px] pb-20 sm:pb-16 pt-24 sm:pt-32 relative z-10"
+        style={{ maxWidth: "none" }}
+      >
+        <div
+          className="hero-content max-w-full sm:max-w-[500px] md:max-w-[600px] lg:max-w-[700px]"
+          style={{
+            textAlign: "start",
+            width: "100%",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          {/* Eyebrow */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-white text-lg sm:text-xl md:text-[22px] mb-4 sm:mb-6"
+            style={{
+              fontWeight: 400,
+              fontFamily: "TWKEverettMono-Regular, monospace",
+              color: "rgb(255, 255, 255)",
+            }}
+          >
+            Claude Trade enables
+          </motion.p>
+
+          {/* Scramble Text */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-white text-lg sm:text-xl md:text-[22px] mb-6 sm:mb-8"
+            style={{
+              fontWeight: 400,
+              fontFamily: "TWKEverettMono-Regular, monospace",
+              lineHeight: "1.3",
+              letterSpacing: "-0.88px",
+              color: "rgb(255, 255, 255)",
+            }}
+          >
+            <TextScramble texts={scrambleTexts} />
+          </motion.p>
+
+          {/* Main Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-white text-3xl sm:text-4xl md:text-[46.45px] leading-tight md:leading-[51.095px] mb-8 sm:mb-12"
+            style={{
+              fontWeight: 400,
+              fontFamily: "TWKEverett-Regular, sans-serif",
+              letterSpacing: "-1.858px",
+              color: "rgb(255, 255, 255)",
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
+            }}
+          >
+            Describe your trading strategy in natural language.
+            <br />
+            Claude executes it on Solana in seconds.
+          </motion.h1>
+
+          {/* CTA Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex flex-col sm:flex-row"
+            style={{ marginBottom: "0px", marginTop: "0px", gap: "16px" }}
+          >
+            <MagneticButton
+              href="/app"
+              className="text-sm md:text-[14px] font-normal hover:opacity-90 transition-all duration-300 button-hover text-center sm:text-left w-full sm:w-auto"
+              style={{
+                fontFamily: "TWKEverettMono-Regular, monospace",
+                color: "#000000",
+                backgroundColor: "#E57B3A",
+                padding: "16px 24px",
+                textTransform: "uppercase",
+                letterSpacing: "-0.56px",
+                border: "none",
+                borderRadius: "0px",
+                textDecoration: "none",
+                cursor: "pointer",
+                boxShadow: "0 0 20px rgba(255, 77, 0, 0.3)",
+                clipPath:
+                  "polygon(8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px)",
+                margin: "0",
+              }}
+            >
+              Launch App
+            </MagneticButton>
+            <MagneticButton
+              href="/docs"
+              className="text-sm md:text-[14px] font-normal hover:bg-white/10 transition-all duration-300 text-center sm:text-left w-full sm:w-auto"
+              style={{
+                fontFamily: "TWKEverettMono-Regular, monospace",
+                color: "#FFFFFF",
+                backgroundColor: "transparent",
+                padding: "16px 24px",
+                textTransform: "uppercase",
+                letterSpacing: "-0.56px",
+                border: "2px solid #FFFFFF",
+                borderRadius: "0px",
+                textDecoration: "none",
+                cursor: "pointer",
+                margin: "0",
+              }}
+            >
+              Read Docs
+            </MagneticButton>
+          </motion.div>
+
+          {/* Enter Text */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="text-white text-2xl sm:text-3xl md:text-[40px] leading-tight md:leading-[56px]"
+            style={{
+              fontWeight: 400,
+              fontFamily: "TWKEverettMono-Regular, monospace",
+              color: "rgb(255, 255, 255)",
+              marginTop: "12px",
+              marginBottom: "60px",
+            }}
+          >
+            [<TextScramble texts={["ENTER"]} speed={40} />]
+          </motion.p>
+        </div>
       </div>
 
-      <div className="container-wide relative z-10 text-center max-w-4xl mx-auto">
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/70 text-sm font-medium mb-8">
-            <span className="w-2 h-2 rounded-full bg-claude-orange animate-pulse" />
-            Powered by Claude AI
-          </span>
-        </motion.div>
-
-        {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold text-white leading-[1.05] tracking-tight mb-6"
-        >
-          Trade with
-          <br />
-          <span className="relative inline-block">
-            Intelligence
-            <svg
-              viewBox="0 0 200 8"
-              className="absolute -bottom-2 left-0 w-full h-auto"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0 4 Q50 8 100 4 T200 4"
-                fill="none"
-                stroke="#E57B3A"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
-        </motion.h1>
-
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="text-lg md:text-xl text-white/60 font-normal max-w-2xl mx-auto leading-relaxed mb-10"
-        >
-          Describe your trading strategy in natural language. Claude executes it on Solana in seconds, not days.
-        </motion.p>
-
-        {/* CTA Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-          <Link
-            href="/app"
-            className="px-8 py-4 rounded-lg bg-claude-orange text-white font-semibold text-base hover:bg-claude-orange/90 transition-all duration-200 min-w-[180px]"
-          >
-            Launch App
-          </Link>
-          <Link
-            href="/docs"
-            className="px-8 py-4 rounded-lg bg-transparent border border-white/20 text-white font-semibold text-base hover:bg-white/5 transition-all duration-200 min-w-[180px]"
-          >
-            Read Docs
-          </Link>
-        </motion.div>
-
-        {/* Stats Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-20 pt-10 border-t border-white/10"
-        >
-          <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto">
-            <div className="text-center">
-              <div className="font-display text-3xl font-bold text-white">10s</div>
-              <div className="text-sm text-white/50 mt-1">Strategy Deploy</div>
+      {/* Stats Row at bottom */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.8 }}
+        className="absolute bottom-10 left-0 right-0 px-4 sm:px-6 md:px-10 lg:px-[40px]"
+      >
+        <div className="border-t border-white/10 pt-8">
+          <div className="grid grid-cols-3 gap-8 max-w-lg">
+            <div>
+              <div
+                className="text-2xl sm:text-3xl text-white"
+                style={{ fontFamily: "TWKEverett-Regular, sans-serif" }}
+              >
+                10s
+              </div>
+              <div
+                className="text-xs sm:text-sm text-white/50 mt-1"
+                style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+              >
+                Strategy Deploy
+              </div>
             </div>
-            <div className="text-center">
-              <div className="font-display text-3xl font-bold text-white">24/7</div>
-              <div className="text-sm text-white/50 mt-1">Monitoring</div>
+            <div>
+              <div
+                className="text-2xl sm:text-3xl text-white"
+                style={{ fontFamily: "TWKEverett-Regular, sans-serif" }}
+              >
+                24/7
+              </div>
+              <div
+                className="text-xs sm:text-sm text-white/50 mt-1"
+                style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+              >
+                Monitoring
+              </div>
             </div>
-            <div className="text-center">
-              <div className="font-display text-3xl font-bold text-claude-orange">AI</div>
-              <div className="text-sm text-white/50 mt-1">Powered</div>
+            <div>
+              <div
+                className="text-2xl sm:text-3xl"
+                style={{
+                  fontFamily: "TWKEverett-Regular, sans-serif",
+                  color: "#E57B3A",
+                }}
+              >
+                AI
+              </div>
+              <div
+                className="text-xs sm:text-sm text-white/50 mt-1"
+                style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+              >
+                Powered
+              </div>
             </div>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </section>
   );
 };

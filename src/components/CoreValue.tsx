@@ -14,86 +14,145 @@ const smoothEase = [0.22, 1, 0.36, 1];
 
 export const CoreValue: FC = () => {
   return (
-    <section className="py-24 relative overflow-hidden bg-ink">
-      <div className="container-wide">
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-12 gap-6">
-          {/* Main Statement */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.7, ease: smoothEase }}
-            className="col-span-1 lg:col-span-8"
+    <section
+      className="relative overflow-hidden"
+      style={{ backgroundColor: "#F7F7F7", paddingTop: "200px", paddingBottom: "80px" }}
+    >
+      <div className="px-4 sm:px-6 md:px-10 lg:px-[40px]" style={{ maxWidth: "none" }}>
+        {/* Main Statement */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, ease: smoothEase }}
+        >
+          <h2
+            className="text-black max-w-5xl text-3xl sm:text-4xl md:text-[46.45px] leading-tight md:leading-[51.095px]"
+            style={{
+              fontWeight: 400,
+              fontFamily: "TWKEverett-Regular, sans-serif",
+              letterSpacing: "-1.858px",
+              color: "rgb(0, 0, 0)",
+              marginBottom: "0px",
+              marginTop: "0px",
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
+            }}
           >
-            <div className="h-full glass-card p-10 md:p-12 flex flex-col justify-center">
-              <span className="inline-block px-3 py-1 rounded-full bg-white/10 text-white/60 text-xs font-medium uppercase tracking-wider mb-6 w-fit">
-                The Insight
+            Alpha isn&apos;t scarce. Execution speed is. Claude Trade turns
+            natural language into live trades in seconds.
+          </h2>
+        </motion.div>
+
+        {/* Description */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, delay: 0.15, ease: smoothEase }}
+          className="max-w-4xl space-y-6 sm:space-y-8 mb-12 sm:mb-16 mt-6 sm:mt-8"
+        >
+          <p
+            className="leading-relaxed text-base sm:text-lg"
+            style={{
+              fontWeight: 400,
+              fontFamily: "BaselGrotesk-Regular, sans-serif",
+              lineHeight: "1.4",
+              color: "rgb(0, 0, 0)",
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
+            }}
+          >
+            <strong style={{ fontWeight: 600 }}>
+              The future isn&apos;t traders with terminals—it&apos;s AI with
+              wallets.
+            </strong>{" "}
+            Describe your strategy in plain English. Claude understands context,
+            sets parameters, and executes on Solana&apos;s fastest DEXs.
+          </p>
+          <p
+            className="leading-relaxed text-base sm:text-lg"
+            style={{
+              fontWeight: 400,
+              fontFamily: "BaselGrotesk-Regular, sans-serif",
+              lineHeight: "1.4",
+              color: "rgb(0, 0, 0)",
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
+            }}
+          >
+            No code. No API wiring. No waiting. Go from idea to live strategy
+            before the opportunity closes.
+          </p>
+        </motion.div>
+
+        {/* Process Steps */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, delay: 0.25, ease: smoothEase }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 list-none"
+          style={{ marginTop: "40px" }}
+        >
+          {steps.map((step, idx) => (
+            <motion.div
+              key={step.num}
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{
+                duration: 0.5,
+                delay: 0.4 + idx * 0.1,
+                ease: smoothEase,
+              }}
+              className="border border-gray-200 hover:border-[#E57B3A] transition-all duration-300 card-hover group"
+              style={{
+                borderRadius: "0px",
+                paddingTop: "24px",
+                paddingBottom: "24px",
+                paddingLeft: "20px",
+                paddingRight: "20px",
+              }}
+            >
+              <span
+                className="text-xs font-medium mb-3 block"
+                style={{
+                  fontFamily: "TWKEverettMono-Regular, monospace",
+                  color: "#E57B3A",
+                }}
+              >
+                [{step.num}]
               </span>
-              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-white leading-[1.15]">
-                Alpha isn&apos;t scarce.
-                <br />
-                <span className="text-white/40">Execution speed is.</span>
-              </h2>
-            </div>
-          </motion.div>
-
-          {/* Accent Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.7, delay: 0.15, ease: smoothEase }}
-            className="col-span-1 lg:col-span-4"
-          >
-            <div className="h-full accent-card p-8 flex flex-col justify-center">
-              <h3 className="font-display text-2xl font-semibold text-white mb-3">
-                Seconds, Not Days
+              <h3
+                className="text-black text-xl sm:text-2xl md:text-[24px] mt-3 sm:mt-4"
+                style={{
+                  marginBottom: "8px",
+                  fontWeight: 400,
+                  fontFamily: "TWKEverettMono-Regular, monospace",
+                  lineHeight: "1.4",
+                  letterSpacing: "-0.96px",
+                  color: "rgb(0, 0, 0)",
+                }}
+              >
+                {step.title}
               </h3>
-              <p className="text-white/70 font-normal leading-relaxed">
-                Go from idea to live execution before the opportunity vanishes.
+              <p
+                className="leading-relaxed text-base mt-2"
+                style={{
+                  fontWeight: 400,
+                  fontFamily: "BaselGrotesk-Regular, sans-serif",
+                  lineHeight: "1.4",
+                  color: "rgb(0, 0, 0)",
+                  wordBreak: "break-word",
+                  overflowWrap: "break-word",
+                }}
+              >
+                {step.desc}
               </p>
-            </div>
-          </motion.div>
-
-          {/* Process Steps */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.7, delay: 0.25, ease: smoothEase }}
-            className="col-span-1 lg:col-span-12"
-          >
-            <div className="glass-panel p-6 md:p-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {steps.map((step, i) => (
-                  <motion.div
-                    key={step.num}
-                    initial={{ opacity: 0, y: 15 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{
-                      duration: 0.5,
-                      delay: 0.4 + i * 0.1,
-                      ease: smoothEase,
-                    }}
-                    className="p-5 md:p-6 rounded-lg border border-white/5 bg-white/[0.02] hover:border-claude-orange/30 transition-colors cursor-default group"
-                  >
-                    <div className="mb-3">
-                      <span className="text-xs font-mono text-claude-orange font-medium">
-                        {step.num}
-                      </span>
-                    </div>
-                    <h4 className="font-display text-lg font-semibold text-white mb-1">
-                      {step.title}
-                    </h4>
-                    <p className="text-sm text-white/50">{step.desc}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        </div>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   );

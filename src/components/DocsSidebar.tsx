@@ -26,16 +26,23 @@ export const DocsSidebar: FC<DocsSidebarProps> = ({
   onSectionClick,
 }) => {
   return (
-    <aside className="fixed left-0 top-0 h-screen w-72 bg-ink border-r border-white/10 pt-24 pb-8 overflow-hidden z-40 hidden lg:block">
+    <aside
+      className="fixed left-0 top-0 h-screen w-72 border-r border-gray-200 pt-24 pb-8 overflow-hidden z-40 hidden lg:block"
+      style={{ backgroundColor: "#FFFFFF" }}
+    >
       <div className="px-8 mb-8">
         <Link
           href="/"
-          className="flex items-center gap-2 text-white/60 hover:text-white transition-all text-sm font-medium mb-6 group"
+          className="flex items-center gap-2 text-gray-500 hover:text-black transition-all text-sm mb-6 group"
+          style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
         >
           <span>←</span>
           <span>Back</span>
         </Link>
-        <h2 className="font-display font-semibold text-xl text-white tracking-tight">
+        <h2
+          className="text-xl text-black tracking-tight"
+          style={{ fontFamily: "TWKEverett-Regular, sans-serif" }}
+        >
           Documentation
         </h2>
       </div>
@@ -49,7 +56,10 @@ export const DocsSidebar: FC<DocsSidebarProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <h3 className="text-xs font-medium text-white/40 uppercase tracking-widest mb-3 px-2">
+              <h3
+                className="text-xs text-gray-400 uppercase tracking-widest mb-3 px-2"
+                style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+              >
                 {group.title}
               </h3>
               <ul className="space-y-1 relative">
@@ -57,11 +67,19 @@ export const DocsSidebar: FC<DocsSidebarProps> = ({
                   <li key={item.id}>
                     <button
                       onClick={() => onSectionClick(item.id)}
-                      className={`w-full text-left px-4 py-2 text-sm transition-all relative rounded-lg ${
+                      className={`w-full text-left px-4 py-2 text-sm transition-all relative ${
                         activeSection === item.id
-                          ? "bg-claude-orange/15 text-claude-orange font-medium"
-                          : "text-white/60 hover:text-white hover:bg-white/5"
+                          ? "text-[#E57B3A] font-medium"
+                          : "text-gray-600 hover:text-black"
                       }`}
+                      style={{
+                        fontFamily: "TWKEverettMono-Regular, monospace",
+                        borderRadius: 0,
+                        backgroundColor:
+                          activeSection === item.id
+                            ? "rgba(255, 77, 0, 0.1)"
+                            : "transparent",
+                      }}
                     >
                       {item.title}
                     </button>

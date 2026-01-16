@@ -20,7 +20,7 @@ export const DocsInstantStrategy: FC = () => {
         {examplePrompts.map((prompt, i) => (
           <div
             key={i}
-            className="p-5 bg-white/[0.02] border border-white/10 rounded-lg hover:border-claude-orange/30 transition-colors"
+            className="p-5 bg-white/[0.02] border border-white/10 rounded-lg hover:border-[#E57B3A]/30 transition-colors"
           >
             <p className="text-white/90 italic">
               &quot;{prompt}&quot;
@@ -28,7 +28,7 @@ export const DocsInstantStrategy: FC = () => {
           </div>
         ))}
       </div>
-      <div className="bg-claude-orange/10 border border-claude-orange/20 p-5 rounded-lg">
+      <div className="bg-[#E57B3A]/10 border border-[#E57B3A]/20 p-5 rounded-lg">
         <p className="text-white">
           Claude turns this into a runnable strategy, simulation config, and
           deployment settings.

@@ -25,8 +25,8 @@ export const DocsClaudeCode: FC = () => {
               Write code → Fetch data → Normalize → Debug → Integrate → Maybe run
             </p>
           </div>
-          <div className="p-5 bg-claude-orange/10 rounded-lg border border-claude-orange/30">
-            <p className="text-claude-orange mb-2 font-medium">{"// With Claude Trade:"}</p>
+          <div className="p-5 bg-[#E57B3A]/10 rounded-lg border border-[#E57B3A]/30">
+            <p className="text-[#E57B3A] mb-2 font-medium">{"// With Claude Trade:"}</p>
             <p className="text-white font-medium">
               Describe → Configure → Review → Deploy
             </p>

@@ -17,14 +17,14 @@ export const DocsWhySolana: FC = () => {
           variant="default"
           className="p-8 text-center hover:bg-white/5 transition-colors"
         >
-          <p className="font-semibold text-3xl mb-2 text-claude-orange">400ms</p>
+          <p className="font-semibold text-3xl mb-2 text-[#E57B3A]">400ms</p>
           <p className="text-white/60 text-sm">
             Block time
           </p>
         </GlassCard>
         <GlassCard
           variant="accent"
-          className="p-8 text-center hover:bg-claude-orange/15 transition-colors"
+          className="p-8 text-center hover:bg-[#E57B3A]/15 transition-colors"
         >
           <p className="font-semibold text-3xl mb-2 text-white">~$0.00025</p>
           <p className="text-white/60 text-sm">

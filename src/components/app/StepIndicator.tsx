@@ -27,22 +27,46 @@ export const StepIndicator: FC<StepIndicatorProps> = ({ currentStep }) => {
         return (
           <div
             key={step.id}
-            className={`relative flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
-              isActive
-                ? "bg-claude-orange/10 border-claude-orange/30 text-claude-orange"
+            className="relative flex items-center gap-2 px-4 py-2 border transition-all"
+            style={{
+              borderRadius: 0,
+              backgroundColor: isActive
+                ? "rgba(229, 123, 58, 0.1)"
                 : isCompleted
-                ? "bg-ink/5 border-ink/10 text-ink"
-                : "bg-transparent border-ink/10 text-ink/40"
-            }`}
+                ? "rgba(255, 255, 255, 0.05)"
+                : "transparent",
+              borderColor: isActive
+                ? "rgba(229, 123, 58, 0.3)"
+                : "rgba(255, 255, 255, 0.1)",
+              color: isActive
+                ? "#E57B3A"
+                : isCompleted
+                ? "#FFFFFF"
+                : "rgba(255, 255, 255, 0.4)",
+            }}
           >
-            <span className="font-mono text-xs opacity-60">{step.num}</span>
-            <span className="font-medium text-sm">{step.label}</span>
-            
+            <span
+              className="text-xs opacity-60"
+              style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+            >
+              {step.num}
+            </span>
+            <span
+              className="text-sm"
+              style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
+            >
+              {step.label}
+            </span>
+
             {isCompleted && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute -right-1 -top-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
+                className="absolute -right-1 -top-1 w-4 h-4 bg-green-500 flex items-center justify-center"
+                style={{
+                  clipPath:
+                    "polygon(4px 0%, 100% 0%, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0% 100%, 0% 4px)",
+                }}
               >
                 <svg
                   className="w-2.5 h-2.5 text-white"

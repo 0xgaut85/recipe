@@ -22,9 +22,9 @@ export const DocsVision: FC = () => {
         <p className="text-2xl font-display font-semibold text-white">
           Not just trading tools.
           <br />
-          <span className="bg-claude-orange/15 text-claude-orange px-2 rounded">Built for execution.</span>
+          <span className="bg-[#E57B3A]/15 text-[#E57B3A] px-2 rounded">Built for execution.</span>
         </p>
-        <div className="inline-block p-6 bg-claude-orange rounded-xl">
+        <div className="inline-block p-6 bg-[#E57B3A] rounded-xl">
           <span className="text-3xl text-white font-display font-semibold">
             Trade with Intelligence.
           </span>

@@ -20,7 +20,7 @@ export const DocsMarketplace: FC = () => {
         <ul className="space-y-3 text-white/80">
           {marketplaceFeatures.map((feature, i) => (
             <li key={i} className="flex items-center gap-3">
-              <span className="w-2 h-2 bg-claude-orange rounded-full" />
+              <span className="w-2 h-2 bg-[#E57B3A] rounded-full" />
               {feature}
             </li>
           ))}
