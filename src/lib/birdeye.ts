@@ -594,10 +594,15 @@ async function getHighVolumeNewPairsFallback(limit: number): Promise<TrendingTok
   }
 }
 
+// Market cap filter constants for Hot tokens (trenches focus)
+const HOT_MIN_MCAP = 100000;    // $100k minimum
+const HOT_MAX_MCAP = 50000000;  // $50M maximum
+
 /**
  * Get HOT tokens - trending tokens from Birdeye's algorithm
  * Uses /defi/token_trending endpoint with rank sort (Birdeye's trending algorithm)
  * Shows tokens that are currently "hot" based on activity, social, and price action
+ * Filtered to $100k - $50M market cap (trenches focus)
  */
 export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]> {
   // Return cached data if available and fresh
@@ -609,18 +614,28 @@ export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]>
     // Get tokens from Birdeye's trending algorithm (rank = their internal hot algo)
     const trendingByRank = await fetchTrendingTokens("rank");
     
-    console.log(`getHotTokens (token_trending rank): got ${trendingByRank.length} trending tokens`);
+    console.log(`getHotTokens: got ${trendingByRank.length} raw tokens`);
+    
+    // Log market cap values to debug
+    trendingByRank.slice(0, 5).forEach(t => {
+      console.log(`  ${t.symbol}: mcap=${t.marketCap}, price=${t.price}`);
+    });
     
     // Filter for quality tokens: $100k - $50M market cap (trenches focus)
     const hotTokens = trendingByRank
-      .filter(t => 
-        t.price > 0 && 
-        t.volume24h > 0 && 
-        t.liquidity > 0 &&
-        t.marketCap >= 100000 && // Minimum $100k market cap
-        t.marketCap <= 50000000  // Maximum $50M market cap
-      )
+      .filter(t => {
+        const mcap = t.marketCap || 0;
+        return (
+          t.price > 0 && 
+          t.volume24h > 0 && 
+          t.liquidity > 0 &&
+          mcap >= HOT_MIN_MCAP && 
+          mcap <= HOT_MAX_MCAP
+        );
+      })
       .map((t, index) => ({ ...t, rank: index + 1 }));
+
+    console.log(`getHotTokens: ${hotTokens.length} tokens after $100k-$50M mcap filter`);
 
     // If we got tokens, cache and return
     if (hotTokens.length > 0) {
@@ -628,13 +643,23 @@ export async function getHotTokens(limit: number = 20): Promise<TrendingToken[]>
       return hotTokens.slice(0, limit);
     }
 
-    // Fallback: use liquidity-based trending
-    console.log("No hot tokens from rank, trying liquidity fallback");
+    // Fallback: use liquidity-based trending with same market cap filter
+    console.log("No hot tokens from rank filter, trying liquidity fallback");
     const liquidityTokens = await fetchTrendingTokens("liquidity");
     
     const filtered = liquidityTokens
-      .filter(t => t.price > 0 && t.volume24h > 0)
+      .filter(t => {
+        const mcap = t.marketCap || 0;
+        return (
+          t.price > 0 && 
+          t.volume24h > 0 &&
+          mcap >= HOT_MIN_MCAP && 
+          mcap <= HOT_MAX_MCAP
+        );
+      })
       .map((t, index) => ({ ...t, rank: index + 1 }));
+
+    console.log(`getHotTokens fallback: ${filtered.length} tokens after filter`);
 
     gainersCache = { data: filtered, timestamp: Date.now() };
     return filtered.slice(0, limit);
