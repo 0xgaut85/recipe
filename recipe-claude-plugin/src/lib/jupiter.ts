@@ -68,7 +68,15 @@ export interface QuoteResponse {
 }
 
 /**
- * Resolve token symbol to mint address
+ * Check if a string is a valid Solana address (base58, 32-44 chars)
+ */
+export function isSolanaAddress(str: string): boolean {
+  const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+  return base58Regex.test(str);
+}
+
+/**
+ * Resolve token symbol to mint address (simple, no search)
  */
 export function resolveToken(input: string): string {
   const upper = input.toUpperCase();
@@ -274,4 +282,68 @@ export function listTokens(): Array<{ symbol: string; address: string }> {
     symbol,
     address,
   }));
+}
+
+/**
+ * Resolve token to mint address with search fallback
+ * Matches main app's resolveTokenMintWithSearch function
+ * Use this for trading to handle any token name/symbol
+ */
+export async function resolveTokenMintWithSearch(token: string): Promise<{
+  address: string;
+  symbol: string;
+  decimals: number;
+} | null> {
+  // Import dynamically to avoid circular dependency
+  const { searchTokens, getTokenOverview } = await import("./api.js");
+
+  const upperToken = token.toUpperCase();
+
+  // Check known tokens first
+  if (upperToken in TOKEN_MINTS) {
+    const address = TOKEN_MINTS[upperToken];
+    const decimals = getTokenDecimals(address);
+    return { address, symbol: upperToken, decimals };
+  }
+
+  // If it's already a valid Solana address, use it directly
+  if (isSolanaAddress(token)) {
+    try {
+      const overview = await getTokenOverview(token);
+      if (overview) {
+        return {
+          address: token,
+          symbol: overview.symbol,
+          decimals: overview.decimals,
+        };
+      }
+    } catch {
+      // Continue with the address anyway
+    }
+    const decimals = getTokenDecimals(token);
+    return { address: token, symbol: "???", decimals };
+  }
+
+  // Search for the token by name/symbol
+  try {
+    const results = await searchTokens(token);
+    if (results.length > 0) {
+      // Find exact match first, then best match
+      const exactMatch = results.find(
+        (r) =>
+          r.symbol.toUpperCase() === upperToken ||
+          r.name.toUpperCase() === upperToken
+      );
+      const bestMatch = exactMatch || results[0];
+      return {
+        address: bestMatch.address,
+        symbol: bestMatch.symbol,
+        decimals: 9, // Default, will be handled by Jupiter
+      };
+    }
+  } catch (error) {
+    console.error("Token search error:", error);
+  }
+
+  return null;
 }

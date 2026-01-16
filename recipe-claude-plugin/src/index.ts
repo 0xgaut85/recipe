@@ -61,8 +61,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return await handleWalletTool(name, args as Record<string, unknown>);
     }
 
-    // Token tools
-    if (name.startsWith("recipe_token_")) {
+    // Token tools (includes recipe_get_* and recipe_calculate_* for OHLCV/EMA)
+    if (
+      name.startsWith("recipe_token_") ||
+      name.startsWith("recipe_get_") ||
+      name.startsWith("recipe_calculate_")
+    ) {
       return await handleTokenTool(name, args as Record<string, unknown>);
     }
 

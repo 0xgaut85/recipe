@@ -1,10 +1,15 @@
 /**
  * Trade MCP Tools
- * Get quotes and execute swaps
+ * Get quotes and execute swaps - matches main app's trading functionality
  */
 
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
-import { getQuote, executeSwap, listTokens } from "../lib/jupiter.js";
+import {
+  getQuote,
+  executeSwap,
+  listTokens,
+  resolveTokenMintWithSearch,
+} from "../lib/jupiter.js";
 import { loadWallet, getSolBalance } from "../lib/wallet.js";
 
 export const tradeTools: Tool[] = [
@@ -17,19 +22,19 @@ export const tradeTools: Tool[] = [
       properties: {
         inputToken: {
           type: "string",
-          description: "Input token symbol (SOL, USDC, BONK) or mint address",
+          description: "Input token symbol (SOL, USDC, BONK), name, or mint address",
         },
         outputToken: {
           type: "string",
-          description: "Output token symbol or mint address",
+          description: "Output token symbol, name, or mint address",
         },
         amount: {
           type: "number",
           description: "Amount of input token to swap",
         },
-        slippage: {
+        slippageBps: {
           type: "number",
-          description: "Slippage tolerance in percentage (default: 0.5)",
+          description: "Slippage tolerance in basis points (default: 50 = 0.5%)",
         },
       },
       required: ["inputToken", "outputToken", "amount"],
@@ -44,19 +49,19 @@ export const tradeTools: Tool[] = [
       properties: {
         inputToken: {
           type: "string",
-          description: "Input token symbol (SOL, USDC, BONK) or mint address",
+          description: "Input token symbol (SOL, USDC, BONK), name, or mint address",
         },
         outputToken: {
           type: "string",
-          description: "Output token symbol or mint address",
+          description: "Output token symbol, name, or mint address",
         },
         amount: {
           type: "number",
           description: "Amount of input token to swap",
         },
-        slippage: {
+        slippageBps: {
           type: "number",
-          description: "Slippage tolerance in percentage (default: 0.5)",
+          description: "Slippage tolerance in basis points (default: 100 = 1%)",
         },
       },
       required: ["inputToken", "outputToken", "amount"],
@@ -79,12 +84,13 @@ export async function handleTradeTool(
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
   switch (name) {
     case "recipe_swap_quote": {
-      const inputToken = args?.inputToken as string;
-      const outputToken = args?.outputToken as string;
+      const inputTokenArg = args?.inputToken as string;
+      const outputTokenArg = args?.outputToken as string;
       const amount = args?.amount as number;
+      const slippageBps = args?.slippageBps as number | undefined;
       const slippage = (args?.slippage as number) || 0.5;
 
-      if (!inputToken || !outputToken || !amount) {
+      if (!inputTokenArg || !outputTokenArg || !amount) {
         return {
           content: [
             {
@@ -97,23 +103,61 @@ export async function handleTradeTool(
       }
 
       try {
-        const quote = await getQuote(inputToken, outputToken, amount, Math.floor(slippage * 100));
+        // Use smart token resolution
+        const inputToken = await resolveTokenMintWithSearch(inputTokenArg);
+        const outputToken = await resolveTokenMintWithSearch(outputTokenArg);
+
+        if (!inputToken) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Could not find token: ${inputTokenArg}. Try using the contract address (CA).`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        if (!outputToken) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Could not find token: ${outputTokenArg}. Try using the contract address (CA).`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const slippageValue = slippageBps || Math.floor(slippage * 100);
+        const quote = await getQuote(
+          inputToken.address,
+          outputToken.address,
+          amount,
+          slippageValue
+        );
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({
-                inputToken: inputToken.toUpperCase(),
-                outputToken: outputToken.toUpperCase(),
-                inputAmount: quote.inputAmount,
-                outputAmount: quote.outputAmount,
-                exchangeRate: quote.exchangeRate.toFixed(6),
-                priceImpact: `${quote.priceImpact.toFixed(4)}%`,
-                slippage: `${slippage}%`,
-                route: quote.route,
-                ready: "Use recipe_swap_execute with same parameters to trade",
-              }, null, 2),
+              text: JSON.stringify(
+                {
+                  inputToken: inputToken.symbol,
+                  outputToken: outputToken.symbol,
+                  inputAmount: quote.inputAmount,
+                  outputAmount: quote.outputAmount,
+                  exchangeRate: quote.exchangeRate.toFixed(6),
+                  priceImpact: `${quote.priceImpact.toFixed(4)}%`,
+                  slippage: `${slippageValue / 100}%`,
+                  route: quote.route,
+                  ready: "Use recipe_swap_execute with same parameters to trade",
+                },
+                null,
+                2
+              ),
             },
           ],
         };
@@ -122,11 +166,15 @@ export async function handleTradeTool(
           content: [
             {
               type: "text",
-              text: JSON.stringify({
-                error: "Failed to get quote",
-                message: error instanceof Error ? error.message : "Unknown error",
-                suggestion: "Check that both tokens exist and have liquidity",
-              }, null, 2),
+              text: JSON.stringify(
+                {
+                  error: "Failed to get quote",
+                  message: error instanceof Error ? error.message : "Unknown error",
+                  suggestion: "Check that both tokens exist and have liquidity",
+                },
+                null,
+                2
+              ),
             },
           ],
           isError: true,
@@ -135,12 +183,13 @@ export async function handleTradeTool(
     }
 
     case "recipe_swap_execute": {
-      const inputToken = args?.inputToken as string;
-      const outputToken = args?.outputToken as string;
+      const inputTokenArg = args?.inputToken as string;
+      const outputTokenArg = args?.outputToken as string;
       const amount = args?.amount as number;
-      const slippage = (args?.slippage as number) || 0.5;
+      const slippageBps = args?.slippageBps as number | undefined;
+      const slippage = (args?.slippage as number) || 1; // Default 1% for memecoins
 
-      if (!inputToken || !outputToken || !amount) {
+      if (!inputTokenArg || !outputTokenArg || !amount) {
         return {
           content: [
             {
@@ -159,54 +208,101 @@ export async function handleTradeTool(
           content: [
             {
               type: "text",
-              text: JSON.stringify({
-                error: "No wallet found",
-                solution: "Use recipe_wallet_create to generate a wallet first",
-              }, null, 2),
+              text: JSON.stringify(
+                {
+                  error: "No wallet found",
+                  solution: "Use recipe_wallet_create to generate a wallet first",
+                },
+                null,
+                2
+              ),
             },
           ],
           isError: true,
         };
       }
 
-      // Check balance for SOL swaps
-      if (inputToken.toUpperCase() === "SOL") {
-        const balance = await getSolBalance(wallet.publicKey);
-        if (balance < amount + 0.01) { // Leave some for fees
+      try {
+        // Use smart token resolution
+        const inputToken = await resolveTokenMintWithSearch(inputTokenArg);
+        const outputToken = await resolveTokenMintWithSearch(outputTokenArg);
+
+        if (!inputToken) {
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify({
-                  error: "Insufficient SOL balance",
-                  required: amount + 0.01,
-                  available: balance,
-                  solution: `Send at least ${(amount + 0.01 - balance).toFixed(4)} more SOL to ${wallet.publicKey}`,
-                }, null, 2),
+                text: `Could not find token: ${inputTokenArg}. Please provide the contract address (CA).`,
               },
             ],
             isError: true,
           };
         }
-      }
 
-      try {
-        const result = await executeSwap(inputToken, outputToken, amount, Math.floor(slippage * 100));
+        if (!outputToken) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Could not find token: ${outputTokenArg}. Please provide the contract address (CA).`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Check balance for SOL swaps
+        if (inputToken.symbol.toUpperCase() === "SOL" || inputToken.symbol.toUpperCase() === "WSOL") {
+          const balance = await getSolBalance(wallet.publicKey);
+          if (balance < amount + 0.01) {
+            // Leave some for fees
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    {
+                      error: "Insufficient SOL balance",
+                      required: amount + 0.01,
+                      available: balance,
+                      solution: `Send at least ${(amount + 0.01 - balance).toFixed(4)} more SOL to ${wallet.publicKey}`,
+                    },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+
+        const slippageValue = slippageBps || Math.floor(slippage * 100);
+        const result = await executeSwap(
+          inputToken.address,
+          outputToken.address,
+          amount,
+          slippageValue
+        );
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({
-                success: true,
-                transaction: result.signature,
-                inputToken: inputToken.toUpperCase(),
-                outputToken: outputToken.toUpperCase(),
-                inputAmount: result.inputAmount,
-                outputAmount: result.outputAmount,
-                priceImpact: `${result.priceImpact.toFixed(4)}%`,
-                explorer: result.explorerUrl,
-              }, null, 2),
+              text: JSON.stringify(
+                {
+                  success: true,
+                  signature: result.signature,
+                  inputToken: inputToken.symbol,
+                  outputToken: outputToken.symbol,
+                  inputAmount: result.inputAmount,
+                  outputAmount: result.outputAmount,
+                  priceImpact: `${result.priceImpact.toFixed(4)}%`,
+                  explorerUrl: result.explorerUrl,
+                },
+                null,
+                2
+              ),
             },
           ],
         };
@@ -215,11 +311,15 @@ export async function handleTradeTool(
           content: [
             {
               type: "text",
-              text: JSON.stringify({
-                error: "Swap failed",
-                message: error instanceof Error ? error.message : "Unknown error",
-                suggestion: "Check your balance, slippage settings, and try again",
-              }, null, 2),
+              text: JSON.stringify(
+                {
+                  error: "Swap failed",
+                  message: error instanceof Error ? error.message : "Unknown error",
+                  suggestion: "Check your balance, slippage settings, and try again",
+                },
+                null,
+                2
+              ),
             },
           ],
           isError: true,

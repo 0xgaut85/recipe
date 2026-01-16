@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getCurrentUserId } from "@/lib/auth";
 import { toolDefinitions, executeTool } from "@/lib/claude-tools";
 import { applyRateLimit, rateLimiters } from "@/lib/rate-limit";
+import { prisma } from "@/lib/prisma";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
@@ -26,7 +27,20 @@ interface ChatRequest {
   messages: Message[];
 }
 
-// Single unified system prompt - no more phase switching
+interface ParsedStrategyConfig {
+  name: string;
+  description: string;
+  amount: number;
+  maxAgeMinutes: number;
+  minLiquidity: number;
+  minVolume: number;
+  minMarketCap: number;
+  nameFilter?: string;
+  takeProfit?: number;
+  stopLoss?: number;
+}
+
+// Single unified system prompt
 const SYSTEM_PROMPT = `you are recipe, an ai trading assistant on solana.
 
 CAPABILITIES:
@@ -38,60 +52,26 @@ CAPABILITIES:
 STRATEGY CREATION FLOW:
 1. user describes what they want
 2. if anything is unclear, ask 1-2 questions (amount, filters, etc)
-3. show the complete config summary
-4. when user confirms (yes, yeah, do it, go, deploy, ok), call create_strategy tool
-5. after tool succeeds, confirm strategy is live
+3. show the complete config summary with this EXACT format:
 
-IMMEDIATE TRADES:
-if user says "buy X" or "sell X" directly, use execute_spot_trade tool immediately.
-
-STRATEGY PARAMETERS (for snipers):
-- amount (SOL) - REQUIRED
-- maxAgeMinutes (default 30)
-- minLiquidity (default $5k)
-- minVolume (default $10k)
-- minMarketCap (default $10k)
-- nameFilter (optional - filter by token name)
-- takeProfit % (optional)
-- stopLoss % (optional)
-
-WHEN SHOWING CONFIG:
-"🎯 [strategy name]
+🎯 [strategy name]
 - amount: X SOL
 - max age: X min
 - min liquidity: $Xk
 - min volume: $Xk
 - min mcap: $Xk
-- name filter: [if any]
+- name filter: [filter text]
 - take profit: X% / stop loss: X%
 
-ready to deploy? say yes!"
+ready to deploy? say yes!
 
-CRITICAL - WHEN USER CONFIRMS (says yes, yeah, do it, deploy, go, ok, sure, etc):
-YOU MUST CALL THE create_strategy TOOL. DO NOT SKIP THIS STEP.
-DO NOT just say "your strategy is live" without calling the tool first.
-The strategy DOES NOT EXIST until you call create_strategy.
+4. when user confirms, the system will automatically create the strategy
+5. confirm strategy is live after user says yes
 
-Call create_strategy with these params:
-{
-  "name": "claude sniper",
-  "description": "snipes new pairs with claude in name",
-  "type": "SNIPER",
-  "amount": 0.1,
-  "maxAgeMinutes": 15,
-  "minLiquidity": 5000,
-  "minVolume": 20000,
-  "minMarketCap": 15000,
-  "nameFilter": "claude",
-  "takeProfit": 100,
-  "stopLoss": 30,
-  "slippageBps": 300
-}
+IMMEDIATE TRADES:
+if user says "buy X" or "sell X" directly, use execute_spot_trade tool immediately.
 
-AFTER create_strategy TOOL RETURNS SUCCESS:
-"🚀 your [name] is now live! check the strategies panel (📊) to monitor it."
-
-WARNING: If you say the strategy is live without calling create_strategy, you are lying to the user.
+IMPORTANT: Always use the exact config format above so the system can parse it.
 
 STYLE: be concise, lowercase, helpful, use emojis sparingly.`;
 
@@ -103,43 +83,120 @@ function isConfirmation(text: string): boolean {
     "ship it", "send it", "execute", "start", "run it", "make it"
   ];
   const lower = text.toLowerCase().trim();
-  return confirmWords.some(word => lower === word || lower.startsWith(word + " ") || lower.endsWith(" " + word));
+  return confirmWords.some(word => lower === word || lower.startsWith(word + " ") || lower.endsWith(" " + word) || lower.includes(word));
 }
 
-// Check if conversation has shown a strategy config (ready to deploy)
-function hasShownConfig(messages: Message[]): boolean {
-  for (const msg of messages) {
-    if (msg.role === "assistant" && typeof msg.content === "string") {
-      const lower = msg.content.toLowerCase();
-      if ((lower.includes("🎯") || lower.includes("ready to deploy") || lower.includes("say yes")) &&
-          (lower.includes("amount") || lower.includes("sol"))) {
-        return true;
+// Parse strategy config from AI message
+function parseStrategyConfig(messages: Message[]): ParsedStrategyConfig | null {
+  // Find the last assistant message with strategy config
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role !== "assistant") continue;
+    
+    const content = typeof msg.content === "string" 
+      ? msg.content 
+      : msg.content.filter(b => b.type === "text").map(b => b.text).join("");
+    
+    // Check if this message contains a strategy config
+    if (!content.includes("🎯") && !content.toLowerCase().includes("ready to deploy")) continue;
+    
+    try {
+      // Extract strategy name (after 🎯)
+      const nameMatch = content.match(/🎯\s*([^\n]+)/);
+      const name = nameMatch ? nameMatch[1].trim() : "unnamed strategy";
+      
+      // Extract amount (number before SOL)
+      const amountMatch = content.match(/amount:\s*([\d.]+)\s*sol/i);
+      const amount = amountMatch ? parseFloat(amountMatch[1]) : 0.1;
+      
+      // Extract max age (number before min)
+      const ageMatch = content.match(/max age:\s*(\d+)\s*min/i);
+      const maxAgeMinutes = ageMatch ? parseInt(ageMatch[1]) : 30;
+      
+      // Extract min liquidity ($Xk format)
+      const liqMatch = content.match(/min liquidity:\s*\$?([\d.]+)k?/i);
+      const minLiquidity = liqMatch ? parseFloat(liqMatch[1]) * (content.toLowerCase().includes("k") ? 1000 : 1) : 5000;
+      
+      // Extract min volume ($Xk format)
+      const volMatch = content.match(/min volume:\s*\$?([\d.]+)k?/i);
+      const minVolume = volMatch ? parseFloat(volMatch[1]) * (content.toLowerCase().includes("k") ? 1000 : 1) : 10000;
+      
+      // Extract min mcap ($Xk format)
+      const mcapMatch = content.match(/min mcap:\s*\$?([\d.]+)k?/i);
+      const minMarketCap = mcapMatch ? parseFloat(mcapMatch[1]) * (content.toLowerCase().includes("k") ? 1000 : 1) : 10000;
+      
+      // Extract name filter
+      const filterMatch = content.match(/name filter:\s*([^\n-]+)/i);
+      const nameFilter = filterMatch ? filterMatch[1].trim() : undefined;
+      
+      // Extract take profit (X%)
+      const tpMatch = content.match(/take profit:\s*(\d+)%/i);
+      const takeProfit = tpMatch ? parseInt(tpMatch[1]) : undefined;
+      
+      // Extract stop loss (X%)
+      const slMatch = content.match(/stop loss:\s*(\d+)%/i);
+      const stopLoss = slMatch ? parseInt(slMatch[1]) : undefined;
+      
+      // Validate we have minimum required fields
+      if (amount > 0) {
+        return {
+          name,
+          description: `Sniper strategy: ${name}`,
+          amount,
+          maxAgeMinutes,
+          minLiquidity,
+          minVolume,
+          minMarketCap,
+          nameFilter: nameFilter !== "none" ? nameFilter : undefined,
+          takeProfit,
+          stopLoss,
+        };
       }
+    } catch (e) {
+      console.error("Error parsing strategy config:", e);
     }
   }
-  return false;
+  
+  return null;
+}
+
+// Create strategy directly in database
+async function createStrategyDirectly(userId: string, config: ParsedStrategyConfig): Promise<{ success: boolean; strategyId?: string; error?: string }> {
+  try {
+    const strategy = await prisma.strategy.create({
+      data: {
+        userId,
+        name: config.name,
+        description: config.description,
+        isActive: true,
+        config: {
+          type: "SNIPER",
+          amount: config.amount,
+          maxAgeMinutes: config.maxAgeMinutes,
+          minLiquidity: config.minLiquidity,
+          minVolume: config.minVolume,
+          minMarketCap: config.minMarketCap,
+          nameFilter: config.nameFilter,
+          takeProfit: config.takeProfit,
+          stopLoss: config.stopLoss,
+          slippageBps: 300,
+        },
+      },
+    });
+    
+    return { success: true, strategyId: strategy.id };
+  } catch (error) {
+    console.error("Error creating strategy:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create strategy" };
+  }
 }
 
 async function makeClaudeRequest(
-  messages: Message[],
-  forceToolCall?: string
+  messages: Message[]
 ): Promise<{
   content: ContentBlock[];
   stop_reason: string;
 }> {
-  const requestBody: Record<string, unknown> = {
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    messages,
-    tools: toolDefinitions,
-  };
-
-  // Force a specific tool call if requested
-  if (forceToolCall) {
-    requestBody.tool_choice = { type: "tool", name: forceToolCall };
-  }
-
   const response = await fetch(ANTHROPIC_API_URL, {
     method: "POST",
     headers: {
@@ -147,7 +204,13 @@ async function makeClaudeRequest(
       "x-api-key": ANTHROPIC_API_KEY!,
       "anthropic-version": "2023-06-01",
     },
-    body: JSON.stringify(requestBody),
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages,
+      tools: toolDefinitions,
+    }),
   });
 
   if (!response.ok) {
@@ -199,26 +262,70 @@ export async function POST(request: NextRequest) {
 
     const encoder = new TextEncoder();
 
+    // Check if user just confirmed a strategy deployment
+    const lastUserMsg = conversationMessages.filter(m => m.role === "user").pop();
+    let strategyCreated = false;
+    let strategyResult: { success: boolean; strategyId?: string; error?: string } | null = null;
+
+    if (lastUserMsg && typeof lastUserMsg.content === "string" && isConfirmation(lastUserMsg.content)) {
+      // Try to parse and create strategy directly
+      const config = parseStrategyConfig(conversationMessages);
+      if (config && userId) {
+        strategyResult = await createStrategyDirectly(userId, config);
+        strategyCreated = strategyResult.success;
+        console.log("Strategy creation result:", strategyResult);
+      }
+    }
+
     const stream = new ReadableStream({
       async start(controller) {
         let iterations = 0;
         let continueLoop = true;
 
         try {
+          // If strategy was just created, modify the conversation to tell Claude
+          if (strategyCreated && strategyResult) {
+            // Add a system message telling Claude the strategy was created
+            const modifiedMessages: Message[] = [
+              ...conversationMessages,
+              {
+                role: "assistant" as const,
+                content: [
+                  {
+                    type: "tool_use" as const,
+                    id: "auto_create_" + Date.now(),
+                    name: "create_strategy",
+                    input: {},
+                  }
+                ],
+              },
+              {
+                role: "user" as const,
+                content: [
+                  {
+                    type: "tool_result" as const,
+                    tool_use_id: "auto_create_" + Date.now(),
+                    content: JSON.stringify({
+                      success: true,
+                      strategyId: strategyResult.strategyId,
+                      message: "Strategy created successfully! Tell the user it's now live.",
+                    }),
+                  }
+                ],
+              },
+            ];
+            conversationMessages = modifiedMessages;
+            
+            // Send progress signal
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ progress: "serve" })}\n\n`)
+            );
+          }
+
           while (continueLoop && iterations < MAX_TOOL_ITERATIONS) {
             iterations++;
 
-            // Check if we should force create_strategy tool call
-            // This happens when: user confirms AND config was shown
-            let forceToolCall: string | undefined;
-            const lastUserMsg = conversationMessages.filter(m => m.role === "user").pop();
-            if (lastUserMsg && typeof lastUserMsg.content === "string") {
-              if (isConfirmation(lastUserMsg.content) && hasShownConfig(conversationMessages)) {
-                forceToolCall = "create_strategy";
-              }
-            }
-
-            const response = await makeClaudeRequest(conversationMessages, forceToolCall);
+            const response = await makeClaudeRequest(conversationMessages);
 
             const toolUses: ContentBlock[] = [];
             let aiResponseText = "";
@@ -277,7 +384,7 @@ export async function POST(request: NextRequest) {
                     userId || undefined
                   );
 
-                  // Progress: "serve" - strategy was created
+                  // Progress: "serve" - strategy was created via tool
                   if (toolUse.name === "create_strategy" && result && typeof result === "object" && "success" in result && (result as { success: boolean }).success) {
                     controller.enqueue(
                       encoder.encode(`data: ${JSON.stringify({ progress: "serve" })}\n\n`)

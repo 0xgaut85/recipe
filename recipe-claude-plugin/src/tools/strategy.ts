@@ -1,165 +1,145 @@
 /**
  * Strategy MCP Tools
- * Strategy templates and configuration
+ * Create and manage trading strategies - matches main app's claude-tools.ts
+ * Supports SNIPER, SPOT, and CONDITIONAL strategy types
  */
 
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
-interface StrategyTemplate {
-  name: string;
-  category: string;
-  description: string;
-  parameters: Array<{
-    name: string;
-    type: string;
-    description: string;
-    required: boolean;
-    default?: unknown;
-  }>;
-  example: Record<string, unknown>;
-}
-
-const STRATEGY_TEMPLATES: StrategyTemplate[] = [
-  {
-    name: "volume_spike_entry",
-    category: "momentum",
-    description: "Enter positions when volume spikes above a threshold, indicating potential momentum.",
-    parameters: [
-      { name: "token", type: "string", description: "Token to trade", required: true },
-      { name: "volumeMultiplier", type: "number", description: "Volume spike threshold (e.g., 3x average)", required: true, default: 3 },
-      { name: "lookbackPeriod", type: "string", description: "Period to calculate average volume", required: false, default: "1h" },
-      { name: "positionSize", type: "number", description: "Position size in SOL", required: true },
-      { name: "stopLoss", type: "number", description: "Stop loss percentage", required: false, default: 10 },
-      { name: "takeProfit", type: "number", description: "Take profit percentage", required: false, default: 30 },
-    ],
-    example: {
-      token: "BONK",
-      volumeMultiplier: 3,
-      lookbackPeriod: "1h",
-      positionSize: 1,
-      stopLoss: 10,
-      takeProfit: 30,
-    },
-  },
-  {
-    name: "new_token_sniper",
-    category: "momentum",
-    description: "Automatically enter new Pump.fun launches based on criteria like market cap and social signals.",
-    parameters: [
-      { name: "minMarketCap", type: "number", description: "Minimum market cap to enter", required: false, default: 5000 },
-      { name: "maxMarketCap", type: "number", description: "Maximum market cap to enter", required: false, default: 100000 },
-      { name: "positionSize", type: "number", description: "Position size in SOL", required: true },
-      { name: "requireTwitter", type: "boolean", description: "Require Twitter link", required: false, default: false },
-      { name: "requireTelegram", type: "boolean", description: "Require Telegram link", required: false, default: false },
-      { name: "exitOnMigration", type: "boolean", description: "Exit when token migrates to Raydium", required: false, default: true },
-    ],
-    example: {
-      minMarketCap: 5000,
-      maxMarketCap: 50000,
-      positionSize: 0.5,
-      requireTwitter: true,
-      exitOnMigration: true,
-    },
-  },
-  {
-    name: "dip_buyer",
-    category: "mean_reversion",
-    description: "Buy tokens after significant price drops, betting on mean reversion.",
-    parameters: [
-      { name: "token", type: "string", description: "Token to trade", required: true },
-      { name: "dropThreshold", type: "number", description: "Minimum price drop percentage to trigger", required: true, default: 20 },
-      { name: "timeframe", type: "string", description: "Timeframe for price drop calculation", required: false, default: "24h" },
-      { name: "positionSize", type: "number", description: "Position size in SOL", required: true },
-      { name: "dcaSteps", type: "number", description: "Number of DCA steps if price continues dropping", required: false, default: 3 },
-    ],
-    example: {
-      token: "SOL",
-      dropThreshold: 15,
-      timeframe: "24h",
-      positionSize: 2,
-      dcaSteps: 3,
-    },
-  },
-  {
-    name: "wallet_copy",
-    category: "copy_trading",
-    description: "Copy trades from a target wallet address with customizable delay and position sizing.",
-    parameters: [
-      { name: "targetWallet", type: "string", description: "Wallet address to copy", required: true },
-      { name: "copyDelay", type: "number", description: "Delay in seconds before copying (0 for immediate)", required: false, default: 0 },
-      { name: "positionMultiplier", type: "number", description: "Multiply target's position size by this factor", required: false, default: 1 },
-      { name: "maxPositionSize", type: "number", description: "Maximum position size in SOL", required: true },
-      { name: "excludeTokens", type: "array", description: "Token addresses to exclude from copying", required: false },
-      { name: "onlyBuys", type: "boolean", description: "Only copy buy transactions", required: false, default: false },
-    ],
-    example: {
-      targetWallet: "ABC...XYZ",
-      copyDelay: 5,
-      positionMultiplier: 0.5,
-      maxPositionSize: 5,
-      onlyBuys: true,
-    },
-  },
-  {
-    name: "grid_trading",
-    category: "range_trading",
-    description: "Place buy and sell orders at regular intervals within a price range.",
-    parameters: [
-      { name: "token", type: "string", description: "Token to trade", required: true },
-      { name: "lowerPrice", type: "number", description: "Lower bound of price range", required: true },
-      { name: "upperPrice", type: "number", description: "Upper bound of price range", required: true },
-      { name: "gridLevels", type: "number", description: "Number of grid levels", required: true, default: 10 },
-      { name: "positionSize", type: "number", description: "Total position size in SOL", required: true },
-    ],
-    example: {
-      token: "SOL",
-      lowerPrice: 100,
-      upperPrice: 200,
-      gridLevels: 10,
-      positionSize: 5,
-    },
-  },
-];
-
 export const strategyTools: Tool[] = [
-  {
-    name: "recipe_strategy_list",
-    description:
-      "Get available strategy templates for common trading patterns. Each template includes description, parameters, and example configuration.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        category: {
-          type: "string",
-          enum: ["momentum", "mean_reversion", "copy_trading", "range_trading", "all"],
-          description: "Filter by category or 'all' for all templates",
-        },
-      },
-    },
-  },
   {
     name: "recipe_strategy_create",
     description:
-      "Create a strategy configuration from a template with custom parameters. Returns a complete strategy config.",
+      "Create and save a trading strategy. Supports spot trades, new pair sniping, and conditional/indicator-based strategies. Use this when the user wants to save/deploy a strategy.",
     inputSchema: {
       type: "object",
       properties: {
-        template: {
+        name: {
           type: "string",
-          description: "Template name to use (e.g., 'volume_spike_entry', 'new_token_sniper')",
+          description: "Short name for the strategy",
         },
-        parameters: {
+        description: {
+          type: "string",
+          description: "Detailed description of what the strategy does",
+        },
+        type: {
+          type: "string",
+          enum: ["SPOT", "SNIPER", "CONDITIONAL"],
+          description:
+            "Type of strategy: SPOT for swaps, SNIPER for new pair sniping, CONDITIONAL for indicator-based triggers",
+        },
+        inputToken: {
+          type: "string",
+          description: "Input token symbol or address (e.g., 'SOL', 'BONK')",
+        },
+        outputToken: {
+          type: "string",
+          description: "Output token symbol or address (for SPOT trades)",
+        },
+        amount: {
+          type: "number",
+          description: "Amount to trade (in input token units, e.g., SOL amount)",
+        },
+        direction: {
+          type: "string",
+          enum: ["buy", "sell"],
+          description: "Trade direction",
+        },
+        stopLoss: {
+          type: "number",
+          description: "Stop loss percentage (optional, omit for no stop loss)",
+        },
+        takeProfit: {
+          type: "number",
+          description: "Take profit percentage (optional, omit for manual exit)",
+        },
+        // SNIPER specific
+        maxAgeMinutes: {
+          type: "number",
+          description: "For SNIPER: Maximum pair age in minutes (e.g., 15 for very fresh)",
+        },
+        minLiquidity: {
+          type: "number",
+          description: "For SNIPER: Minimum liquidity in USD (e.g., 10000)",
+        },
+        maxLiquidity: {
+          type: "number",
+          description: "For SNIPER: Maximum liquidity in USD (optional)",
+        },
+        minVolume: {
+          type: "number",
+          description: "For SNIPER: Minimum 24h volume in USD",
+        },
+        minMarketCap: {
+          type: "number",
+          description: "For SNIPER: Minimum market cap in USD (e.g., 100000 for $100k)",
+        },
+        maxMarketCap: {
+          type: "number",
+          description: "For SNIPER: Maximum market cap in USD (optional, for microcap plays)",
+        },
+        nameFilter: {
+          type: "string",
+          description:
+            "For SNIPER: Filter tokens by name containing this string (e.g., 'claude', 'ai')",
+        },
+        slippageBps: {
+          type: "number",
+          description: "Slippage tolerance in basis points (default: 300 for 3%)",
+        },
+        // CONDITIONAL specific
+        condition: {
           type: "object",
-          description: "Custom parameters for the strategy",
+          description: "For CONDITIONAL: Indicator-based trigger conditions",
+          properties: {
+            indicator: {
+              type: "string",
+              enum: ["EMA", "RSI", "SMA", "PRICE"],
+              description:
+                "Indicator to use (EMA, RSI, SMA, or PRICE for specific price level)",
+            },
+            period: {
+              type: "number",
+              description: "Indicator period (e.g., 20, 50, 200 for EMA/SMA)",
+            },
+            timeframe: {
+              type: "string",
+              enum: ["1m", "5m", "15m", "1H", "4H", "1D"],
+              description: "Candle timeframe for the indicator",
+            },
+            trigger: {
+              type: "string",
+              enum: ["price_above", "price_below", "price_touches", "crosses_above", "crosses_below"],
+              description: "When to trigger the trade",
+            },
+            value: {
+              type: "number",
+              description: "For PRICE indicator: specific price level to trigger at",
+            },
+          },
         },
       },
-      required: ["template"],
+      required: ["name", "description", "type"],
+    },
+  },
+  {
+    name: "recipe_strategy_list",
+    description:
+      "Get example strategy configurations for common trading patterns.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          enum: ["SPOT", "SNIPER", "CONDITIONAL", "all"],
+          description: "Filter by strategy type or 'all' for all examples",
+        },
+      },
     },
   },
   {
     name: "recipe_strategy_validate",
-    description:
-      "Validate a strategy configuration for completeness and safety.",
+    description: "Validate a strategy configuration for completeness and safety.",
     inputSchema: {
       type: "object",
       properties: {
@@ -173,92 +153,240 @@ export const strategyTools: Tool[] = [
   },
 ];
 
+// Example strategy configurations matching the main app
+const STRATEGY_EXAMPLES = {
+  SNIPER: {
+    name: "AI Token Sniper",
+    description: "Snipe new AI-themed tokens on Pump.fun with good liquidity",
+    type: "SNIPER",
+    amount: 0.1,
+    maxAgeMinutes: 15,
+    minLiquidity: 10000,
+    minMarketCap: 50000,
+    maxMarketCap: 500000,
+    nameFilter: "ai",
+    slippageBps: 300,
+    takeProfit: 100,
+    stopLoss: 30,
+  },
+  SPOT: {
+    name: "SOL to BONK Swap",
+    description: "Simple spot swap from SOL to BONK",
+    type: "SPOT",
+    inputToken: "SOL",
+    outputToken: "BONK",
+    amount: 1,
+    direction: "buy",
+    slippageBps: 50,
+    stopLoss: 10,
+    takeProfit: 50,
+  },
+  CONDITIONAL: {
+    name: "Buy BONK on EMA Cross",
+    description: "Buy BONK when price crosses above 50 EMA on 4H timeframe",
+    type: "CONDITIONAL",
+    inputToken: "BONK",
+    amount: 0.5,
+    direction: "buy",
+    slippageBps: 100,
+    stopLoss: 15,
+    takeProfit: 50,
+    condition: {
+      indicator: "EMA",
+      period: 50,
+      timeframe: "4H",
+      trigger: "crosses_above",
+    },
+  },
+};
+
 export async function handleStrategyTool(
   name: string,
   args: Record<string, unknown> | undefined
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
   switch (name) {
-    case "recipe_strategy_list": {
-      const category = (args?.category as string) || "all";
+    case "recipe_strategy_create": {
+      const strategyType = args?.type as string;
 
-      const filtered = category === "all"
-        ? STRATEGY_TEMPLATES
-        : STRATEGY_TEMPLATES.filter((t) => t.category === category);
+      if (!args?.name || !args?.description || !strategyType) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "Missing required fields: name, description, and type are required",
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      if (!["SPOT", "SNIPER", "CONDITIONAL"].includes(strategyType)) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Invalid strategy type: ${strategyType}. Must be SPOT, SNIPER, or CONDITIONAL`,
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // Build config based on strategy type
+      interface StrategyConfig {
+        type: string;
+        amount?: number;
+        slippageBps: number;
+        inputToken?: string;
+        outputToken?: string;
+        direction?: string;
+        stopLoss?: number;
+        takeProfit?: number;
+        maxAgeMinutes?: number;
+        minLiquidity?: number;
+        maxLiquidity?: number;
+        minVolume?: number;
+        minMarketCap?: number;
+        maxMarketCap?: number;
+        nameFilter?: string;
+        condition?: {
+          indicator: string;
+          period?: number;
+          timeframe?: string;
+          trigger: string;
+          value?: number;
+        };
+      }
+
+      let config: StrategyConfig = {
+        type: strategyType,
+        amount: args.amount as number | undefined,
+        slippageBps: (args.slippageBps as number) || (strategyType === "SNIPER" ? 300 : 50),
+      };
+
+      if (strategyType === "SPOT") {
+        if (!args.inputToken || !args.outputToken) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "SPOT strategy requires inputToken and outputToken",
+              },
+            ],
+            isError: true,
+          };
+        }
+        config = {
+          ...config,
+          inputToken: args.inputToken as string,
+          outputToken: args.outputToken as string,
+          direction: (args.direction as string) || "buy",
+          stopLoss: args.stopLoss as number | undefined,
+          takeProfit: args.takeProfit as number | undefined,
+        };
+      } else if (strategyType === "SNIPER") {
+        config = {
+          ...config,
+          maxAgeMinutes: (args.maxAgeMinutes as number) || 30,
+          minLiquidity: args.minLiquidity as number | undefined,
+          maxLiquidity: args.maxLiquidity as number | undefined,
+          minVolume: args.minVolume as number | undefined,
+          minMarketCap: args.minMarketCap as number | undefined,
+          maxMarketCap: args.maxMarketCap as number | undefined,
+          nameFilter: args.nameFilter as string | undefined,
+          takeProfit: args.takeProfit as number | undefined,
+          stopLoss: args.stopLoss as number | undefined,
+        };
+      } else if (strategyType === "CONDITIONAL") {
+        if (!args.inputToken) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "CONDITIONAL strategy requires inputToken",
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const conditionArg = args.condition as {
+          indicator?: string;
+          period?: number;
+          timeframe?: string;
+          trigger?: string;
+          value?: number;
+        } | undefined;
+
+        if (!conditionArg) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "CONDITIONAL strategy requires a condition object with indicator, period, timeframe, and trigger",
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        config = {
+          ...config,
+          inputToken: args.inputToken as string,
+          outputToken: args.outputToken as string | undefined,
+          direction: (args.direction as string) || "buy",
+          stopLoss: args.stopLoss as number | undefined,
+          takeProfit: args.takeProfit as number | undefined,
+          condition: {
+            indicator: conditionArg.indicator || "EMA",
+            period: conditionArg.period,
+            timeframe: conditionArg.timeframe || "1H",
+            trigger: conditionArg.trigger || "price_touches",
+            value: conditionArg.value,
+          },
+        };
+      }
+
+      const typeEmoji =
+        strategyType === "SNIPER" ? "🎯" : strategyType === "CONDITIONAL" ? "📊" : "💱";
 
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              count: filtered.length,
-              templates: filtered.map((t) => ({
-                name: t.name,
-                category: t.category,
-                description: t.description,
-                requiredParams: t.parameters.filter((p) => p.required).map((p) => p.name),
-                optionalParams: t.parameters.filter((p) => !p.required).map((p) => p.name),
-                example: t.example,
-              })),
-            }, null, 2),
+            text: JSON.stringify(
+              {
+                success: true,
+                name: args.name,
+                description: args.description,
+                type: strategyType,
+                config,
+                message: `${typeEmoji} Strategy "${args.name}" created successfully!`,
+                note: "This strategy configuration can be used with the Recipe.money web app or saved locally for reference.",
+              },
+              null,
+              2
+            ),
           },
         ],
       };
     }
 
-    case "recipe_strategy_create": {
-      const templateName = args?.template as string;
-      const customParams = (args?.parameters as Record<string, unknown>) || {};
+    case "recipe_strategy_list": {
+      const typeFilter = (args?.type as string) || "all";
 
-      if (!templateName) {
-        return {
-          content: [{ type: "text", text: "Missing template parameter" }],
-          isError: true,
-        };
-      }
+      let examples: Record<string, unknown>[];
 
-      const template = STRATEGY_TEMPLATES.find((t) => t.name === templateName);
-
-      if (!template) {
+      if (typeFilter === "all") {
+        examples = Object.values(STRATEGY_EXAMPLES);
+      } else if (typeFilter in STRATEGY_EXAMPLES) {
+        examples = [STRATEGY_EXAMPLES[typeFilter as keyof typeof STRATEGY_EXAMPLES]];
+      } else {
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({
-                error: `Template '${templateName}' not found`,
-                available: STRATEGY_TEMPLATES.map((t) => t.name),
-              }, null, 2),
-            },
-          ],
-          isError: true,
-        };
-      }
-
-      // Merge defaults with custom params
-      const config: Record<string, unknown> = {};
-      for (const param of template.parameters) {
-        if (customParams[param.name] !== undefined) {
-          config[param.name] = customParams[param.name];
-        } else if (param.default !== undefined) {
-          config[param.name] = param.default;
-        }
-      }
-
-      // Check required params
-      const missing = template.parameters
-        .filter((p) => p.required && config[p.name] === undefined)
-        .map((p) => p.name);
-
-      if (missing.length > 0) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                error: "Missing required parameters",
-                missing,
-                template: template.name,
-                example: template.example,
-              }, null, 2),
+              text: `Invalid type filter: ${typeFilter}. Use SPOT, SNIPER, CONDITIONAL, or all`,
             },
           ],
           isError: true,
@@ -269,14 +397,16 @@ export async function handleStrategyTool(
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              template: template.name,
-              category: template.category,
-              description: template.description,
-              config,
-              status: "ready",
-              note: "This is a strategy configuration. Use the Recipe.money web app to deploy and run strategies.",
-            }, null, 2),
+            text: JSON.stringify(
+              {
+                count: examples.length,
+                examples,
+                usage:
+                  "Use recipe_strategy_create with these configurations as templates. Customize the parameters for your needs.",
+              },
+              null,
+              2
+            ),
           },
         ],
       };
@@ -295,17 +425,44 @@ export async function handleStrategyTool(
       const issues: string[] = [];
       const warnings: string[] = [];
 
-      // Basic validation
-      if (!strategy.positionSize) {
-        issues.push("Missing positionSize - required for risk management");
+      // Required fields
+      if (!strategy.name) {
+        issues.push("Missing name");
+      }
+      if (!strategy.type) {
+        issues.push("Missing type - must be SPOT, SNIPER, or CONDITIONAL");
+      }
+      if (!strategy.amount && strategy.type !== "SNIPER") {
+        issues.push("Missing amount - required for SPOT and CONDITIONAL strategies");
       }
 
-      if (typeof strategy.positionSize === "number" && strategy.positionSize > 10) {
+      // Type-specific validation
+      if (strategy.type === "SPOT") {
+        if (!strategy.inputToken) issues.push("SPOT: Missing inputToken");
+        if (!strategy.outputToken) issues.push("SPOT: Missing outputToken");
+      }
+
+      if (strategy.type === "CONDITIONAL") {
+        if (!strategy.inputToken) issues.push("CONDITIONAL: Missing inputToken");
+        if (!strategy.condition) issues.push("CONDITIONAL: Missing condition object");
+        else {
+          const condition = strategy.condition as Record<string, unknown>;
+          if (!condition.indicator) issues.push("CONDITIONAL: Missing condition.indicator");
+          if (!condition.trigger) issues.push("CONDITIONAL: Missing condition.trigger");
+        }
+      }
+
+      // Safety warnings
+      if (typeof strategy.amount === "number" && (strategy.amount as number) > 10) {
         warnings.push("Large position size (>10 SOL) - consider reducing for safety");
       }
 
-      if (!strategy.stopLoss && !strategy.maxLoss) {
+      if (!strategy.stopLoss) {
         warnings.push("No stop loss defined - unlimited downside risk");
+      }
+
+      if (typeof strategy.slippageBps === "number" && (strategy.slippageBps as number) > 500) {
+        warnings.push("High slippage (>5%) - may result in unfavorable execution");
       }
 
       const isValid = issues.length === 0;
@@ -314,14 +471,18 @@ export async function handleStrategyTool(
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              valid: isValid,
-              issues,
-              warnings,
-              recommendation: isValid
-                ? "Strategy passes basic validation. Review warnings before deploying."
-                : "Fix issues before deploying strategy.",
-            }, null, 2),
+            text: JSON.stringify(
+              {
+                valid: isValid,
+                issues,
+                warnings,
+                recommendation: isValid
+                  ? "Strategy passes validation. Review warnings before deploying."
+                  : "Fix the issues listed above before deploying.",
+              },
+              null,
+              2
+            ),
           },
         ],
       };
