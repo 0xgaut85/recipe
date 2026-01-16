@@ -410,6 +410,125 @@ export async function getTrendingTokens(limit: number = 20): Promise<TrendingTok
   return tokens.slice(0, limit);
 }
 
+// Cache for high volume new pairs
+let highVolumeNewPairsCache: {
+  data: TrendingToken[];
+  timestamp: number;
+} | null = null;
+
+/**
+ * Get high-volume NEW tokens (max 3 days old)
+ * Perfect for finding trending new launches with real activity
+ */
+export async function getHighVolumeNewPairs(limit: number = 15): Promise<TrendingToken[]> {
+  // Return cached data if available and fresh
+  if (highVolumeNewPairsCache && Date.now() - highVolumeNewPairsCache.timestamp < CACHE_TTL_MS) {
+    return highVolumeNewPairsCache.data.slice(0, limit);
+  }
+
+  try {
+    const headers = getHeaders();
+    
+    // Get new listings first (these are recent tokens)
+    const newListings = await getNewListings(20);
+    
+    // Also try to get tokens from the token_list endpoint with time filter
+    // Birdeye's new_listing only shows very recent ones, so we supplement
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/token_trending`);
+    url.searchParams.set("sort_by", "volume24hUSD");
+    url.searchParams.set("sort_type", "desc");
+    url.searchParams.set("offset", "0");
+    url.searchParams.set("limit", "20");
+
+    const response = await fetch(url.toString(), { headers });
+    
+    let trendingTokens: TrendingToken[] = [];
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.data?.tokens) {
+        trendingTokens = data.data.tokens.map((token: any, index: number) => ({
+          address: token.address,
+          symbol: token.symbol || "???",
+          name: token.name || "Unknown",
+          logoURI: token.logoURI || token.logo || "",
+          price: token.price || 0,
+          priceChange24h: token.priceChange24hPercent || token.price24hChange || 0,
+          volume24h: token.volume24hUSD || token.v24hUSD || 0,
+          liquidity: token.liquidity || 0,
+          marketCap: token.mc || token.marketCap || 0,
+          rank: index + 1,
+          listedAt: token.listingTime || token.createdAt,
+        }));
+      }
+    }
+
+    // Convert new listings to TrendingToken format
+    const newListingsAsTrending: TrendingToken[] = newListings.map((listing, index) => ({
+      address: listing.address,
+      symbol: listing.symbol,
+      name: listing.name,
+      logoURI: listing.logoURI,
+      price: listing.price,
+      priceChange24h: 0, // New listings might not have price change yet
+      volume24h: listing.volume24h,
+      liquidity: listing.liquidity,
+      marketCap: listing.marketCap,
+      rank: index + 1,
+      listedAt: listing.listedAt,
+    }));
+
+    // Combine both lists, prefer new listings
+    const allTokens = [...newListingsAsTrending, ...trendingTokens];
+    
+    // Filter for tokens max 3 days old (4320 minutes) with volume
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+    const cutoffTime = Date.now() - threeDaysMs;
+    
+    const recentHighVolume = allTokens
+      .filter(token => {
+        // Must have volume
+        if (token.volume24h <= 0) return false;
+        // Must have liquidity
+        if (token.liquidity <= 0) return false;
+        // Filter by age if we have listing time
+        if ((token as any).listedAt && (token as any).listedAt < cutoffTime) return false;
+        return true;
+      })
+      // Remove duplicates by address
+      .filter((token, index, self) => 
+        index === self.findIndex(t => t.address === token.address)
+      )
+      // Sort by volume descending
+      .sort((a, b) => b.volume24h - a.volume24h)
+      .map((token, index) => ({ ...token, rank: index + 1 }));
+
+    highVolumeNewPairsCache = { data: recentHighVolume, timestamp: Date.now() };
+    return recentHighVolume.slice(0, limit);
+  } catch (error) {
+    console.error("High volume new pairs error:", error);
+    
+    // Fallback: just use new listings sorted by volume
+    const newListings = await getNewListings(20);
+    const sorted = newListings
+      .filter(t => t.volume24h > 0)
+      .sort((a, b) => b.volume24h - a.volume24h)
+      .map((listing, index) => ({
+        address: listing.address,
+        symbol: listing.symbol,
+        name: listing.name,
+        logoURI: listing.logoURI,
+        price: listing.price,
+        priceChange24h: 0,
+        volume24h: listing.volume24h,
+        liquidity: listing.liquidity,
+        marketCap: listing.marketCap,
+        rank: index + 1,
+      }));
+    
+    return sorted.slice(0, limit);
+  }
+}
+
 /**
  * Get HOT tokens - top gainers with real activity
  * Uses the trending endpoint sorted by rank (Birdeye's internal algo) then filters by price change

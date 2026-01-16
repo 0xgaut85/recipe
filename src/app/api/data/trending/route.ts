@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getTrendingTokens, getHotTokens, getNewListings } from "@/lib/birdeye";
+import { getHotTokens, getNewListings, getHighVolumeNewPairs } from "@/lib/birdeye";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -7,9 +7,9 @@ export const revalidate = 0;
 /**
  * GET /api/data/trending
  * Get market data from Birdeye:
- * - hotTokens: Biggest gainers (sorted by 24h price change)
- * - volumeTokens: High volume tokens (sorted by 24h volume)
- * - newLaunches: Recently launched tokens
+ * - hotTokens: Biggest gainers/movers (sorted by 24h price change)
+ * - volumeTokens: High volume NEW tokens (max 3 days old, sorted by volume)
+ * - newLaunches: Recently launched tokens (very fresh, < 30 min)
  */
 export async function GET() {
   try {
@@ -27,9 +27,12 @@ export async function GET() {
     }
 
     // Fetch all data in parallel
+    // - Hot: biggest price movers
+    // - Volume: high volume NEW tokens (max 3 days old)
+    // - New: very fresh launches
     const [hotTokens, volumeTokens, newListings] = await Promise.all([
       getHotTokens(15).catch(() => []),
-      getTrendingTokens(15).catch(() => []),
+      getHighVolumeNewPairs(15).catch(() => []), // Changed to high volume new pairs
       getNewListings(10).catch(() => []),
     ]);
 
