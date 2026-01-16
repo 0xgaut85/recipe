@@ -215,8 +215,27 @@ export async function searchTokens(query: string, limit: number = 10): Promise<T
   }
 }
 
+// Simple in-memory cache to prevent rate limiting
+let trendingCache: {
+  data: Array<{
+    address: string;
+    symbol: string;
+    name: string;
+    logoURI: string;
+    price: number;
+    priceChange24h: number;
+    volume24h: number;
+    liquidity: number;
+    marketCap: number;
+    rank: number;
+  }>;
+  timestamp: number;
+} | null = null;
+
+const CACHE_TTL_MS = 30000; // 30 seconds cache
+
 /**
- * Get trending tokens from Birdeye using Token List V3 API
+ * Get trending tokens from Birdeye using token_trending endpoint
  * Returns tokens with logos, accurate prices, and volume data
  */
 export async function getTrendingTokens(
@@ -234,109 +253,60 @@ export async function getTrendingTokens(
   marketCap: number;
   rank: number;
 }>> {
+  // Return cached data if available and fresh
+  if (trendingCache && Date.now() - trendingCache.timestamp < CACHE_TTL_MS) {
+    return trendingCache.data.slice(offset, offset + limit);
+  }
+
   try {
     const headers = getHeaders();
     // Add chain header for Solana
     (headers as Record<string, string>)["x-chain"] = "solana";
 
-    // Use Token List V3 API for complete data including logos
-    const url = new URL(`${BIRDEYE_API_BASE}/defi/v3/token/list`);
-    url.searchParams.set("sort_by", "v24hUSD"); // Sort by 24h volume for trending
+    // Use token_trending endpoint - the correct one for trending tokens
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/token_trending`);
+    url.searchParams.set("sort_by", "volume24hUSD"); // Sort by 24h volume
     url.searchParams.set("sort_type", "desc");
-    url.searchParams.set("offset", offset.toString());
-    url.searchParams.set("limit", limit.toString());
-    url.searchParams.set("min_liquidity", "10000"); // Min $10k liquidity
+    url.searchParams.set("offset", "0");
+    url.searchParams.set("limit", "50"); // Fetch more for caching
 
     const response = await fetch(url.toString(), { headers });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Birdeye token list error:", response.status, errorText);
-      
-      // Fallback to trending endpoint if v3 fails
-      return getTrendingTokensFallback(limit, offset);
-    }
-
-    const data = await response.json();
-
-    if (!data.success || !data.data?.items) {
-      console.error("Birdeye token list: no data", data);
-      return getTrendingTokensFallback(limit, offset);
-    }
-
-    return data.data.items.map((token: any, index: number) => ({
-      address: token.address,
-      symbol: token.symbol || "???",
-      name: token.name || "Unknown",
-      logoURI: token.logoURI || token.logo_uri || token.icon || "",
-      price: token.price || 0,
-      priceChange24h: token.priceChange24hPercent || token.price_change_24h_percent || 0,
-      volume24h: token.v24hUSD || token.volume_24h_usd || 0,
-      liquidity: token.liquidity || 0,
-      marketCap: token.mc || token.market_cap || 0,
-      rank: offset + index + 1,
-    }));
-  } catch (error) {
-    console.error("Birdeye trending error:", error);
-    return getTrendingTokensFallback(limit, offset);
-  }
-}
-
-/**
- * Fallback trending tokens using the older endpoint
- */
-async function getTrendingTokensFallback(
-  limit: number = 20,
-  offset: number = 0
-): Promise<Array<{
-  address: string;
-  symbol: string;
-  name: string;
-  logoURI: string;
-  price: number;
-  priceChange24h: number;
-  volume24h: number;
-  liquidity: number;
-  marketCap: number;
-  rank: number;
-}>> {
-  try {
-    const headers = getHeaders();
-    (headers as Record<string, string>)["x-chain"] = "solana";
-
-    const url = new URL(`${BIRDEYE_API_BASE}/defi/token_trending`);
-    url.searchParams.set("sort_by", "rank");
-    url.searchParams.set("sort_type", "asc");
-    url.searchParams.set("limit", limit.toString());
-    url.searchParams.set("offset", offset.toString());
-
-    const response = await fetch(url.toString(), { headers });
-
-    if (!response.ok) {
-      console.error("Birdeye trending fallback error:", response.status);
+      console.error("Birdeye trending error:", response.status, errorText);
       return [];
     }
 
     const data = await response.json();
 
     if (!data.success || !data.data?.tokens) {
+      console.error("Birdeye trending: no data", data);
       return [];
     }
 
-    return data.data.tokens.map((token: any, index: number) => ({
+    const tokens = data.data.tokens.map((token: any, index: number) => ({
       address: token.address,
       symbol: token.symbol || "???",
       name: token.name || "Unknown",
       logoURI: token.logoURI || token.logo || "",
       price: token.price || 0,
       priceChange24h: token.priceChange24hPercent || 0,
-      volume24h: token.v24hUSD || token.volume24hUSD || 0,
+      volume24h: token.volume24hUSD || 0,
       liquidity: token.liquidity || 0,
       marketCap: token.mc || 0,
-      rank: offset + index + 1,
+      rank: index + 1,
     }));
+
+    // Update cache
+    trendingCache = {
+      data: tokens,
+      timestamp: Date.now(),
+    };
+
+    return tokens.slice(offset, offset + limit);
   } catch (error) {
-    console.error("Birdeye trending fallback error:", error);
+    console.error("Birdeye trending error:", error);
     return [];
   }
 }
