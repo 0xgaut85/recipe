@@ -44,6 +44,14 @@ export interface PumpFunTrade {
   virtual_token_reserves: number;
 }
 
+// Cache for Pump.fun data to reduce API calls
+let pumpfunCache: {
+  data: PumpFunCoin[];
+  timestamp: number;
+} | null = null;
+
+const PUMPFUN_CACHE_TTL_MS = 60000; // 1 minute cache
+
 /**
  * Get new coin launches from Pump.fun
  */
@@ -51,23 +59,54 @@ export async function getNewLaunches(
   limit: number = 50,
   offset: number = 0
 ): Promise<PumpFunCoin[]> {
+  // Return cached data if fresh
+  if (pumpfunCache && Date.now() - pumpfunCache.timestamp < PUMPFUN_CACHE_TTL_MS) {
+    return pumpfunCache.data.slice(offset, offset + limit);
+  }
+
   try {
     const url = new URL(`${PUMPFUN_API_BASE}/coins`);
     url.searchParams.set("sort", "created_timestamp");
     url.searchParams.set("order", "DESC");
-    url.searchParams.set("limit", limit.toString());
+    url.searchParams.set("limit", Math.min(limit, 50).toString());
     url.searchParams.set("offset", offset.toString());
     url.searchParams.set("includeNsfw", "false");
 
-    const response = await fetch(url.toString());
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(url.toString(), {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
+      // Don't throw for 5xx errors, just return empty
+      if (response.status >= 500) {
+        console.warn(`Pump.fun server error: ${response.status}`);
+        return [];
+      }
       throw new Error(`Pump.fun API error: ${response.status}`);
     }
 
     const data = await response.json();
-    return data || [];
+    const coins = data || [];
+
+    // Update cache
+    pumpfunCache = {
+      data: coins,
+      timestamp: Date.now(),
+    };
+
+    return coins;
   } catch (error) {
+    // Silently return empty for network/timeout errors
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn("Pump.fun request timed out");
+      return [];
+    }
     console.error("Pump.fun new launches error:", error);
     return [];
   }

@@ -268,7 +268,7 @@ export async function getTrendingTokens(
     url.searchParams.set("sort_by", "volume24hUSD"); // Sort by 24h volume
     url.searchParams.set("sort_type", "desc");
     url.searchParams.set("offset", "0");
-    url.searchParams.set("limit", "50"); // Fetch more for caching
+    url.searchParams.set("limit", "20"); // Birdeye max is 20
 
     const response = await fetch(url.toString(), { headers });
 
@@ -311,8 +311,23 @@ export async function getTrendingTokens(
   }
 }
 
+// Cache for new listings
+let newListingsCache: {
+  data: Array<{
+    address: string;
+    symbol: string;
+    name: string;
+    logoURI: string;
+    price: number;
+    liquidity: number;
+    listedAt: number;
+  }>;
+  timestamp: number;
+} | null = null;
+
 /**
  * Get new token listings from Birdeye
+ * Covers all launchpads: Pump.fun, Raydium, Meteora, etc.
  */
 export async function getNewListings(
   limit: number = 20
@@ -320,21 +335,29 @@ export async function getNewListings(
   address: string;
   symbol: string;
   name: string;
+  logoURI: string;
   price: number;
   liquidity: number;
   listedAt: number;
 }>> {
+  // Return cached data if fresh (30 seconds)
+  if (newListingsCache && Date.now() - newListingsCache.timestamp < CACHE_TTL_MS) {
+    return newListingsCache.data.slice(0, limit);
+  }
+
   try {
     const headers = getHeaders();
     (headers as Record<string, string>)["x-chain"] = "solana";
 
-    const url = new URL(`${BIRDEYE_API_BASE}/defi/token_new_listing`);
-    url.searchParams.set("limit", limit.toString());
+    // Use v2 endpoint for new listings
+    const url = new URL(`${BIRDEYE_API_BASE}/defi/v2/tokens/new_listing`);
+    url.searchParams.set("limit", Math.min(limit, 20).toString()); // Max 20
 
     const response = await fetch(url.toString(), { headers });
 
     if (!response.ok) {
-      console.error("Birdeye new listings error:", response.status);
+      const errorText = await response.text();
+      console.error("Birdeye new listings error:", response.status, errorText);
       return [];
     }
 
@@ -344,14 +367,23 @@ export async function getNewListings(
       return [];
     }
 
-    return data.data.items.map((token: any) => ({
+    const listings = data.data.items.map((token: any) => ({
       address: token.address,
       symbol: token.symbol || "???",
       name: token.name || "Unknown",
+      logoURI: token.logoURI || token.logo || "",
       price: token.price || 0,
       liquidity: token.liquidity || 0,
-      listedAt: token.listingTime || Date.now(),
+      listedAt: token.listingTime || token.createdAt || Date.now(),
     }));
+
+    // Update cache
+    newListingsCache = {
+      data: listings,
+      timestamp: Date.now(),
+    };
+
+    return listings;
   } catch (error) {
     console.error("Birdeye new listings error:", error);
     return [];
