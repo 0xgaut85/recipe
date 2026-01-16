@@ -23,6 +23,7 @@ export const ChatPanel: FC<ChatPanelProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [lastCreatedStrategy, setLastCreatedStrategy] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -37,6 +38,13 @@ export const ChatPanel: FC<ChatPanelProps> = ({
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Reset chat for new strategy
+  const startNewStrategy = () => {
+    setMessages([]);
+    setLastCreatedStrategy(null);
+    onProgressUpdate("describe");
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -111,6 +119,11 @@ export const ChatPanel: FC<ChatPanelProps> = ({
                 // Update progress indicator based on signals from backend
                 if (parsed.progress) {
                   onProgressUpdate(parsed.progress as CookingStep);
+                  
+                  // When strategy is deployed (serve phase), track it
+                  if (parsed.progress === "serve") {
+                    setLastCreatedStrategy("Strategy deployed!");
+                  }
                 }
               } catch {
                 // Skip invalid JSON
@@ -231,6 +244,25 @@ export const ChatPanel: FC<ChatPanelProps> = ({
         )}
 
         <div ref={messagesEndRef} />
+
+        {/* New Strategy Button - shown after strategy is created */}
+        {lastCreatedStrategy && currentStep === "serve" && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center py-4"
+          >
+            <button
+              onClick={startNewStrategy}
+              className="flex items-center gap-2 px-6 py-3 bg-accent-pink/20 border border-accent-pink/50 rounded-xl text-accent-pink hover:bg-accent-pink/30 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="font-bold lowercase">create new strategy</span>
+            </button>
+          </motion.div>
+        )}
       </div>
 
       {/* Input */}

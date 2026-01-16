@@ -13,13 +13,9 @@ const steps: { id: CookingStep; num: string; label: string }[] = [
 
 interface StepIndicatorProps {
   currentStep: CookingStep;
-  onStepClick?: (step: CookingStep) => void;
 }
 
-export const StepIndicator: FC<StepIndicatorProps> = ({
-  currentStep,
-  onStepClick,
-}) => {
+export const StepIndicator: FC<StepIndicatorProps> = ({ currentStep }) => {
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
 
   return (
@@ -27,22 +23,17 @@ export const StepIndicator: FC<StepIndicatorProps> = ({
       {steps.map((step, index) => {
         const isActive = step.id === currentStep;
         const isCompleted = index < currentIndex;
-        const isClickable = index <= currentIndex && onStepClick;
 
         return (
-          <motion.button
+          <div
             key={step.id}
-            onClick={() => isClickable && onStepClick(step.id)}
-            disabled={!isClickable}
             className={`relative flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all ${
               isActive
                 ? "bg-accent-pink border-accent-pink text-black"
                 : isCompleted
-                ? "bg-white/10 border-white/20 text-white cursor-pointer hover:bg-white/20"
-                : "bg-transparent border-white/10 text-white/40 cursor-default"
+                ? "bg-white/10 border-white/20 text-white"
+                : "bg-transparent border-white/10 text-white/40"
             }`}
-            whileHover={isClickable ? { scale: 1.02 } : {}}
-            whileTap={isClickable ? { scale: 0.98 } : {}}
           >
             <span className="font-mono text-xs opacity-60">{step.num}</span>
             <span className="font-bold text-sm lowercase">{step.label}</span>
@@ -68,7 +59,7 @@ export const StepIndicator: FC<StepIndicatorProps> = ({
                 </svg>
               </motion.div>
             )}
-          </motion.button>
+          </div>
         );
       })}
     </div>

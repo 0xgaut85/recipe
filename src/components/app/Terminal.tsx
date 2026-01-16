@@ -216,7 +216,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
 
         {/* Step Indicator - Desktop */}
         <div className="hidden lg:block">
-          <StepIndicator currentStep={currentStep} onStepClick={onStepChange} />
+          <StepIndicator currentStep={currentStep} />
         </div>
 
         {/* Right Side Actions */}
@@ -290,7 +290,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
 
       {/* Mobile Step Indicator */}
       <div className="lg:hidden px-4 py-2 border-b border-white/10 overflow-x-auto">
-        <StepIndicator currentStep={currentStep} onStepClick={onStepChange} />
+        <StepIndicator currentStep={currentStep} />
       </div>
 
       {/* Mobile Balance */}
