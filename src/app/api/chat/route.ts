@@ -67,8 +67,12 @@ WHEN SHOWING CONFIG:
 
 ready to deploy? say yes!"
 
-WHEN USER CONFIRMS:
-call create_strategy with all params. example:
+CRITICAL - WHEN USER CONFIRMS (says yes, yeah, do it, deploy, go, ok, sure, etc):
+YOU MUST CALL THE create_strategy TOOL. DO NOT SKIP THIS STEP.
+DO NOT just say "your strategy is live" without calling the tool first.
+The strategy DOES NOT EXIST until you call create_strategy.
+
+Call create_strategy with these params:
 {
   "name": "claude sniper",
   "description": "snipes new pairs with claude in name",
@@ -84,17 +88,58 @@ call create_strategy with all params. example:
   "slippageBps": 300
 }
 
-AFTER STRATEGY CREATED:
+AFTER create_strategy TOOL RETURNS SUCCESS:
 "🚀 your [name] is now live! check the strategies panel (📊) to monitor it."
+
+WARNING: If you say the strategy is live without calling create_strategy, you are lying to the user.
 
 STYLE: be concise, lowercase, helpful, use emojis sparingly.`;
 
+// Check if user message is a confirmation to deploy strategy
+function isConfirmation(text: string): boolean {
+  const confirmWords = [
+    "yes", "yeah", "yep", "yup", "sure", "ok", "okay", "go", 
+    "deploy", "do it", "let's go", "lets go", "confirm", "launch",
+    "ship it", "send it", "execute", "start", "run it", "make it"
+  ];
+  const lower = text.toLowerCase().trim();
+  return confirmWords.some(word => lower === word || lower.startsWith(word + " ") || lower.endsWith(" " + word));
+}
+
+// Check if conversation has shown a strategy config (ready to deploy)
+function hasShownConfig(messages: Message[]): boolean {
+  for (const msg of messages) {
+    if (msg.role === "assistant" && typeof msg.content === "string") {
+      const lower = msg.content.toLowerCase();
+      if ((lower.includes("🎯") || lower.includes("ready to deploy") || lower.includes("say yes")) &&
+          (lower.includes("amount") || lower.includes("sol"))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 async function makeClaudeRequest(
-  messages: Message[]
+  messages: Message[],
+  forceToolCall?: string
 ): Promise<{
   content: ContentBlock[];
   stop_reason: string;
 }> {
+  const requestBody: Record<string, unknown> = {
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 4096,
+    system: SYSTEM_PROMPT,
+    messages,
+    tools: toolDefinitions,
+  };
+
+  // Force a specific tool call if requested
+  if (forceToolCall) {
+    requestBody.tool_choice = { type: "tool", name: forceToolCall };
+  }
+
   const response = await fetch(ANTHROPIC_API_URL, {
     method: "POST",
     headers: {
@@ -102,13 +147,7 @@ async function makeClaudeRequest(
       "x-api-key": ANTHROPIC_API_KEY!,
       "anthropic-version": "2023-06-01",
     },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      system: SYSTEM_PROMPT,
-      messages,
-      tools: toolDefinitions,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -169,7 +208,17 @@ export async function POST(request: NextRequest) {
           while (continueLoop && iterations < MAX_TOOL_ITERATIONS) {
             iterations++;
 
-            const response = await makeClaudeRequest(conversationMessages);
+            // Check if we should force create_strategy tool call
+            // This happens when: user confirms AND config was shown
+            let forceToolCall: string | undefined;
+            const lastUserMsg = conversationMessages.filter(m => m.role === "user").pop();
+            if (lastUserMsg && typeof lastUserMsg.content === "string") {
+              if (isConfirmation(lastUserMsg.content) && hasShownConfig(conversationMessages)) {
+                forceToolCall = "create_strategy";
+              }
+            }
+
+            const response = await makeClaudeRequest(conversationMessages, forceToolCall);
 
             const toolUses: ContentBlock[] = [];
             let aiResponseText = "";
