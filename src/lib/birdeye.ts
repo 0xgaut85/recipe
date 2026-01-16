@@ -405,20 +405,24 @@ function addAgeMinutes(token: any): NewPairData {
 
 /**
  * Get new pairs with filters - for sniping strategies
- * @param maxAgeMinutes Maximum age of pair in minutes (default 30)
- * @param minLiquidity Minimum liquidity in USD (default 1000)
- * @param minVolume Minimum 24h volume in USD (default 0)
+ * All filters are optional and use sensible defaults
  */
 export async function getNewPairsFiltered(options: {
   maxAgeMinutes?: number;
   minLiquidity?: number;
+  maxLiquidity?: number;
   minVolume?: number;
+  minMarketCap?: number;
+  maxMarketCap?: number;
   limit?: number;
 } = {}): Promise<NewPairData[]> {
   const {
     maxAgeMinutes = 30,
-    minLiquidity = 1000,
+    minLiquidity = 0,
+    maxLiquidity,
     minVolume = 0,
+    minMarketCap = 0,
+    maxMarketCap,
     limit = 20,
   } = options;
 
@@ -426,12 +430,20 @@ export async function getNewPairsFiltered(options: {
 
   return allPairs
     .filter((pair) => {
-      // Filter by age
-      if (pair.ageMinutes > maxAgeMinutes) return false;
-      // Filter by liquidity
-      if (pair.liquidity < minLiquidity) return false;
+      // Filter by age (max age in minutes)
+      if (maxAgeMinutes > 0 && pair.ageMinutes > maxAgeMinutes) return false;
+      
+      // Filter by liquidity (min/max)
+      if (minLiquidity > 0 && pair.liquidity < minLiquidity) return false;
+      if (maxLiquidity && pair.liquidity > maxLiquidity) return false;
+      
       // Filter by volume
       if (minVolume > 0 && pair.volume24h < minVolume) return false;
+      
+      // Filter by market cap (min/max)
+      if (minMarketCap > 0 && pair.marketCap < minMarketCap) return false;
+      if (maxMarketCap && pair.marketCap > maxMarketCap) return false;
+      
       return true;
     })
     .slice(0, limit);

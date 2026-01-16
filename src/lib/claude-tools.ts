@@ -87,21 +87,33 @@ export const toolDefinitions = [
   },
   {
     name: "get_new_pairs",
-    description: "Get newly launched token pairs on Solana (Pump.fun, Raydium, Meteora, etc). Use this for sniping new launches.",
+    description: "Get newly launched token pairs on Solana (Pump.fun, Raydium, Meteora, etc). Use this for sniping new launches. Supports filtering by age, liquidity, volume, and market cap.",
     input_schema: {
       type: "object",
       properties: {
         maxAgeMinutes: {
           type: "number",
-          description: "Maximum age of pair in minutes (default: 30). Use 30 for pairs launched in last 30 mins.",
+          description: "Maximum age of pair in minutes (default: 30). Use 15 for very fresh pairs.",
         },
         minLiquidity: {
           type: "number",
-          description: "Minimum liquidity in USD (default: 1000)",
+          description: "Minimum liquidity in USD (e.g., 10000 for $10k min liquidity)",
+        },
+        maxLiquidity: {
+          type: "number",
+          description: "Maximum liquidity in USD (optional, for filtering out whales)",
         },
         minVolume: {
           type: "number",
-          description: "Minimum 24h volume in USD (default: 0)",
+          description: "Minimum 24h volume in USD",
+        },
+        minMarketCap: {
+          type: "number",
+          description: "Minimum market cap in USD (e.g., 100000 for $100k min mcap)",
+        },
+        maxMarketCap: {
+          type: "number",
+          description: "Maximum market cap in USD (optional, for microcap plays)",
         },
         limit: {
           type: "number",
@@ -324,23 +336,35 @@ export const toolDefinitions = [
         },
         stopLoss: {
           type: "number",
-          description: "Stop loss percentage (optional)",
+          description: "Stop loss percentage (optional, omit for no stop loss)",
         },
         takeProfit: {
           type: "number",
-          description: "Take profit percentage (optional, set to 0 or omit for manual exit)",
+          description: "Take profit percentage (optional, omit for manual exit)",
         },
         maxAgeMinutes: {
           type: "number",
-          description: "For SNIPER: Maximum pair age in minutes (e.g., 30)",
+          description: "For SNIPER: Maximum pair age in minutes (e.g., 15 for very fresh)",
         },
         minLiquidity: {
           type: "number",
-          description: "For SNIPER: Minimum liquidity in USD",
+          description: "For SNIPER: Minimum liquidity in USD (e.g., 10000)",
+        },
+        maxLiquidity: {
+          type: "number",
+          description: "For SNIPER: Maximum liquidity in USD (optional)",
         },
         minVolume: {
           type: "number",
           description: "For SNIPER: Minimum 24h volume in USD",
+        },
+        minMarketCap: {
+          type: "number",
+          description: "For SNIPER: Minimum market cap in USD (e.g., 100000 for $100k)",
+        },
+        maxMarketCap: {
+          type: "number",
+          description: "For SNIPER: Maximum market cap in USD (optional, for microcap plays)",
         },
         slippageBps: {
           type: "number",
@@ -422,8 +446,11 @@ export async function executeTool(
     case "get_new_pairs": {
       const options = {
         maxAgeMinutes: (args.maxAgeMinutes as number) || 30,
-        minLiquidity: (args.minLiquidity as number) || 1000,
-        minVolume: (args.minVolume as number) || 0,
+        minLiquidity: args.minLiquidity as number | undefined,
+        maxLiquidity: args.maxLiquidity as number | undefined,
+        minVolume: args.minVolume as number | undefined,
+        minMarketCap: args.minMarketCap as number | undefined,
+        maxMarketCap: args.maxMarketCap as number | undefined,
         limit: (args.limit as number) || 20,
       };
       
@@ -443,7 +470,14 @@ export async function executeTool(
           dex: pair.dex || "unknown",
         })),
         count: pairs.length,
-        filters: options,
+        filters: {
+          maxAgeMinutes: options.maxAgeMinutes,
+          minLiquidity: options.minLiquidity || "any",
+          maxLiquidity: options.maxLiquidity || "any",
+          minVolume: options.minVolume || "any",
+          minMarketCap: options.minMarketCap || "any",
+          maxMarketCap: options.maxMarketCap || "any",
+        },
       };
     }
 
@@ -698,7 +732,10 @@ export async function executeTool(
         leverage?: number;
         maxAgeMinutes?: number;
         minLiquidity?: number;
+        maxLiquidity?: number;
         minVolume?: number;
+        minMarketCap?: number;
+        maxMarketCap?: number;
       } = {
         type: strategyType,
         amount: args.amount as number | undefined,
@@ -727,8 +764,11 @@ export async function executeTool(
         config = {
           ...config,
           maxAgeMinutes: (args.maxAgeMinutes as number) || 30,
-          minLiquidity: (args.minLiquidity as number) || 10000,
-          minVolume: (args.minVolume as number) || 100000,
+          minLiquidity: args.minLiquidity as number | undefined,
+          maxLiquidity: args.maxLiquidity as number | undefined,
+          minVolume: args.minVolume as number | undefined,
+          minMarketCap: args.minMarketCap as number | undefined,
+          maxMarketCap: args.maxMarketCap as number | undefined,
           takeProfit: args.takeProfit as number | undefined, // undefined = manual exit
           stopLoss: args.stopLoss as number | undefined,
         };
