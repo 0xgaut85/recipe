@@ -153,49 +153,56 @@ export const strategyTools: Tool[] = [
   },
 ];
 
-// Example strategy configurations matching the main app
+// Example strategy configurations matching the main app's API format
+// Each example uses the { name, description, config } structure
 const STRATEGY_EXAMPLES = {
   SNIPER: {
     name: "AI Token Sniper",
     description: "Snipe new AI-themed tokens on Pump.fun with good liquidity",
-    type: "SNIPER",
-    amount: 0.1,
-    maxAgeMinutes: 15,
-    minLiquidity: 10000,
-    minMarketCap: 50000,
-    maxMarketCap: 500000,
-    nameFilter: "ai",
-    slippageBps: 300,
-    takeProfit: 100,
-    stopLoss: 30,
+    config: {
+      type: "SNIPER",
+      amount: 0.1,
+      maxAgeMinutes: 15,
+      minLiquidity: 10000,
+      minMarketCap: 50000,
+      maxMarketCap: 500000,
+      nameFilter: "ai",
+      slippageBps: 300,
+      takeProfit: 100,
+      stopLoss: 30,
+    },
   },
   SPOT: {
     name: "SOL to BONK Swap",
     description: "Simple spot swap from SOL to BONK",
-    type: "SPOT",
-    inputToken: "SOL",
-    outputToken: "BONK",
-    amount: 1,
-    direction: "buy",
-    slippageBps: 50,
-    stopLoss: 10,
-    takeProfit: 50,
+    config: {
+      type: "SPOT",
+      inputToken: "SOL",
+      outputToken: "BONK",
+      amount: 1,
+      direction: "buy",
+      slippageBps: 50,
+      stopLoss: 10,
+      takeProfit: 50,
+    },
   },
   CONDITIONAL: {
     name: "Buy BONK on EMA Cross",
     description: "Buy BONK when price crosses above 50 EMA on 4H timeframe",
-    type: "CONDITIONAL",
-    inputToken: "BONK",
-    amount: 0.5,
-    direction: "buy",
-    slippageBps: 100,
-    stopLoss: 15,
-    takeProfit: 50,
-    condition: {
-      indicator: "EMA",
-      period: 50,
-      timeframe: "4H",
-      trigger: "crosses_above",
+    config: {
+      type: "CONDITIONAL",
+      inputToken: "BONK",
+      amount: 0.5,
+      direction: "buy",
+      slippageBps: 100,
+      stopLoss: 15,
+      takeProfit: 50,
+      condition: {
+        indicator: "EMA",
+        period: 50,
+        timeframe: "4H",
+        trigger: "crosses_above",
+      },
     },
   },
 };
@@ -232,9 +239,11 @@ export async function handleStrategyTool(
         };
       }
 
-      // Build config based on strategy type
+      // Build config based on strategy type - matches app's API schema
+      // The app expects: { name, description, config: { type, ...fields } }
       interface StrategyConfig {
         type: string;
+        token?: string;
         amount?: number;
         slippageBps: number;
         inputToken?: string;
@@ -350,6 +359,14 @@ export async function handleStrategyTool(
       const typeEmoji =
         strategyType === "SNIPER" ? "🎯" : strategyType === "CONDITIONAL" ? "📊" : "💱";
 
+      // Output in the exact format expected by the app's /api/strategies POST endpoint
+      // This allows users to directly use this output with the Recipe.money web app
+      const strategyPayload = {
+        name: args.name as string,
+        description: args.description as string,
+        config,
+      };
+
       return {
         content: [
           {
@@ -357,12 +374,9 @@ export async function handleStrategyTool(
             text: JSON.stringify(
               {
                 success: true,
-                name: args.name,
-                description: args.description,
-                type: strategyType,
-                config,
+                strategy: strategyPayload,
                 message: `${typeEmoji} Strategy "${args.name}" created successfully!`,
-                note: "This strategy configuration can be used with the Recipe.money web app or saved locally for reference.",
+                note: "This strategy configuration is compatible with the Recipe.money web app API. Use the 'strategy' object directly with POST /api/strategies.",
               },
               null,
               2

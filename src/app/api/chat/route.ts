@@ -76,14 +76,42 @@ IMPORTANT: Always use the exact config format above so the system can parse it.
 STYLE: be concise, lowercase, helpful, use emojis sparingly.`;
 
 // Check if user message is a confirmation to deploy strategy
+// Must be strict - only exact matches or clear confirmations
 function isConfirmation(text: string): boolean {
-  const confirmWords = [
-    "yes", "yeah", "yep", "yup", "sure", "ok", "okay", "go", 
-    "deploy", "do it", "let's go", "lets go", "confirm", "launch",
-    "ship it", "send it", "execute", "start", "run it", "make it"
-  ];
   const lower = text.toLowerCase().trim();
-  return confirmWords.some(word => lower === word || lower.startsWith(word + " ") || lower.endsWith(" " + word) || lower.includes(word));
+  
+  // Exact single-word matches
+  const exactMatches = ["yes", "yeah", "yep", "yup", "sure", "ok", "okay", "go", "deploy", "confirm", "launch"];
+  if (exactMatches.includes(lower)) return true;
+  
+  // Exact phrase matches
+  const phraseMatches = [
+    "do it", "let's go", "lets go", "yes please", "yes deploy",
+    "ship it", "send it", "execute", "start it", "run it", "make it",
+    "yes create it", "create it", "deploy it", "launch it"
+  ];
+  if (phraseMatches.includes(lower)) return true;
+  
+  return false;
+}
+
+// Check if strategy was already created in this conversation
+function alreadyHasStrategy(messages: Message[]): boolean {
+  for (const msg of messages) {
+    if (msg.role !== "assistant") continue;
+    const content = typeof msg.content === "string" 
+      ? msg.content 
+      : msg.content.filter(b => b.type === "text").map(b => b.text).join("");
+    
+    // Check for strategy ID patterns that indicate it was already created
+    if (content.includes("strategy id:") || 
+        content.includes("strategyId:") ||
+        content.includes("strategy ID:") ||
+        content.match(/cmk[a-z0-9]{20,}/i)) { // Prisma CUID pattern
+      return true;
+    }
+  }
+  return false;
 }
 
 // Helper to parse money values like "$5k", "$20", "$15k"
@@ -278,12 +306,20 @@ export async function POST(request: NextRequest) {
     let strategyResult: { success: boolean; strategyId?: string; error?: string } | null = null;
 
     if (lastUserMsg && typeof lastUserMsg.content === "string" && isConfirmation(lastUserMsg.content)) {
-      // Try to parse and create strategy directly
-      const config = parseStrategyConfig(conversationMessages);
-      if (config && userId) {
-        strategyResult = await createStrategyDirectly(userId, config);
-        strategyCreated = strategyResult.success;
-        console.log("Strategy creation result:", strategyResult);
+      // Check if strategy was already created in this conversation
+      if (alreadyHasStrategy(conversationMessages)) {
+        console.log("Strategy already exists in conversation, skipping creation");
+      } else {
+        // Try to parse and create strategy directly
+        const config = parseStrategyConfig(conversationMessages);
+        if (config && userId) {
+          console.log("Creating strategy with config:", config);
+          strategyResult = await createStrategyDirectly(userId, config);
+          strategyCreated = strategyResult.success;
+          console.log("Strategy creation result:", strategyResult);
+        } else {
+          console.log("Could not parse strategy config or no userId", { hasConfig: !!config, hasUserId: !!userId });
+        }
       }
     }
 
@@ -295,6 +331,9 @@ export async function POST(request: NextRequest) {
         try {
           // If strategy was just created, modify the conversation to tell Claude
           if (strategyCreated && strategyResult) {
+            // Generate tool ID once and reuse it
+            const toolId = "auto_create_" + Date.now();
+            
             // Add a system message telling Claude the strategy was created
             const modifiedMessages: Message[] = [
               ...conversationMessages,
@@ -303,7 +342,7 @@ export async function POST(request: NextRequest) {
                 content: [
                   {
                     type: "tool_use" as const,
-                    id: "auto_create_" + Date.now(),
+                    id: toolId,
                     name: "create_strategy",
                     input: {},
                   }
@@ -314,11 +353,11 @@ export async function POST(request: NextRequest) {
                 content: [
                   {
                     type: "tool_result" as const,
-                    tool_use_id: "auto_create_" + Date.now(),
+                    tool_use_id: toolId,
                     content: JSON.stringify({
                       success: true,
                       strategyId: strategyResult.strategyId,
-                      message: "Strategy created successfully! Tell the user it's now live.",
+                      message: "Strategy created successfully! Tell the user it's now live and show the strategy ID.",
                     }),
                   }
                 ],
