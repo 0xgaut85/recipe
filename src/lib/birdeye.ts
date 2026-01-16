@@ -7,8 +7,9 @@ const BIRDEYE_API_BASE = "https://public-api.birdeye.so";
 
 /**
  * Get API headers with authentication
+ * Always includes x-chain: solana since we're Solana-focused
  */
-function getHeaders(): HeadersInit {
+function getHeaders(): Record<string, string> {
   const apiKey = process.env.BIRDEYE_API_KEY;
   
   if (!apiKey) {
@@ -17,6 +18,7 @@ function getHeaders(): HeadersInit {
 
   return {
     "X-API-KEY": apiKey,
+    "x-chain": "solana",
     "Content-Type": "application/json",
   };
 }
@@ -260,8 +262,6 @@ export async function getTrendingTokens(
 
   try {
     const headers = getHeaders();
-    // Add chain header for Solana
-    (headers as Record<string, string>)["x-chain"] = "solana";
 
     // Use token_trending endpoint - the correct one for trending tokens
     const url = new URL(`${BIRDEYE_API_BASE}/defi/token_trending`);
@@ -347,7 +347,6 @@ export async function getNewListings(
 
   try {
     const headers = getHeaders();
-    (headers as Record<string, string>)["x-chain"] = "solana";
 
     // Use v2 endpoint for new listings
     const url = new URL(`${BIRDEYE_API_BASE}/defi/v2/tokens/new_listing`);
