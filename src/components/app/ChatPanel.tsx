@@ -113,6 +113,12 @@ export const ChatPanel: FC<ChatPanelProps> = ({
                     return updated;
                   });
                 }
+                // Handle specific step advancement
+                if (parsed.advanceToStep) {
+                  // Advance to specific step (e.g., "serve" after strategy created in taste)
+                  onStepComplete(currentStep);
+                }
+                // Legacy support for generic step complete
                 if (parsed.stepComplete) {
                   onStepComplete(currentStep);
                 }
@@ -247,6 +253,20 @@ export const ChatPanel: FC<ChatPanelProps> = ({
 
       {/* Input */}
       <div className="border-t border-white/10 p-4">
+        {/* Step Advancement Buttons */}
+        {messages.length > 0 && currentStep !== "serve" && (
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => onStepComplete(currentStep)}
+              className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 hover:text-white text-sm font-medium lowercase transition-all"
+            >
+              {currentStep === "describe" && "→ start cooking"}
+              {currentStep === "cook" && "→ ready to taste"}
+              {currentStep === "taste" && "→ deploy & serve"}
+            </button>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="relative">
           <textarea
             ref={inputRef}
