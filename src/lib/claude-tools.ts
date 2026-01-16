@@ -937,7 +937,7 @@ export async function executeTool(
           name: args.name as string,
           description: args.description as string,
           config: config as object,
-          isActive: false,
+          isActive: true, // Start active immediately
         },
       });
 
