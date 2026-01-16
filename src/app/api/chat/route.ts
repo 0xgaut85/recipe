@@ -86,6 +86,17 @@ function isConfirmation(text: string): boolean {
   return confirmWords.some(word => lower === word || lower.startsWith(word + " ") || lower.endsWith(" " + word) || lower.includes(word));
 }
 
+// Helper to parse money values like "$5k", "$20", "$15k"
+function parseMoneyValue(text: string, fieldName: string, defaultValue: number): number {
+  // Match patterns like "min liquidity: $5k" or "min volume: $20"
+  const regex = new RegExp(`${fieldName}:\\s*\\$?([\\d.]+)(k)?`, 'i');
+  const match = text.match(regex);
+  if (!match) return defaultValue;
+  const value = parseFloat(match[1]);
+  const hasK = match[2]?.toLowerCase() === 'k';
+  return hasK ? value * 1000 : value;
+}
+
 // Parse strategy config from AI message
 function parseStrategyConfig(messages: Message[]): ParsedStrategyConfig | null {
   // Find the last assistant message with strategy config
@@ -113,29 +124,28 @@ function parseStrategyConfig(messages: Message[]): ParsedStrategyConfig | null {
       const ageMatch = content.match(/max age:\s*(\d+)\s*min/i);
       const maxAgeMinutes = ageMatch ? parseInt(ageMatch[1]) : 30;
       
-      // Extract min liquidity ($Xk format)
-      const liqMatch = content.match(/min liquidity:\s*\$?([\d.]+)k?/i);
-      const minLiquidity = liqMatch ? parseFloat(liqMatch[1]) * (content.toLowerCase().includes("k") ? 1000 : 1) : 5000;
+      // Extract money values with proper k handling
+      const minLiquidity = parseMoneyValue(content, "min liquidity", 5000);
+      const minVolume = parseMoneyValue(content, "min volume", 10000);
+      const minMarketCap = parseMoneyValue(content, "min mcap", 10000);
+      const maxMarketCap = parseMoneyValue(content, "max mcap", 0);
       
-      // Extract min volume ($Xk format)
-      const volMatch = content.match(/min volume:\s*\$?([\d.]+)k?/i);
-      const minVolume = volMatch ? parseFloat(volMatch[1]) * (content.toLowerCase().includes("k") ? 1000 : 1) : 10000;
+      // Extract name filter (handle quoted and unquoted)
+      const filterMatch = content.match(/name filter:\s*"?([^"\n-]+)"?/i);
+      let nameFilter = filterMatch ? filterMatch[1].trim() : undefined;
+      if (nameFilter === "none" || nameFilter === "N/A") nameFilter = undefined;
       
-      // Extract min mcap ($Xk format)
-      const mcapMatch = content.match(/min mcap:\s*\$?([\d.]+)k?/i);
-      const minMarketCap = mcapMatch ? parseFloat(mcapMatch[1]) * (content.toLowerCase().includes("k") ? 1000 : 1) : 10000;
-      
-      // Extract name filter
-      const filterMatch = content.match(/name filter:\s*([^\n-]+)/i);
-      const nameFilter = filterMatch ? filterMatch[1].trim() : undefined;
-      
-      // Extract take profit (X%)
+      // Extract take profit (X% or "none")
       const tpMatch = content.match(/take profit:\s*(\d+)%/i);
       const takeProfit = tpMatch ? parseInt(tpMatch[1]) : undefined;
       
-      // Extract stop loss (X%)
-      const slMatch = content.match(/stop loss:\s*(\d+)%/i);
+      // Extract stop loss (X% or "none")  
+      const slMatch = content.match(/stop loss:?\s*-?(\d+)%/i);
       const stopLoss = slMatch ? parseInt(slMatch[1]) : undefined;
+      
+      console.log("Parsed strategy config:", {
+        name, amount, maxAgeMinutes, minLiquidity, minVolume, minMarketCap, maxMarketCap, nameFilter, takeProfit, stopLoss
+      });
       
       // Validate we have minimum required fields
       if (amount > 0) {
@@ -147,7 +157,7 @@ function parseStrategyConfig(messages: Message[]): ParsedStrategyConfig | null {
           minLiquidity,
           minVolume,
           minMarketCap,
-          nameFilter: nameFilter !== "none" ? nameFilter : undefined,
+          nameFilter,
           takeProfit,
           stopLoss,
         };

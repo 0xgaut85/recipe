@@ -60,21 +60,25 @@ npm run build
 | `recipe_wallet_balance` | Get all token balances for any wallet |
 | `recipe_wallet_export` | Export wallet for backup |
 
-#### Token Discovery
+#### Token Discovery & Analysis
 
 | Tool | Description |
 |------|-------------|
-| `recipe_token_search` | Search tokens by name or symbol |
-| `recipe_token_info` | Get detailed info for a token address |
-| `recipe_token_trending` | Get hot tokens, volume leaders, new launches |
+| `recipe_token_search` | Search tokens with advanced filters (symbol, name, mcap, liquidity, holders) |
+| `recipe_token_info` | Get detailed info for a token address or symbol |
+| `recipe_token_trending` | Get trending tokens on Solana by volume |
 | `recipe_token_price` | Get current USD price |
 | `recipe_token_new_launches` | Get latest Pump.fun launches |
+| `recipe_get_ohlcv` | Get OHLCV candle data for technical analysis |
+| `recipe_calculate_ema` | Calculate EMA and check if price is above/below |
+| `recipe_get_new_pairs` | Get new pairs with filters (age, liquidity, volume, mcap) |
+| `recipe_get_pair_details` | Get detailed metrics (30m/1h volume, trades, price changes) |
 
 #### Trading
 
 | Tool | Description |
 |------|-------------|
-| `recipe_swap_quote` | Get a swap quote from Jupiter |
+| `recipe_swap_quote` | Get a swap quote from Jupiter (supports token names, symbols, or addresses) |
 | `recipe_swap_execute` | Execute a swap with your wallet |
 | `recipe_tokens_list` | List common token symbols |
 
@@ -82,8 +86,8 @@ npm run build
 
 | Tool | Description |
 |------|-------------|
-| `recipe_strategy_list` | Get available strategy templates |
-| `recipe_strategy_create` | Create a strategy configuration |
+| `recipe_strategy_list` | Get example strategy configurations |
+| `recipe_strategy_create` | Create a SNIPER, SPOT, or CONDITIONAL strategy |
 | `recipe_strategy_validate` | Validate a strategy config |
 
 ## Usage Examples
@@ -103,6 +107,16 @@ Claude will use `recipe_wallet_create` to generate a keypair and save it locally
 
 > "Show me the latest Pump.fun launches"
 
+> "Find tokens with symbol starting with 'AI' and market cap over $1M"
+
+### Technical Analysis
+
+> "Get the 4H OHLCV data for BONK"
+
+> "Calculate the 50-period EMA for WIF on the 1H timeframe"
+
+> "Show me new pairs launched in the last 15 minutes with at least $10k liquidity"
+
 ### Execute a Swap
 
 > "Get a quote for swapping 1 SOL to USDC"
@@ -113,9 +127,35 @@ Claude will use `recipe_wallet_create` to generate a keypair and save it locally
 
 ### Create a Strategy
 
-> "Show me available trading strategies"
+> "Show me example trading strategies"
 
-> "Create a volume spike strategy for BONK with 1 SOL position size"
+> "Create a sniper strategy for AI-themed tokens with min $50k market cap"
+
+> "Create a conditional strategy to buy BONK when price crosses above 50 EMA"
+
+## Strategy Types
+
+### SNIPER
+Automatically snipe new token launches matching your criteria:
+- `maxAgeMinutes` - How fresh the token must be
+- `minLiquidity` / `maxLiquidity` - Liquidity range
+- `minMarketCap` / `maxMarketCap` - Market cap range
+- `nameFilter` - Filter by name (e.g., "ai", "meme")
+- `takeProfit` / `stopLoss` - Exit conditions
+
+### SPOT
+Simple token swap with optional risk management:
+- `inputToken` / `outputToken` - Tokens to trade
+- `amount` - Trade size
+- `direction` - buy or sell
+- `stopLoss` / `takeProfit` - Optional exit conditions
+
+### CONDITIONAL
+Trade when technical conditions are met:
+- `indicator` - EMA, RSI, SMA, or PRICE
+- `period` - Indicator period (e.g., 20, 50, 200)
+- `timeframe` - 1m, 5m, 15m, 1H, 4H, 1D
+- `trigger` - price_above, price_below, crosses_above, crosses_below, price_touches
 
 ## Wallet Security
 
@@ -138,15 +178,20 @@ Common tokens can be referenced by symbol:
 | JUP | Jupiter |
 | POPCAT | Popcat |
 | PYTH | Pyth Network |
+| RAY | Raydium |
+| ORCA | Orca |
+| JITO | Jito |
+| RENDER | Render |
 
-You can also use any valid Solana mint address.
+You can also use any valid Solana mint address, or search by token name!
 
 ## Data Sources
 
-- **Token Data**: DexScreener, Pump.fun, recipe.money API
+- **Token Data**: DexScreener, Pump.fun, recipe.money API (Birdeye)
+- **OHLCV & Indicators**: recipe.money API (Birdeye)
 - **Prices & Swaps**: Jupiter Aggregator
 - **Wallet Balances**: Solana RPC, recipe.money API (Helius)
-- **Trending**: recipe.money API (Birdeye)
+- **Trending & New Pairs**: recipe.money API (Birdeye)
 
 ## Troubleshooting
 
@@ -164,6 +209,11 @@ Your wallet needs SOL to trade. Send SOL to your public key address shown in wal
 - Check you have enough balance (including fees)
 - Try increasing slippage for volatile tokens
 - Make sure the token has liquidity
+
+### "Could not find token"
+
+- Try using the contract address (CA) instead of the symbol
+- Make sure the token exists and has liquidity
 
 ## Support
 
