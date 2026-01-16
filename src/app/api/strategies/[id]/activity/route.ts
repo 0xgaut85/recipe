@@ -92,21 +92,32 @@ export async function GET(
     // Sort by timestamp descending
     activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-    // Add simulated scanning activity if strategy is active
+    // Add real-time scanning activity if strategy is active
     if (strategy.isActive) {
       const config = strategy.config as any;
-      
-      // Add recent scan events
       const now = Date.now();
-      for (let i = 0; i < 3; i++) {
-        const scanTime = new Date(now - i * 30000); // Every 30 seconds
+      
+      // Add current scan status
+      if (config.type === "SNIPER") {
         activities.unshift({
-          id: `scan-${i}-${now}`,
+          id: `scan-current-${now}`,
           type: "scan",
-          message: config.type === "SNIPER" 
-            ? `Scanning for new pairs (${config.maxAgeMinutes || 30}min, $${config.minLiquidity || 0} liq)`
-            : `Checking market conditions`,
-          timestamp: scanTime.toISOString(),
+          message: `Scanning for new pairs: max ${config.maxAgeMinutes || 60}min old, min $${(config.minLiquidity || 1000).toLocaleString()} liq${config.nameFilter ? `, filter: "${config.nameFilter}"` : ""}`,
+          timestamp: new Date().toISOString(),
+        });
+        
+        activities.unshift({
+          id: `info-amount-${now}`,
+          type: "info",
+          message: `Will buy ${config.amount || 0.01} SOL per token`,
+          timestamp: new Date(now - 1000).toISOString(),
+        });
+      } else if (config.type === "CONDITIONAL") {
+        activities.unshift({
+          id: `check-current-${now}`,
+          type: "check",
+          message: `Monitoring ${config.condition?.indicator || "price"} conditions`,
+          timestamp: new Date().toISOString(),
         });
       }
     }

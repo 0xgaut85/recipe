@@ -61,18 +61,22 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
     }
   }, [publicKey]);
 
-  // Poll for strategy execution when there are active strategies
+  // Poll for strategy execution - always poll when logged in to catch new strategies
   useEffect(() => {
-    if (activeStrategies === 0) return;
+    if (!walletData) return;
 
-    const pollInterval = setInterval(async () => {
+    // Initial check for active strategies
+    const checkAndExecute = async () => {
       try {
         const response = await fetch("/api/strategies/execute");
         if (response.ok) {
           const data = await response.json();
           
           // Update active strategies count
-          setActiveStrategies(data.status?.activeCount || 0);
+          const newCount = data.status?.activeCount || 0;
+          if (newCount !== activeStrategies) {
+            setActiveStrategies(newCount);
+          }
           
           // Show notification for executed trades
           if (data.executed && data.results) {
@@ -89,34 +93,25 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
               }
             }
           }
+          
+          // Log for debugging
+          if (data.status?.activeCount > 0) {
+            console.log("Strategy poll:", data.message, data.results?.length || 0, "results");
+          }
         }
       } catch (error) {
         console.error("Strategy polling error:", error);
       }
-    }, 15000); // Poll every 15 seconds
-
-    return () => clearInterval(pollInterval);
-  }, [activeStrategies, lastTradeNotification]);
-
-  // Fetch initial strategy count
-  useEffect(() => {
-    if (!walletData) return;
-
-    const fetchStrategyStatus = async () => {
-      try {
-        const response = await fetch("/api/strategies");
-        if (response.ok) {
-          const data = await response.json();
-          const activeCount = data.strategies?.filter((s: any) => s.isActive)?.length || 0;
-          setActiveStrategies(activeCount);
-        }
-      } catch (error) {
-        console.error("Failed to fetch strategy status:", error);
-      }
     };
 
-    fetchStrategyStatus();
-  }, [walletData]);
+    // Run immediately on mount
+    checkAndExecute();
+
+    // Poll every 10 seconds (faster for better responsiveness)
+    const pollInterval = setInterval(checkAndExecute, 10000);
+
+    return () => clearInterval(pollInterval);
+  }, [walletData, lastTradeNotification, activeStrategies]);
 
   // Authenticate with the connected wallet address
   const authenticateWallet = async (connectedWallet: string) => {

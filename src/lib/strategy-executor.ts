@@ -159,17 +159,32 @@ async function executeSniperStrategy(
   userId: string,
   boughtTokens: Set<string>
 ): Promise<ExecutionResult> {
-  // Get new pairs matching criteria
-  const newPairs = await getNewPairsFiltered({
-    maxAgeMinutes: config.maxAgeMinutes || 60,
-    minLiquidity: config.minLiquidity || 10000,
-    maxLiquidity: config.maxLiquidity,
-    minVolume: config.minVolume,
-    minMarketCap: config.minMarketCap,
-    maxMarketCap: config.maxMarketCap,
-    limit: 20,
+  console.log(`[Sniper] Executing strategy: ${strategyName}`);
+  console.log(`[Sniper] Config:`, {
+    maxAge: config.maxAgeMinutes,
+    minLiq: config.minLiquidity,
+    nameFilter: config.nameFilter,
+    amount: config.amount,
   });
 
+  // Get new pairs matching criteria
+  // Use lower defaults to catch more opportunities
+  const filterOptions = {
+    maxAgeMinutes: config.maxAgeMinutes || 60,
+    minLiquidity: config.minLiquidity ?? 1000, // Lower default: $1k
+    maxLiquidity: config.maxLiquidity,
+    minVolume: config.minVolume ?? 0,
+    minMarketCap: config.minMarketCap ?? 0,
+    maxMarketCap: config.maxMarketCap,
+    limit: 20,
+  };
+  
+  console.log(`[Sniper] Filter options:`, filterOptions);
+  
+  const newPairs = await getNewPairsFiltered(filterOptions);
+
+  console.log(`[Sniper] Found ${newPairs.length} new pairs from Birdeye`);
+  
   if (newPairs.length === 0) {
     return {
       strategyId,
@@ -182,12 +197,31 @@ async function executeSniperStrategy(
   // Apply name filter if specified
   let filteredPairs = newPairs;
   if (config.nameFilter) {
-    const filterLower = config.nameFilter.toLowerCase();
-    filteredPairs = newPairs.filter(
-      (pair) =>
-        pair.name.toLowerCase().includes(filterLower) ||
-        pair.symbol.toLowerCase().includes(filterLower)
-    );
+    const filterLower = config.nameFilter.toLowerCase().trim();
+    console.log(`[Sniper] Applying name filter: "${filterLower}" (length: ${filterLower.length})`);
+    
+    // Check if filter is a single letter (starts with filter)
+    if (filterLower.length === 1) {
+      filteredPairs = newPairs.filter(
+        (pair) =>
+          pair.name.toLowerCase().startsWith(filterLower) ||
+          pair.symbol.toLowerCase().startsWith(filterLower)
+      );
+      console.log(`[Sniper] Single-letter filter (startsWith): found ${filteredPairs.length} matches`);
+    } else {
+      // For longer filters, check if name/symbol includes the filter
+      filteredPairs = newPairs.filter(
+        (pair) =>
+          pair.name.toLowerCase().includes(filterLower) ||
+          pair.symbol.toLowerCase().includes(filterLower)
+      );
+      console.log(`[Sniper] Multi-char filter (includes): found ${filteredPairs.length} matches`);
+    }
+    
+    // Log matching pairs
+    if (filteredPairs.length > 0) {
+      console.log(`[Sniper] Matching pairs:`, filteredPairs.slice(0, 5).map(p => `${p.symbol} (${p.name})`));
+    }
   }
 
   if (filteredPairs.length === 0) {
