@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
       // New wallet - create new user
       const user = await prisma.user.create({
         data: {
-          name: `chef_${Date.now().toString(36)}`,
+          name: `trader_${Date.now().toString(36)}`,
         },
       });
       userId = user.id;

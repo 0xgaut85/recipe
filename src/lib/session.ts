@@ -7,7 +7,7 @@ import crypto from "crypto";
 import { cookies } from "next/headers";
 import prisma from "./prisma";
 
-const SESSION_COOKIE = "recipe_session";
+const SESSION_COOKIE = "claude_trade_session";
 const SESSION_EXPIRY_DAYS = 30;
 const TOKEN_LENGTH = 64; // 64 bytes = 512 bits
 

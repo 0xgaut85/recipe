@@ -7,9 +7,9 @@ const strategyDefinitions = [
   { label: "Adapt", desc: "Shift when the market shifts" },
 ];
 
-export const DocsWhatIsRecipe: FC = () => {
+export const DocsWhatIsClaudeTrade: FC = () => {
   return (
-    <section id="what-is-recipe" className="scroll-mt-32">
+    <section id="what-is-claude-trade" className="scroll-mt-32">
       <h2 className="font-display text-2xl font-semibold text-white mb-6">
         What is Claude Trade?
       </h2>

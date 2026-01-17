@@ -72,7 +72,7 @@ export const Header: FC = () => {
               DOCS
             </Link>
             <a
-              href="https://github.com/0xLaylo/recipe-plugin"
+              href="https://github.com/0xgaut85/recipe"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-medium text-white hover:text-white/80 transition-colors duration-200 header-link"
@@ -183,7 +183,7 @@ export const Header: FC = () => {
                   DOCS
                 </Link>
                 <a
-                  href="https://github.com/0xLaylo/recipe-plugin"
+                  href="https://github.com/0xgaut85/recipe"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-sm py-3 transition-colors duration-200"

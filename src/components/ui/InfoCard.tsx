@@ -10,8 +10,7 @@ interface InfoCardProps {
   delay?: number;
 }
 
-// Renamed from CuisineTicket to InfoCard - a clean tech-style info card
-export const CuisineTicket: FC<InfoCardProps> = ({
+export const InfoCard: FC<InfoCardProps> = ({
   children,
   variant = "light",
   className = "",
@@ -42,6 +41,3 @@ export const CuisineTicket: FC<InfoCardProps> = ({
     </motion.div>
   );
 };
-
-// Export alias for backwards compatibility
-export const InfoCard = CuisineTicket;

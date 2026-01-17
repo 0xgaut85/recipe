@@ -1,9 +1,9 @@
 /**
- * Custom Error Classes for Recipe
+ * Custom Error Classes for Claude Trade
  * Provides structured error handling across the application
  */
 
-export class RecipeError extends Error {
+export class TradeError extends Error {
   public readonly code: string;
   public readonly statusCode: number;
   public readonly details?: unknown;
@@ -15,7 +15,7 @@ export class RecipeError extends Error {
     details?: unknown
   ) {
     super(message);
-    this.name = "RecipeError";
+    this.name = "TradeError";
     this.code = code;
     this.statusCode = statusCode;
     this.details = details;
@@ -31,14 +31,14 @@ export class RecipeError extends Error {
 }
 
 // Authentication Errors
-export class AuthenticationError extends RecipeError {
+export class AuthenticationError extends TradeError {
   constructor(message: string = "Authentication required", details?: unknown) {
     super(message, "AUTH_REQUIRED", 401, details);
     this.name = "AuthenticationError";
   }
 }
 
-export class InvalidSessionError extends RecipeError {
+export class InvalidSessionError extends TradeError {
   constructor(message: string = "Invalid or expired session", details?: unknown) {
     super(message, "INVALID_SESSION", 401, details);
     this.name = "InvalidSessionError";
@@ -46,14 +46,14 @@ export class InvalidSessionError extends RecipeError {
 }
 
 // Wallet Errors
-export class WalletNotFoundError extends RecipeError {
+export class WalletNotFoundError extends TradeError {
   constructor(message: string = "Wallet not found", details?: unknown) {
     super(message, "WALLET_NOT_FOUND", 404, details);
     this.name = "WalletNotFoundError";
   }
 }
 
-export class InsufficientBalanceError extends RecipeError {
+export class InsufficientBalanceError extends TradeError {
   constructor(
     required: number,
     available: number,
@@ -69,7 +69,7 @@ export class InsufficientBalanceError extends RecipeError {
   }
 }
 
-export class InvalidAddressError extends RecipeError {
+export class InvalidAddressError extends TradeError {
   constructor(address: string) {
     super(
       `Invalid Solana address: ${address}`,
@@ -82,7 +82,7 @@ export class InvalidAddressError extends RecipeError {
 }
 
 // Transaction Errors
-export class TransactionError extends RecipeError {
+export class TransactionError extends TradeError {
   constructor(
     message: string,
     signature?: string,
@@ -93,7 +93,7 @@ export class TransactionError extends RecipeError {
   }
 }
 
-export class TransactionTimeoutError extends RecipeError {
+export class TransactionTimeoutError extends TradeError {
   constructor(signature: string) {
     super(
       `Transaction timed out: ${signature}`,
@@ -105,7 +105,7 @@ export class TransactionTimeoutError extends RecipeError {
   }
 }
 
-export class SlippageExceededError extends RecipeError {
+export class SlippageExceededError extends TradeError {
   constructor(expected: number, actual: number) {
     super(
       `Slippage exceeded. Expected: ${expected}%, Actual: ${actual}%`,
@@ -118,7 +118,7 @@ export class SlippageExceededError extends RecipeError {
 }
 
 // Rate Limiting Errors
-export class RateLimitError extends RecipeError {
+export class RateLimitError extends TradeError {
   constructor(
     message: string = "Rate limit exceeded",
     retryAfter?: number
@@ -128,7 +128,7 @@ export class RateLimitError extends RecipeError {
   }
 }
 
-export class DailyLimitError extends RecipeError {
+export class DailyLimitError extends TradeError {
   constructor(limit: number, current: number) {
     super(
       `Daily limit exceeded. Limit: ${limit}, Current: ${current}`,
@@ -141,7 +141,7 @@ export class DailyLimitError extends RecipeError {
 }
 
 // API Errors
-export class ExternalApiError extends RecipeError {
+export class ExternalApiError extends TradeError {
   constructor(
     service: string,
     message: string,
@@ -186,14 +186,14 @@ export class PumpFunApiError extends ExternalApiError {
 }
 
 // Validation Errors
-export class ValidationError extends RecipeError {
+export class ValidationError extends TradeError {
   constructor(message: string, details?: unknown) {
     super(message, "VALIDATION_ERROR", 400, details);
     this.name = "ValidationError";
   }
 }
 
-export class TokenNotFoundError extends RecipeError {
+export class TokenNotFoundError extends TradeError {
   constructor(token: string) {
     super(
       `Token not found: ${token}`,
@@ -206,7 +206,7 @@ export class TokenNotFoundError extends RecipeError {
 }
 
 // Database Errors
-export class DatabaseError extends RecipeError {
+export class DatabaseError extends TradeError {
   constructor(message: string = "Database error", details?: unknown) {
     super(message, "DATABASE_ERROR", 500, details);
     this.name = "DatabaseError";
@@ -214,14 +214,14 @@ export class DatabaseError extends RecipeError {
 }
 
 // Encryption Errors
-export class EncryptionError extends RecipeError {
+export class EncryptionError extends TradeError {
   constructor(message: string = "Encryption error") {
     super(message, "ENCRYPTION_ERROR", 500);
     this.name = "EncryptionError";
   }
 }
 
-export class EncryptionKeyMissingError extends RecipeError {
+export class EncryptionKeyMissingError extends TradeError {
   constructor() {
     super(
       "Encryption key not configured",
@@ -241,7 +241,7 @@ export function handleApiError(error: unknown): {
   statusCode: number;
   details?: unknown;
 } {
-  if (error instanceof RecipeError) {
+  if (error instanceof TradeError) {
     return {
       error: error.message,
       code: error.code,

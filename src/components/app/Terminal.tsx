@@ -156,7 +156,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
 
   const handleDisconnect = async () => {
     try {
-      document.cookie = "recipe_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "claude_trade_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       await disconnect();
       toast.success("Disconnected successfully");
       setWalletData(null);

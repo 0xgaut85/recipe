@@ -1,7 +1,7 @@
 export { DocsAbstract } from "./DocsAbstract";
 export { DocsProblem } from "./DocsProblem";
 export { DocsInsight } from "./DocsInsight";
-export { DocsWhatIsRecipe } from "./DocsWhatIsRecipe";
+export { DocsWhatIsClaudeTrade } from "./DocsWhatIsClaudeTrade";
 export { DocsClaudeCode } from "./DocsClaudeCode";
 export { DocsInstantStrategy } from "./DocsInstantStrategy";
 export { DocsProductLoop } from "./DocsProductLoop";

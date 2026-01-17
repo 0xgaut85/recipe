@@ -11,28 +11,28 @@ interface CardProps {
 
 const variantStyles: Record<CardVariant, React.CSSProperties> = {
   default: {
-    background: "transparent",
-    border: "1px solid #E5E7EB",
+    background: "rgba(255, 255, 255, 0.02)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     borderRadius: "0px",
   },
   light: {
-    background: "#FFFFFF",
-    border: "1px solid #E5E7EB",
+    background: "rgba(255, 255, 255, 0.05)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     borderRadius: "0px",
   },
   panel: {
-    background: "transparent",
-    border: "1px solid #E5E7EB",
+    background: "rgba(255, 255, 255, 0.02)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     borderRadius: "0px",
   },
   accent: {
-    background: "rgba(255, 77, 0, 0.05)",
-    border: "1px solid rgba(255, 77, 0, 0.2)",
+    background: "rgba(229, 123, 58, 0.1)",
+    border: "1px solid rgba(229, 123, 58, 0.3)",
     borderRadius: "0px",
   },
   bordered: {
     background: "transparent",
-    border: "1px solid #E5E7EB",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     borderRadius: "0px",
   },
 };

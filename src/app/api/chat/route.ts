@@ -43,7 +43,7 @@ interface ParsedStrategyConfig {
 }
 
 // Single unified system prompt
-const SYSTEM_PROMPT = `you are recipe, an ai trading assistant on solana.
+const SYSTEM_PROMPT = `you are claude trade, an ai trading assistant on solana.
 
 CAPABILITIES:
 - create trading strategies (snipers, spot trades, conditional triggers)
@@ -415,17 +415,17 @@ export async function POST(request: NextRequest) {
             // Detect progress based on conversation content
             const lowerText = aiResponseText.toLowerCase();
             
-            // Progress: "cook" - AI showed strategy config
+            // Progress: "configure" - AI showed strategy config
             if (lowerText.includes("🎯") || lowerText.includes("here's your strategy") || lowerText.includes("strategy config")) {
               controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ progress: "cook" })}\n\n`)
+                encoder.encode(`data: ${JSON.stringify({ progress: "configure" })}\n\n`)
               );
             }
             
-            // Progress: "taste" - AI asked for confirmation
+            // Progress: "review" - AI asked for confirmation
             if (lowerText.includes("ready to deploy") || lowerText.includes("say yes") || lowerText.includes("ready to launch")) {
               controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ progress: "taste" })}\n\n`)
+                encoder.encode(`data: ${JSON.stringify({ progress: "review" })}\n\n`)
               );
             }
 

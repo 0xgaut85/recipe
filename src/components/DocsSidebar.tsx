@@ -27,20 +27,20 @@ export const DocsSidebar: FC<DocsSidebarProps> = ({
 }) => {
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-72 border-r border-gray-200 pt-24 pb-8 overflow-hidden z-40 hidden lg:block"
-      style={{ backgroundColor: "#FFFFFF" }}
+      className="fixed left-0 top-0 h-screen w-72 border-r border-white/10 pt-24 pb-8 overflow-hidden z-40 hidden lg:block"
+      style={{ backgroundColor: "#0A0A0A" }}
     >
       <div className="px-8 mb-8">
         <Link
           href="/"
-          className="flex items-center gap-2 text-gray-500 hover:text-black transition-all text-sm mb-6 group"
+          className="flex items-center gap-2 text-gray-500 hover:text-white transition-all text-sm mb-6 group"
           style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
         >
           <span>←</span>
           <span>Back</span>
         </Link>
         <h2
-          className="text-xl text-black tracking-tight"
+          className="text-xl text-white tracking-tight"
           style={{ fontFamily: "TWKEverett-Regular, sans-serif" }}
         >
           Documentation
@@ -57,7 +57,7 @@ export const DocsSidebar: FC<DocsSidebarProps> = ({
               transition={{ delay: i * 0.1 }}
             >
               <h3
-                className="text-xs text-gray-400 uppercase tracking-widest mb-3 px-2"
+                className="text-xs text-gray-500 uppercase tracking-widest mb-3 px-2"
                 style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
               >
                 {group.title}
@@ -70,14 +70,14 @@ export const DocsSidebar: FC<DocsSidebarProps> = ({
                       className={`w-full text-left px-4 py-2 text-sm transition-all relative ${
                         activeSection === item.id
                           ? "text-[#E57B3A] font-medium"
-                          : "text-gray-600 hover:text-black"
+                          : "text-gray-400 hover:text-white"
                       }`}
                       style={{
                         fontFamily: "TWKEverettMono-Regular, monospace",
                         borderRadius: 0,
                         backgroundColor:
                           activeSection === item.id
-                            ? "rgba(255, 77, 0, 0.1)"
+                            ? "rgba(229, 123, 58, 0.15)"
                             : "transparent",
                       }}
                     >

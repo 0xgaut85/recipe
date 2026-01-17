@@ -23,7 +23,7 @@ const logger = pino({
   }),
   // Add base fields
   base: {
-    service: "recipe-app",
+    service: "claude-trade",
     version: process.env.npm_package_version || "0.1.0",
   },
   // Redact sensitive fields
