@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Wallet setup script for Recipe
+ * Wallet setup script for Claude Trade
  * 
- * Generates a new Solana keypair and saves it to ~/.recipe/wallet.json
+ * Generates a new Solana keypair and saves it to ~/.claude-trade/wallet.json
  */
 
 const fs = require('fs');
@@ -18,8 +18,8 @@ async function main() {
     const { Keypair } = await import('@solana/web3.js');
     const bs58 = await import('bs58');
     
-    const recipeDir = path.join(os.homedir(), '.recipe');
-    const walletPath = path.join(recipeDir, 'wallet.json');
+    const claudeTradeDir = path.join(os.homedir(), '.claude-trade');
+    const walletPath = path.join(claudeTradeDir, 'wallet.json');
     
     // Check if wallet already exists
     if (fs.existsSync(walletPath)) {
@@ -37,8 +37,8 @@ async function main() {
     }
     
     // Create directory if needed
-    if (!fs.existsSync(recipeDir)) {
-      fs.mkdirSync(recipeDir, { recursive: true });
+    if (!fs.existsSync(claudeTradeDir)) {
+      fs.mkdirSync(claudeTradeDir, { recursive: true });
     }
     
     // Generate new keypair

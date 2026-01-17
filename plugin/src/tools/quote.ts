@@ -3,7 +3,7 @@ import { getQuote, formatQuote, TOKENS, resolveTokenSymbol } from "../lib/jupite
 
 export const quoteTools: Tool[] = [
   {
-    name: "recipe_quote_swap",
+    name: "claude_trade_quote_swap",
     description: "Get a swap quote from Jupiter aggregator. Shows expected output, price impact, and route. Supports token symbols (SOL, USDC, BONK, etc.) or mint addresses.",
     inputSchema: {
       type: "object",
@@ -29,7 +29,7 @@ export const quoteTools: Tool[] = [
     },
   },
   {
-    name: "recipe_quote_price",
+    name: "claude_trade_quote_price",
     description: "Get the current price of a token in USD (via USDC quote).",
     inputSchema: {
       type: "object",
@@ -43,7 +43,7 @@ export const quoteTools: Tool[] = [
     },
   },
   {
-    name: "recipe_quote_tokens",
+    name: "claude_trade_quote_tokens",
     description: "List common token addresses supported by the quote tool.",
     inputSchema: {
       type: "object",
@@ -79,7 +79,7 @@ export async function handleQuoteTool(
   args: Record<string, unknown> | undefined
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
   switch (name) {
-    case "recipe_quote_swap": {
+    case "claude_trade_quote_swap": {
       const inputToken = args?.inputToken as string;
       const outputToken = args?.outputToken as string;
       const amount = args?.amount as number;
@@ -146,7 +146,7 @@ export async function handleQuoteTool(
       };
     }
 
-    case "recipe_quote_price": {
+    case "claude_trade_quote_price": {
       const token = args?.token as string;
 
       if (!token) {
@@ -190,7 +190,7 @@ export async function handleQuoteTool(
       };
     }
 
-    case "recipe_quote_tokens": {
+    case "claude_trade_quote_tokens": {
       return {
         content: [
           {

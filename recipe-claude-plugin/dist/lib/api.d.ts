@@ -1,5 +1,5 @@
 /**
- * Recipe.money API Client
+ * Claude Trade API Client
  * All data requiring API keys goes through our backend - users need no configuration
  */
 export interface TrendingToken {
@@ -95,12 +95,12 @@ export interface PairOverview {
 }
 /**
  * Get trending tokens, volume leaders, and new launches
- * Uses Birdeye data via recipe.money backend
+ * Uses Birdeye data via claudetrade.io backend
  */
 export declare function getTrending(): Promise<TrendingData>;
 /**
  * Get wallet balances for any address
- * Uses Helius data via recipe.money backend
+ * Uses Helius data via claudetrade.io backend
  */
 export declare function getWalletBalances(address: string): Promise<WalletData>;
 /**
@@ -155,13 +155,13 @@ export declare function getNewLaunches(limit?: number): Promise<Array<{
 /**
  * Get OHLCV candle data for technical analysis
  * NOTE: This feature requires Birdeye API key which is not available in the plugin.
- * The OHLCV endpoint is not implemented on recipe.money backend for public access.
+ * The OHLCV endpoint is not implemented on claudetrade.io backend for public access.
  * Returns an error message directing users to use the web app for this feature.
  */
 export declare function getOHLCV(tokenAddress: string, timeframe?: TimeFrame, limit?: number): Promise<OHLCVCandle[]>;
 /**
  * Get new pairs with filters for sniping strategies
- * Uses trending data from recipe.money backend (which has Birdeye API key)
+ * Uses trending data from claudetrade.io backend (which has Birdeye API key)
  * Applies local filtering for the options
  */
 export declare function getNewPairs(options?: {

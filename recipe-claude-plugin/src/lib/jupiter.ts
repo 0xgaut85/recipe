@@ -174,7 +174,7 @@ export async function executeSwap(
 }> {
   const keypair = getKeypair();
   if (!keypair) {
-    throw new Error("No wallet found. Use recipe_wallet_create first.");
+    throw new Error("No wallet found. Use claude_trade_wallet_create first.");
   }
 
   const inputMint = resolveToken(inputToken);

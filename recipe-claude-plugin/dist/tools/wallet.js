@@ -6,23 +6,23 @@ import { getOrCreateWallet, loadWallet, getSolBalance, getWalletPath, walletExis
 import { getWalletBalances } from "../lib/api.js";
 export const walletTools = [
     {
-        name: "recipe_wallet_create",
-        description: "Create a new Solana wallet or load existing one. Generates a keypair locally and saves to ~/.recipe/wallet.json. Returns public key and private key - user must fund this wallet with SOL to trade.",
+        name: "claude_trade_wallet_create",
+        description: "Create a new Solana wallet or load existing one. Generates a keypair locally and saves to ~/.claude-trade/wallet.json. Returns public key and private key - user must fund this wallet with SOL to trade.",
         inputSchema: {
             type: "object",
             properties: {},
         },
     },
     {
-        name: "recipe_wallet_info",
-        description: "Get your wallet's public key, private key, and SOL balance. Shows the wallet stored at ~/.recipe/wallet.json.",
+        name: "claude_trade_wallet_info",
+        description: "Get your wallet's public key, private key, and SOL balance. Shows the wallet stored at ~/.claude-trade/wallet.json.",
         inputSchema: {
             type: "object",
             properties: {},
         },
     },
     {
-        name: "recipe_wallet_balance",
+        name: "claude_trade_wallet_balance",
         description: "Get all token balances for a wallet. If no address provided, uses your local wallet.",
         inputSchema: {
             type: "object",
@@ -35,7 +35,7 @@ export const walletTools = [
         },
     },
     {
-        name: "recipe_wallet_export",
+        name: "claude_trade_wallet_export",
         description: "Export wallet details for backup. Shows path to wallet file and all keys.",
         inputSchema: {
             type: "object",
@@ -45,7 +45,7 @@ export const walletTools = [
 ];
 export async function handleWalletTool(name, args) {
     switch (name) {
-        case "recipe_wallet_create": {
+        case "claude_trade_wallet_create": {
             const { wallet, isNew } = getOrCreateWallet();
             const balance = await getSolBalance(wallet.publicKey);
             const result = {
@@ -64,7 +64,7 @@ export async function handleWalletTool(name, args) {
                 content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
             };
         }
-        case "recipe_wallet_info": {
+        case "claude_trade_wallet_info": {
             const wallet = loadWallet();
             if (!wallet) {
                 return {
@@ -73,7 +73,7 @@ export async function handleWalletTool(name, args) {
                             type: "text",
                             text: JSON.stringify({
                                 error: "No wallet found",
-                                solution: "Use recipe_wallet_create to generate a new wallet",
+                                solution: "Use claude_trade_wallet_create to generate a new wallet",
                             }, null, 2),
                         },
                     ],
@@ -97,7 +97,7 @@ export async function handleWalletTool(name, args) {
                 ],
             };
         }
-        case "recipe_wallet_balance": {
+        case "claude_trade_wallet_balance": {
             let address = args?.address;
             if (!address) {
                 const wallet = loadWallet();
@@ -108,7 +108,7 @@ export async function handleWalletTool(name, args) {
                                 type: "text",
                                 text: JSON.stringify({
                                     error: "No wallet found and no address provided",
-                                    solution: "Use recipe_wallet_create first or provide an address",
+                                    solution: "Use claude_trade_wallet_create first or provide an address",
                                 }, null, 2),
                             },
                         ],
@@ -161,7 +161,7 @@ export async function handleWalletTool(name, args) {
                 };
             }
         }
-        case "recipe_wallet_export": {
+        case "claude_trade_wallet_export": {
             if (!walletExists()) {
                 return {
                     content: [
@@ -169,7 +169,7 @@ export async function handleWalletTool(name, args) {
                             type: "text",
                             text: JSON.stringify({
                                 error: "No wallet to export",
-                                solution: "Use recipe_wallet_create to generate a wallet first",
+                                solution: "Use claude_trade_wallet_create to generate a wallet first",
                             }, null, 2),
                         },
                     ],

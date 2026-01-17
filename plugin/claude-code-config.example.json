@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "recipe": {
+    "claude-trade": {
       "command": "npx",
-      "args": ["-y", "recipe-mcp-server"],
+      "args": ["-y", "claude-trade-mcp-server"],
       "env": {
         "HELIUS_API_KEY": "your-helius-api-key-here"
       }

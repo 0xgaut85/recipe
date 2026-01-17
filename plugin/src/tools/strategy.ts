@@ -2,7 +2,7 @@ import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 export const strategyTools: Tool[] = [
   {
-    name: "recipe_strategy_templates",
+    name: "claude_trade_strategy_templates",
     description: "Get available strategy templates for common trading patterns. Each template includes description, parameters, and example configuration.",
     inputSchema: {
       type: "object",
@@ -16,7 +16,7 @@ export const strategyTools: Tool[] = [
     },
   },
   {
-    name: "recipe_strategy_create",
+    name: "claude_trade_strategy_create",
     description: "Create a new strategy configuration from a template with custom parameters.",
     inputSchema: {
       type: "object",
@@ -34,7 +34,7 @@ export const strategyTools: Tool[] = [
     },
   },
   {
-    name: "recipe_strategy_validate",
+    name: "claude_trade_strategy_validate",
     description: "Validate a strategy configuration for completeness and safety.",
     inputSchema: {
       type: "object",
@@ -151,7 +151,7 @@ export async function handleStrategyTool(
   args: Record<string, unknown> | undefined
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
   switch (name) {
-    case "recipe_strategy_templates": {
+    case "claude_trade_strategy_templates": {
       const category = (args?.category as string) || "all";
 
       const filtered =
@@ -186,7 +186,7 @@ export async function handleStrategyTool(
       };
     }
 
-    case "recipe_strategy_create": {
+    case "claude_trade_strategy_create": {
       const templateName = args?.template as string;
       const customParams = (args?.parameters as Record<string, unknown>) || {};
 
@@ -258,7 +258,7 @@ export async function handleStrategyTool(
       };
     }
 
-    case "recipe_strategy_validate": {
+    case "claude_trade_strategy_validate": {
       const strategy = args?.strategy as Record<string, unknown>;
 
       if (!strategy) {

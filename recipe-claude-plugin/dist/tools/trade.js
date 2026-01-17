@@ -6,7 +6,7 @@ import { getQuote, executeSwap, listTokens, resolveTokenMintWithSearch, } from "
 import { loadWallet, getSolBalance } from "../lib/wallet.js";
 export const tradeTools = [
     {
-        name: "recipe_swap_quote",
+        name: "claude_trade_swap_quote",
         description: "Get a swap quote from Jupiter aggregator. Shows expected output, price impact, and route. Use this before executing a swap to preview the trade.",
         inputSchema: {
             type: "object",
@@ -32,7 +32,7 @@ export const tradeTools = [
         },
     },
     {
-        name: "recipe_swap_execute",
+        name: "claude_trade_swap_execute",
         description: "Execute a token swap using your local wallet. WARNING: This uses real funds! Make sure your wallet has enough balance.",
         inputSchema: {
             type: "object",
@@ -58,7 +58,7 @@ export const tradeTools = [
         },
     },
     {
-        name: "recipe_quick_buy",
+        name: "claude_trade_quick_buy",
         description: "Quick buy a token using SOL. Simplified version of swap - just specify the token and SOL amount. WARNING: Uses real funds!",
         inputSchema: {
             type: "object",
@@ -80,7 +80,7 @@ export const tradeTools = [
         },
     },
     {
-        name: "recipe_quick_sell",
+        name: "claude_trade_quick_sell",
         description: "Quick sell a token for SOL. Simplified version of swap - just specify the token and amount to sell. WARNING: Uses real funds!",
         inputSchema: {
             type: "object",
@@ -102,7 +102,7 @@ export const tradeTools = [
         },
     },
     {
-        name: "recipe_tokens_list",
+        name: "claude_trade_tokens_list",
         description: "List common token symbols and their mint addresses. Useful for finding tokens to trade.",
         inputSchema: {
             type: "object",
@@ -112,7 +112,7 @@ export const tradeTools = [
 ];
 export async function handleTradeTool(name, args) {
     switch (name) {
-        case "recipe_swap_quote": {
+        case "claude_trade_swap_quote": {
             const inputTokenArg = args?.inputToken;
             const outputTokenArg = args?.outputToken;
             const amount = args?.amount;
@@ -170,7 +170,7 @@ export async function handleTradeTool(name, args) {
                                 priceImpact: `${quote.priceImpact.toFixed(4)}%`,
                                 slippage: `${slippageValue / 100}%`,
                                 route: quote.route,
-                                ready: "Use recipe_swap_execute with same parameters to trade",
+                                ready: "Use claude_trade_swap_execute with same parameters to trade",
                             }, null, 2),
                         },
                     ],
@@ -192,7 +192,7 @@ export async function handleTradeTool(name, args) {
                 };
             }
         }
-        case "recipe_swap_execute": {
+        case "claude_trade_swap_execute": {
             const inputTokenArg = args?.inputToken;
             const outputTokenArg = args?.outputToken;
             const amount = args?.amount;
@@ -218,7 +218,7 @@ export async function handleTradeTool(name, args) {
                             type: "text",
                             text: JSON.stringify({
                                 error: "No wallet found",
-                                solution: "Use recipe_wallet_create to generate a wallet first",
+                                solution: "Use claude_trade_wallet_create to generate a wallet first",
                             }, null, 2),
                         },
                     ],
@@ -308,7 +308,7 @@ export async function handleTradeTool(name, args) {
                 };
             }
         }
-        case "recipe_quick_buy": {
+        case "claude_trade_quick_buy": {
             const tokenArg = args?.token;
             const solAmount = args?.solAmount;
             const slippageBps = args?.slippageBps || 100;
@@ -332,7 +332,7 @@ export async function handleTradeTool(name, args) {
                             type: "text",
                             text: JSON.stringify({
                                 error: "No wallet found",
-                                solution: "Use recipe_wallet_create to generate a wallet first",
+                                solution: "Use claude_trade_wallet_create to generate a wallet first",
                             }, null, 2),
                         },
                     ],
@@ -406,7 +406,7 @@ export async function handleTradeTool(name, args) {
                 };
             }
         }
-        case "recipe_quick_sell": {
+        case "claude_trade_quick_sell": {
             const tokenArg = args?.token;
             const amount = args?.amount;
             const slippageBps = args?.slippageBps || 100;
@@ -430,7 +430,7 @@ export async function handleTradeTool(name, args) {
                             type: "text",
                             text: JSON.stringify({
                                 error: "No wallet found",
-                                solution: "Use recipe_wallet_create to generate a wallet first",
+                                solution: "Use claude_trade_wallet_create to generate a wallet first",
                             }, null, 2),
                         },
                     ],
@@ -486,7 +486,7 @@ export async function handleTradeTool(name, args) {
                 };
             }
         }
-        case "recipe_tokens_list": {
+        case "claude_trade_tokens_list": {
             const tokens = listTokens();
             return {
                 content: [

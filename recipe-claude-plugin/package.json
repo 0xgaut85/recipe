@@ -1,10 +1,10 @@
 {
-  "name": "recipe-claude-plugin",
+  "name": "claude-trade-plugin",
   "version": "1.0.0",
   "description": "Solana trading plugin for Claude Code - search tokens, execute swaps, create strategies",
   "main": "dist/index.js",
   "bin": {
-    "recipe-mcp": "./dist/index.js"
+    "claude-trade-mcp": "./dist/index.js"
   },
   "type": "module",
   "scripts": {
@@ -21,11 +21,11 @@
     "defi",
     "jupiter"
   ],
-  "author": "Recipe.money",
+  "author": "claudetrade.io",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/recipedotmoney/recipe-claude-plugin"
+    "url": "https://github.com/0xgaut85/recipe"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",

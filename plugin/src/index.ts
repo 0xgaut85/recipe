@@ -21,7 +21,7 @@ import {
 
 const server = new Server(
   {
-    name: "recipe-mcp-server",
+    name: "claude-trade-mcp-server",
     version: "0.1.0",
   },
   {
@@ -51,22 +51,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     // Token tools
-    if (name.startsWith("recipe_token_")) {
+    if (name.startsWith("claude_trade_token_")) {
       return await handleTokenTool(name, args);
     }
 
     // Wallet tools
-    if (name.startsWith("recipe_wallet_")) {
+    if (name.startsWith("claude_trade_wallet_")) {
       return await handleWalletTool(name, args);
     }
 
     // Quote tools
-    if (name.startsWith("recipe_quote_")) {
+    if (name.startsWith("claude_trade_quote_")) {
       return await handleQuoteTool(name, args);
     }
 
     // Strategy tools
-    if (name.startsWith("recipe_strategy_")) {
+    if (name.startsWith("claude_trade_strategy_")) {
       return await handleStrategyTool(name, args);
     }
 
@@ -125,7 +125,7 @@ async function main() {
   // Initialize wallet on startup
   console.error("\n");
   console.error("═══════════════════════════════════════════════════════════════");
-  console.error("  RECIPE.MONEY - CLAUDE CODE PLUGIN");
+  console.error("  CLAUDE TRADE - CLAUDE CODE PLUGIN");
   console.error("═══════════════════════════════════════════════════════════════");
   console.error("\n");
 
@@ -136,7 +136,7 @@ async function main() {
   // Start MCP server
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Recipe MCP server running on stdio");
+  console.error("Claude Trade MCP server running on stdio");
   console.error("\n");
 }
 

@@ -1,6 +1,6 @@
-# recipe mcp server
+# claude trade mcp server
 
-a claude code plugin for solana vibetrading. get token data, analyze wallets, and create trading strategies directly in claude code.
+a claude code plugin for solana trading. get token data, analyze wallets, and create trading strategies directly in claude code.
 
 ## installation
 
@@ -11,9 +11,9 @@ add to your claude code config (`~/.claude/claude_desktop_config.json` or simila
 ```json
 {
   "mcpServers": {
-    "recipe": {
+    "claude-trade": {
       "command": "npx",
-      "args": ["-y", "recipe-mcp-server"],
+      "args": ["-y", "claude-trade-mcp-server"],
       "env": {
         "HELIUS_API_KEY": "your-helius-api-key"
       }
@@ -37,7 +37,7 @@ npm run build
 ```json
 {
   "mcpServers": {
-    "recipe": {
+    "claude-trade": {
       "command": "node",
       "args": ["/path/to/plugin/dist/index.js"],
       "env": {
@@ -58,28 +58,28 @@ npm run build
 
 ### token tools
 
-- **recipe_token_search** - search for tokens by name or symbol
-- **recipe_token_info** - get detailed info for a token address
-- **recipe_token_new_launches** - get latest pump.fun launches
-- **recipe_token_pumpfun** - get pump.fun specific token data
+- **claude_trade_token_search** - search for tokens by name or symbol
+- **claude_trade_token_info** - get detailed info for a token address
+- **claude_trade_token_new_launches** - get latest pump.fun launches
+- **claude_trade_token_pumpfun** - get pump.fun specific token data
 
 ### wallet tools
 
-- **recipe_wallet_balances** - get sol and token balances
-- **recipe_wallet_transactions** - get recent transaction history
-- **recipe_wallet_analyze** - analyze trading patterns and behavior
+- **claude_trade_wallet_balances** - get sol and token balances
+- **claude_trade_wallet_transactions** - get recent transaction history
+- **claude_trade_wallet_analyze** - analyze trading patterns and behavior
 
 ### quote tools
 
-- **recipe_quote_swap** - get jupiter swap quotes
-- **recipe_quote_price** - get token price in usd
-- **recipe_quote_tokens** - list supported token symbols
+- **claude_trade_quote_swap** - get jupiter swap quotes
+- **claude_trade_quote_price** - get token price in usd
+- **claude_trade_quote_tokens** - list supported token symbols
 
 ### strategy tools
 
-- **recipe_strategy_templates** - get available strategy templates
-- **recipe_strategy_create** - create a strategy from template
-- **recipe_strategy_validate** - validate strategy configuration
+- **claude_trade_strategy_templates** - get available strategy templates
+- **claude_trade_strategy_create** - create a strategy from template
+- **claude_trade_strategy_validate** - validate strategy configuration
 
 ## example usage
 
@@ -105,14 +105,14 @@ once installed, you can ask claude code things like:
 ## notes
 
 - this plugin is read-only - it cannot execute trades
-- for live trading, use the recipe.money web app
+- for live trading, use the claude trade web app
 - wallet analysis requires a helius api key
 - rate limits apply to all api calls
 
 ## support
 
-- website: [recipe.money](https://recipe.money)
-- twitter: [@recipedotmoney](https://x.com/recipedotmoney)
+- website: [claudetrade.io](https://claudetrade.io)
+- twitter: [@claudetrade](https://x.com/claudetrade)
 
 ## license
 

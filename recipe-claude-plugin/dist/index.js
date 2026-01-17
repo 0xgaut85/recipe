@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * Recipe MCP Server
+ * Claude Trade MCP Server
  * Solana trading plugin for Claude Code
  *
  * Features:
- * - Auto-generate local wallet (keys stored at ~/.recipe/wallet.json)
+ * - Auto-generate local wallet (keys stored at ~/.claude-trade/wallet.json)
  * - Search tokens, get prices, trending data
  * - Execute swaps via Jupiter
  * - Strategy templates
  *
- * All data APIs go through recipe.money backend - no API keys needed for users.
+ * All data APIs go through Claude Trade backend - no API keys needed for users.
  * Private keys are generated locally and never leave the user's machine.
  */
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -21,7 +21,7 @@ import { tradeTools, handleTradeTool } from "./tools/trade.js";
 import { strategyTools, handleStrategyTool } from "./tools/strategy.js";
 import { getOrCreateWallet, formatWalletInfo } from "./lib/wallet.js";
 const server = new Server({
-    name: "recipe",
+    name: "claude-trade",
     version: "1.0.0",
 }, {
     capabilities: {
@@ -44,23 +44,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     try {
         // Wallet tools
-        if (name.startsWith("recipe_wallet_")) {
+        if (name.startsWith("claude_trade_wallet_")) {
             return await handleWalletTool(name, args);
         }
-        // Token tools (includes recipe_get_* and recipe_calculate_* for OHLCV/EMA)
-        if (name.startsWith("recipe_token_") ||
-            name.startsWith("recipe_get_") ||
-            name.startsWith("recipe_calculate_")) {
+        // Token tools (includes claude_trade_get_* and claude_trade_calculate_* for OHLCV/EMA)
+        if (name.startsWith("claude_trade_token_") ||
+            name.startsWith("claude_trade_get_") ||
+            name.startsWith("claude_trade_calculate_")) {
             return await handleTokenTool(name, args);
         }
         // Trade tools (swap, quick buy/sell, tokens list)
-        if (name.startsWith("recipe_swap_") ||
-            name.startsWith("recipe_quick_") ||
-            name === "recipe_tokens_list") {
+        if (name.startsWith("claude_trade_swap_") ||
+            name.startsWith("claude_trade_quick_") ||
+            name === "claude_trade_tokens_list") {
             return await handleTradeTool(name, args);
         }
         // Strategy tools
-        if (name.startsWith("recipe_strategy_")) {
+        if (name.startsWith("claude_trade_strategy_")) {
             return await handleStrategyTool(name, args);
         }
         return {
@@ -93,8 +93,8 @@ async function main() {
     // Initialize wallet on startup
     console.error("");
     console.error("═══════════════════════════════════════════════════════════════");
-    console.error("  RECIPE.MONEY - CLAUDE CODE PLUGIN");
-    console.error("  https://recipe.money");
+    console.error("  CLAUDE TRADE - CLAUDE CODE PLUGIN");
+    console.error("  https://claudetrade.io");
     console.error("═══════════════════════════════════════════════════════════════");
     console.error("");
     // Get or create wallet
@@ -103,7 +103,7 @@ async function main() {
     // Start MCP server
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error("Recipe MCP server running on stdio");
+    console.error("Claude Trade MCP server running on stdio");
     console.error("");
 }
 main().catch((error) => {

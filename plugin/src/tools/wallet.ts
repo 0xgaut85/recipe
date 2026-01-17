@@ -8,7 +8,7 @@ import {
 
 export const walletTools: Tool[] = [
   {
-    name: "recipe_wallet_balances",
+    name: "claude_trade_wallet_balances",
     description: "Get token balances for a Solana wallet address. Returns SOL and all SPL token holdings.",
     inputSchema: {
       type: "object",
@@ -22,7 +22,7 @@ export const walletTools: Tool[] = [
     },
   },
   {
-    name: "recipe_wallet_transactions",
+    name: "claude_trade_wallet_transactions",
     description: "Get recent transaction history for a wallet. Shows swaps, transfers, and other activity.",
     inputSchema: {
       type: "object",
@@ -40,7 +40,7 @@ export const walletTools: Tool[] = [
     },
   },
   {
-    name: "recipe_wallet_analyze",
+    name: "claude_trade_wallet_analyze",
     description: "Analyze a wallet's trading behavior and patterns. Returns activity metrics, swap counts, and holdings summary.",
     inputSchema: {
       type: "object",
@@ -69,7 +69,7 @@ export async function handleWalletTool(
   }
 
   switch (name) {
-    case "recipe_wallet_balances": {
+    case "claude_trade_wallet_balances": {
       const [solBalance, tokenBalances] = await Promise.all([
         getSolBalance(address),
         getTokenBalances(address),
@@ -94,7 +94,7 @@ export async function handleWalletTool(
       };
     }
 
-    case "recipe_wallet_transactions": {
+    case "claude_trade_wallet_transactions": {
       const limit = Math.min((args?.limit as number) || 20, 100);
       const transactions = await getTransactionHistory(address, limit);
 
@@ -122,7 +122,7 @@ export async function handleWalletTool(
       };
     }
 
-    case "recipe_wallet_analyze": {
+    case "claude_trade_wallet_analyze": {
       const analysis = await analyzeWallet(address);
 
       return {

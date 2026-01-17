@@ -7,7 +7,7 @@ import { searchTokens, getTokenInfo, getTrending, getNewLaunches, getOHLCV, getN
 import { getTokenPrice, resolveToken, isSolanaAddress } from "../lib/jupiter.js";
 export const tokenTools = [
     {
-        name: "recipe_token_search",
+        name: "claude_trade_token_search",
         description: "Search for tokens by name, symbol, or apply advanced filters. Can filter by first letter, market cap range, liquidity, volume, holders, and more.",
         inputSchema: {
             type: "object",
@@ -56,7 +56,7 @@ export const tokenTools = [
         },
     },
     {
-        name: "recipe_token_info",
+        name: "claude_trade_token_info",
         description: "Get price, volume, liquidity, and other info for a token by its mint address or symbol.",
         inputSchema: {
             type: "object",
@@ -70,7 +70,7 @@ export const tokenTools = [
         },
     },
     {
-        name: "recipe_get_ohlcv",
+        name: "claude_trade_get_ohlcv",
         description: "Get OHLCV (Open, High, Low, Close, Volume) candle data for technical analysis.",
         inputSchema: {
             type: "object",
@@ -93,7 +93,7 @@ export const tokenTools = [
         },
     },
     {
-        name: "recipe_calculate_ema",
+        name: "claude_trade_calculate_ema",
         description: "Calculate EMA (Exponential Moving Average) for a token and check if price is above/below it.",
         inputSchema: {
             type: "object",
@@ -116,7 +116,7 @@ export const tokenTools = [
         },
     },
     {
-        name: "recipe_get_new_pairs",
+        name: "claude_trade_get_new_pairs",
         description: "Get newly launched token pairs on Solana (Pump.fun, Raydium, Meteora, etc). Use this for sniping new launches. Supports filtering by age, liquidity, volume, and market cap.",
         inputSchema: {
             type: "object",
@@ -153,7 +153,7 @@ export const tokenTools = [
         },
     },
     {
-        name: "recipe_get_pair_details",
+        name: "claude_trade_get_pair_details",
         description: "Get detailed metrics for a specific trading pair including 30min/1h volume, trades, and price changes.",
         inputSchema: {
             type: "object",
@@ -167,7 +167,7 @@ export const tokenTools = [
         },
     },
     {
-        name: "recipe_token_trending",
+        name: "claude_trade_token_trending",
         description: "Get trending tokens on Solana by volume.",
         inputSchema: {
             type: "object",
@@ -180,7 +180,7 @@ export const tokenTools = [
         },
     },
     {
-        name: "recipe_token_price",
+        name: "claude_trade_token_price",
         description: "Get the current USD price of a token. Supports symbols (SOL, BONK) or mint addresses.",
         inputSchema: {
             type: "object",
@@ -194,7 +194,7 @@ export const tokenTools = [
         },
     },
     {
-        name: "recipe_token_new_launches",
+        name: "claude_trade_token_new_launches",
         description: "Get the latest token launches on Pump.fun. Shows new memecoins with socials and market data.",
         inputSchema: {
             type: "object",
@@ -227,7 +227,7 @@ function calculateEMA(prices, period) {
 }
 export async function handleTokenTool(name, args) {
     switch (name) {
-        case "recipe_token_search": {
+        case "claude_trade_token_search": {
             const hasAdvancedFilters = args?.symbolStartsWith ||
                 args?.nameContains ||
                 args?.minMarketCap ||
@@ -316,7 +316,7 @@ export async function handleTokenTool(name, args) {
                 ],
             };
         }
-        case "recipe_token_info": {
+        case "claude_trade_token_info": {
             const tokenArg = args?.token;
             if (!tokenArg) {
                 return {
@@ -356,7 +356,7 @@ export async function handleTokenTool(name, args) {
                 ],
             };
         }
-        case "recipe_get_ohlcv": {
+        case "claude_trade_get_ohlcv": {
             const tokenArg = args?.token;
             if (!tokenArg) {
                 return {
@@ -403,7 +403,7 @@ export async function handleTokenTool(name, args) {
                 };
             }
         }
-        case "recipe_calculate_ema": {
+        case "claude_trade_calculate_ema": {
             const tokenArg = args?.token;
             const period = args?.period;
             if (!tokenArg) {
@@ -469,7 +469,7 @@ export async function handleTokenTool(name, args) {
                 };
             }
         }
-        case "recipe_get_new_pairs": {
+        case "claude_trade_get_new_pairs": {
             const options = {
                 maxAgeMinutes: args?.maxAgeMinutes || 30,
                 minLiquidity: args?.minLiquidity,
@@ -525,7 +525,7 @@ export async function handleTokenTool(name, args) {
                 };
             }
         }
-        case "recipe_get_pair_details": {
+        case "claude_trade_get_pair_details": {
             const address = args?.address;
             if (!address) {
                 return {
@@ -582,7 +582,7 @@ export async function handleTokenTool(name, args) {
                 ],
             };
         }
-        case "recipe_token_trending": {
+        case "claude_trade_token_trending": {
             const limit = args?.limit || 10;
             try {
                 const data = await getTrending();
@@ -633,7 +633,7 @@ export async function handleTokenTool(name, args) {
                 };
             }
         }
-        case "recipe_token_price": {
+        case "claude_trade_token_price": {
             const token = args?.token;
             if (!token) {
                 return {
@@ -655,7 +655,7 @@ export async function handleTokenTool(name, args) {
                 ],
             };
         }
-        case "recipe_token_new_launches": {
+        case "claude_trade_token_new_launches": {
             const limit = Math.min(args?.limit || 10, 50);
             const tokens = await getNewLaunches(limit);
             return {

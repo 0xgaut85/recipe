@@ -9,7 +9,7 @@ import * as path from "path";
 import * as os from "os";
 import bs58 from "bs58";
 
-const WALLET_DIR = path.join(os.homedir(), ".recipe");
+const WALLET_DIR = path.join(os.homedir(), ".claude-trade");
 const WALLET_FILE = path.join(WALLET_DIR, "wallet.json");
 
 interface LocalWallet {

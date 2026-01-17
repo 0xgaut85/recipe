@@ -8,7 +8,7 @@ import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 export const strategyTools: Tool[] = [
   {
-    name: "recipe_strategy_create",
+    name: "claude_trade_strategy_create",
     description:
       "Create and save a trading strategy. Supports spot trades, new pair sniping, and conditional/indicator-based strategies. Use this when the user wants to save/deploy a strategy.",
     inputSchema: {
@@ -123,7 +123,7 @@ export const strategyTools: Tool[] = [
     },
   },
   {
-    name: "recipe_strategy_list",
+    name: "claude_trade_strategy_list",
     description:
       "Get example strategy configurations for common trading patterns.",
     inputSchema: {
@@ -138,7 +138,7 @@ export const strategyTools: Tool[] = [
     },
   },
   {
-    name: "recipe_strategy_validate",
+    name: "claude_trade_strategy_validate",
     description: "Validate a strategy configuration for completeness and safety.",
     inputSchema: {
       type: "object",
@@ -212,7 +212,7 @@ export async function handleStrategyTool(
   args: Record<string, unknown> | undefined
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
   switch (name) {
-    case "recipe_strategy_create": {
+    case "claude_trade_strategy_create": {
       const strategyType = args?.type as string;
 
       if (!args?.name || !args?.description || !strategyType) {
@@ -360,7 +360,7 @@ export async function handleStrategyTool(
         strategyType === "SNIPER" ? "🎯" : strategyType === "CONDITIONAL" ? "📊" : "💱";
 
       // Output in the exact format expected by the app's /api/strategies POST endpoint
-      // This allows users to directly use this output with the Recipe.money web app
+      // This allows users to directly use this output with the Claude Trade web app
       const strategyPayload = {
         name: args.name as string,
         description: args.description as string,
@@ -376,7 +376,7 @@ export async function handleStrategyTool(
                 success: true,
                 strategy: strategyPayload,
                 message: `${typeEmoji} Strategy "${args.name}" created successfully!`,
-                note: "This strategy configuration is compatible with the Recipe.money web app API. Use the 'strategy' object directly with POST /api/strategies.",
+                note: "This strategy configuration is compatible with the Claude Trade web app API. Use the 'strategy' object directly with POST /api/strategies.",
               },
               null,
               2
@@ -386,7 +386,7 @@ export async function handleStrategyTool(
       };
     }
 
-    case "recipe_strategy_list": {
+    case "claude_trade_strategy_list": {
       const typeFilter = (args?.type as string) || "all";
 
       let examples: Record<string, unknown>[];
@@ -416,7 +416,7 @@ export async function handleStrategyTool(
                 count: examples.length,
                 examples,
                 usage:
-                  "Use recipe_strategy_create with these configurations as templates. Customize the parameters for your needs.",
+                  "Use claude_trade_strategy_create with these configurations as templates. Customize the parameters for your needs.",
               },
               null,
               2
@@ -426,7 +426,7 @@ export async function handleStrategyTool(
       };
     }
 
-    case "recipe_strategy_validate": {
+    case "claude_trade_strategy_validate": {
       const strategy = args?.strategy as Record<string, unknown>;
 
       if (!strategy) {

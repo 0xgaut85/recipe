@@ -1,10 +1,11 @@
 {
-  "name": "recipe-mcp-server",
+  "name": "claude-trade-mcp-server",
   "version": "0.1.0",
-  "description": "Recipe MCP server for Claude Code - Solana vibetrading tools",
+  "description": "Claude Trade MCP server for Claude Code - Solana trading tools",
   "main": "dist/index.js",
+  "type": "module",
   "bin": {
-    "recipe-mcp-server": "./dist/index.js"
+    "claude-trade-mcp-server": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -18,7 +19,7 @@
     "trading",
     "defi"
   ],
-  "author": "recipe.money",
+  "author": "claudetrade.io",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.4"

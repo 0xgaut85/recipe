@@ -1,5 +1,5 @@
 {
-  "description": "Recipe Solana trading plugin hooks",
+  "description": "Claude Trade Solana trading plugin hooks",
   "hooks": {
     "SessionStart": [
       {

@@ -37429,7 +37429,7 @@ async function getNewLaunches(limit = 10) {
 }
 async function getOHLCV(tokenAddress, timeframe = "1H", limit = 100) {
   throw new Error(
-    "OHLCV data requires Birdeye API access. This feature is available in the Recipe.money web app. For technical analysis, please use the web app at https://recipe.money"
+    "OHLCV data requires Birdeye API access. This feature is available in the Claude Trade web app. For technical analysis, please use the web app at https://claudetrade.io"
   );
 }
 async function getNewPairs(options = {}) {
@@ -37546,7 +37546,7 @@ var API_BASE;
 var init_api = __esm({
   "src/lib/api.ts"() {
     "use strict";
-    API_BASE = "https://recipe.money/api";
+    API_BASE = "https://claudetrade.io/api";
   }
 });
 
@@ -51548,7 +51548,7 @@ var ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 var esm_default2 = esm_default(ALPHABET);
 
 // src/lib/wallet.ts
-var WALLET_DIR = path.join(os.homedir(), ".recipe");
+var WALLET_DIR = path.join(os.homedir(), ".claude-trade");
 var WALLET_FILE = path.join(WALLET_DIR, "wallet.json");
 var RPC_URL = "https://api.mainnet-beta.solana.com";
 function ensureWalletDir() {
@@ -51647,23 +51647,23 @@ function formatWalletInfo(wallet, isNew) {
 init_api();
 var walletTools = [
   {
-    name: "recipe_wallet_create",
-    description: "Create a new Solana wallet or load existing one. Generates a keypair locally and saves to ~/.recipe/wallet.json. Returns public key and private key - user must fund this wallet with SOL to trade.",
+    name: "claude_trade_wallet_create",
+    description: "Create a new Solana wallet or load existing one. Generates a keypair locally and saves to ~/.claude-trade/wallet.json. Returns public key and private key - user must fund this wallet with SOL to trade.",
     inputSchema: {
       type: "object",
       properties: {}
     }
   },
   {
-    name: "recipe_wallet_info",
-    description: "Get your wallet's public key, private key, and SOL balance. Shows the wallet stored at ~/.recipe/wallet.json.",
+    name: "claude_trade_wallet_info",
+    description: "Get your wallet's public key, private key, and SOL balance. Shows the wallet stored at ~/.claude-trade/wallet.json.",
     inputSchema: {
       type: "object",
       properties: {}
     }
   },
   {
-    name: "recipe_wallet_balance",
+    name: "claude_trade_wallet_balance",
     description: "Get all token balances for a wallet. If no address provided, uses your local wallet.",
     inputSchema: {
       type: "object",
@@ -51676,7 +51676,7 @@ var walletTools = [
     }
   },
   {
-    name: "recipe_wallet_export",
+    name: "claude_trade_wallet_export",
     description: "Export wallet details for backup. Shows path to wallet file and all keys.",
     inputSchema: {
       type: "object",
@@ -51686,7 +51686,7 @@ var walletTools = [
 ];
 async function handleWalletTool(name, args) {
   switch (name) {
-    case "recipe_wallet_create": {
+    case "claude_trade_wallet_create": {
       const { wallet, isNew } = getOrCreateWallet();
       const balance = await getSolBalance(wallet.publicKey);
       const result = {
@@ -51703,7 +51703,7 @@ async function handleWalletTool(name, args) {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
       };
     }
-    case "recipe_wallet_info": {
+    case "claude_trade_wallet_info": {
       const wallet = loadWallet();
       if (!wallet) {
         return {
@@ -51712,7 +51712,7 @@ async function handleWalletTool(name, args) {
               type: "text",
               text: JSON.stringify({
                 error: "No wallet found",
-                solution: "Use recipe_wallet_create to generate a new wallet"
+                solution: "Use claude_trade_wallet_create to generate a new wallet"
               }, null, 2)
             }
           ],
@@ -51736,7 +51736,7 @@ async function handleWalletTool(name, args) {
         ]
       };
     }
-    case "recipe_wallet_balance": {
+    case "claude_trade_wallet_balance": {
       let address = args?.address;
       if (!address) {
         const wallet = loadWallet();
@@ -51747,7 +51747,7 @@ async function handleWalletTool(name, args) {
                 type: "text",
                 text: JSON.stringify({
                   error: "No wallet found and no address provided",
-                  solution: "Use recipe_wallet_create first or provide an address"
+                  solution: "Use claude_trade_wallet_create first or provide an address"
                 }, null, 2)
               }
             ],
@@ -51798,7 +51798,7 @@ async function handleWalletTool(name, args) {
         };
       }
     }
-    case "recipe_wallet_export": {
+    case "claude_trade_wallet_export": {
       if (!walletExists()) {
         return {
           content: [
@@ -51806,7 +51806,7 @@ async function handleWalletTool(name, args) {
               type: "text",
               text: JSON.stringify({
                 error: "No wallet to export",
-                solution: "Use recipe_wallet_create to generate a wallet first"
+                solution: "Use claude_trade_wallet_create to generate a wallet first"
               }, null, 2)
             }
           ],
@@ -51931,7 +51931,7 @@ async function getQuote(inputToken, outputToken, amount, slippageBps = 50) {
 async function executeSwap(inputToken, outputToken, amount, slippageBps = 50) {
   const keypair = getKeypair();
   if (!keypair) {
-    throw new Error("No wallet found. Use recipe_wallet_create first.");
+    throw new Error("No wallet found. Use claude_trade_wallet_create first.");
   }
   const inputMint = resolveToken(inputToken);
   const outputMint = resolveToken(outputToken);
@@ -52074,7 +52074,7 @@ async function resolveTokenMintWithSearch(token) {
 // src/tools/token.ts
 var tokenTools = [
   {
-    name: "recipe_token_search",
+    name: "claude_trade_token_search",
     description: "Search for tokens by name, symbol, or apply advanced filters. Can filter by first letter, market cap range, liquidity, volume, holders, and more.",
     inputSchema: {
       type: "object",
@@ -52123,7 +52123,7 @@ var tokenTools = [
     }
   },
   {
-    name: "recipe_token_info",
+    name: "claude_trade_token_info",
     description: "Get price, volume, liquidity, and other info for a token by its mint address or symbol.",
     inputSchema: {
       type: "object",
@@ -52137,7 +52137,7 @@ var tokenTools = [
     }
   },
   {
-    name: "recipe_get_ohlcv",
+    name: "claude_trade_get_ohlcv",
     description: "Get OHLCV (Open, High, Low, Close, Volume) candle data for technical analysis.",
     inputSchema: {
       type: "object",
@@ -52160,7 +52160,7 @@ var tokenTools = [
     }
   },
   {
-    name: "recipe_calculate_ema",
+    name: "claude_trade_calculate_ema",
     description: "Calculate EMA (Exponential Moving Average) for a token and check if price is above/below it.",
     inputSchema: {
       type: "object",
@@ -52183,7 +52183,7 @@ var tokenTools = [
     }
   },
   {
-    name: "recipe_get_new_pairs",
+    name: "claude_trade_get_new_pairs",
     description: "Get newly launched token pairs on Solana (Pump.fun, Raydium, Meteora, etc). Use this for sniping new launches. Supports filtering by age, liquidity, volume, and market cap.",
     inputSchema: {
       type: "object",
@@ -52220,7 +52220,7 @@ var tokenTools = [
     }
   },
   {
-    name: "recipe_get_pair_details",
+    name: "claude_trade_get_pair_details",
     description: "Get detailed metrics for a specific trading pair including 30min/1h volume, trades, and price changes.",
     inputSchema: {
       type: "object",
@@ -52234,7 +52234,7 @@ var tokenTools = [
     }
   },
   {
-    name: "recipe_token_trending",
+    name: "claude_trade_token_trending",
     description: "Get trending tokens on Solana by volume.",
     inputSchema: {
       type: "object",
@@ -52247,7 +52247,7 @@ var tokenTools = [
     }
   },
   {
-    name: "recipe_token_price",
+    name: "claude_trade_token_price",
     description: "Get the current USD price of a token. Supports symbols (SOL, BONK) or mint addresses.",
     inputSchema: {
       type: "object",
@@ -52261,7 +52261,7 @@ var tokenTools = [
     }
   },
   {
-    name: "recipe_token_new_launches",
+    name: "claude_trade_token_new_launches",
     description: "Get the latest token launches on Pump.fun. Shows new memecoins with socials and market data.",
     inputSchema: {
       type: "object",
@@ -52289,7 +52289,7 @@ function calculateEMA(prices, period) {
 }
 async function handleTokenTool(name, args) {
   switch (name) {
-    case "recipe_token_search": {
+    case "claude_trade_token_search": {
       const hasAdvancedFilters = args?.symbolStartsWith || args?.nameContains || args?.minMarketCap || args?.maxMarketCap || args?.minLiquidity || args?.maxLiquidity || args?.minVolume24h || args?.minHolders;
       if (hasAdvancedFilters || args?.keyword) {
         const tokens = await advancedSearchTokens({
@@ -52377,7 +52377,7 @@ async function handleTokenTool(name, args) {
         ]
       };
     }
-    case "recipe_token_info": {
+    case "claude_trade_token_info": {
       const tokenArg = args?.token;
       if (!tokenArg) {
         return {
@@ -52420,7 +52420,7 @@ async function handleTokenTool(name, args) {
         ]
       };
     }
-    case "recipe_get_ohlcv": {
+    case "claude_trade_get_ohlcv": {
       const tokenArg = args?.token;
       if (!tokenArg) {
         return {
@@ -52470,7 +52470,7 @@ async function handleTokenTool(name, args) {
         };
       }
     }
-    case "recipe_calculate_ema": {
+    case "claude_trade_calculate_ema": {
       const tokenArg = args?.token;
       const period = args?.period;
       if (!tokenArg) {
@@ -52537,7 +52537,7 @@ async function handleTokenTool(name, args) {
         };
       }
     }
-    case "recipe_get_new_pairs": {
+    case "claude_trade_get_new_pairs": {
       const options = {
         maxAgeMinutes: args?.maxAgeMinutes || 30,
         minLiquidity: args?.minLiquidity,
@@ -52596,7 +52596,7 @@ async function handleTokenTool(name, args) {
         };
       }
     }
-    case "recipe_get_pair_details": {
+    case "claude_trade_get_pair_details": {
       const address = args?.address;
       if (!address) {
         return {
@@ -52660,7 +52660,7 @@ async function handleTokenTool(name, args) {
         ]
       };
     }
-    case "recipe_token_trending": {
+    case "claude_trade_token_trending": {
       const limit = args?.limit || 10;
       try {
         const data = await getTrending();
@@ -52714,7 +52714,7 @@ async function handleTokenTool(name, args) {
         };
       }
     }
-    case "recipe_token_price": {
+    case "claude_trade_token_price": {
       const token = args?.token;
       if (!token) {
         return {
@@ -52740,7 +52740,7 @@ async function handleTokenTool(name, args) {
         ]
       };
     }
-    case "recipe_token_new_launches": {
+    case "claude_trade_token_new_launches": {
       const limit = Math.min(args?.limit || 10, 50);
       const tokens = await getNewLaunches(limit);
       return {
@@ -52784,7 +52784,7 @@ async function handleTokenTool(name, args) {
 // src/tools/trade.ts
 var tradeTools = [
   {
-    name: "recipe_swap_quote",
+    name: "claude_trade_swap_quote",
     description: "Get a swap quote from Jupiter aggregator. Shows expected output, price impact, and route. Use this before executing a swap to preview the trade.",
     inputSchema: {
       type: "object",
@@ -52810,7 +52810,7 @@ var tradeTools = [
     }
   },
   {
-    name: "recipe_swap_execute",
+    name: "claude_trade_swap_execute",
     description: "Execute a token swap using your local wallet. WARNING: This uses real funds! Make sure your wallet has enough balance.",
     inputSchema: {
       type: "object",
@@ -52836,7 +52836,7 @@ var tradeTools = [
     }
   },
   {
-    name: "recipe_quick_buy",
+    name: "claude_trade_quick_buy",
     description: "Quick buy a token using SOL. Simplified version of swap - just specify the token and SOL amount. WARNING: Uses real funds!",
     inputSchema: {
       type: "object",
@@ -52858,7 +52858,7 @@ var tradeTools = [
     }
   },
   {
-    name: "recipe_quick_sell",
+    name: "claude_trade_quick_sell",
     description: "Quick sell a token for SOL. Simplified version of swap - just specify the token and amount to sell. WARNING: Uses real funds!",
     inputSchema: {
       type: "object",
@@ -52880,7 +52880,7 @@ var tradeTools = [
     }
   },
   {
-    name: "recipe_tokens_list",
+    name: "claude_trade_tokens_list",
     description: "List common token symbols and their mint addresses. Useful for finding tokens to trade.",
     inputSchema: {
       type: "object",
@@ -52890,7 +52890,7 @@ var tradeTools = [
 ];
 async function handleTradeTool(name, args) {
   switch (name) {
-    case "recipe_swap_quote": {
+    case "claude_trade_swap_quote": {
       const inputTokenArg = args?.inputToken;
       const outputTokenArg = args?.outputToken;
       const amount = args?.amount;
@@ -52953,7 +52953,7 @@ async function handleTradeTool(name, args) {
                   priceImpact: `${quote.priceImpact.toFixed(4)}%`,
                   slippage: `${slippageValue / 100}%`,
                   route: quote.route,
-                  ready: "Use recipe_swap_execute with same parameters to trade"
+                  ready: "Use claude_trade_swap_execute with same parameters to trade"
                 },
                 null,
                 2
@@ -52981,7 +52981,7 @@ async function handleTradeTool(name, args) {
         };
       }
     }
-    case "recipe_swap_execute": {
+    case "claude_trade_swap_execute": {
       const inputTokenArg = args?.inputToken;
       const outputTokenArg = args?.outputToken;
       const amount = args?.amount;
@@ -53007,7 +53007,7 @@ async function handleTradeTool(name, args) {
               text: JSON.stringify(
                 {
                   error: "No wallet found",
-                  solution: "Use recipe_wallet_create to generate a wallet first"
+                  solution: "Use claude_trade_wallet_create to generate a wallet first"
                 },
                 null,
                 2
@@ -53113,7 +53113,7 @@ async function handleTradeTool(name, args) {
         };
       }
     }
-    case "recipe_quick_buy": {
+    case "claude_trade_quick_buy": {
       const tokenArg = args?.token;
       const solAmount = args?.solAmount;
       const slippageBps = args?.slippageBps || 100;
@@ -53137,7 +53137,7 @@ async function handleTradeTool(name, args) {
               text: JSON.stringify(
                 {
                   error: "No wallet found",
-                  solution: "Use recipe_wallet_create to generate a wallet first"
+                  solution: "Use claude_trade_wallet_create to generate a wallet first"
                 },
                 null,
                 2
@@ -53227,7 +53227,7 @@ async function handleTradeTool(name, args) {
         };
       }
     }
-    case "recipe_quick_sell": {
+    case "claude_trade_quick_sell": {
       const tokenArg = args?.token;
       const amount = args?.amount;
       const slippageBps = args?.slippageBps || 100;
@@ -53251,7 +53251,7 @@ async function handleTradeTool(name, args) {
               text: JSON.stringify(
                 {
                   error: "No wallet found",
-                  solution: "Use recipe_wallet_create to generate a wallet first"
+                  solution: "Use claude_trade_wallet_create to generate a wallet first"
                 },
                 null,
                 2
@@ -53320,7 +53320,7 @@ async function handleTradeTool(name, args) {
         };
       }
     }
-    case "recipe_tokens_list": {
+    case "claude_trade_tokens_list": {
       const tokens = listTokens();
       return {
         content: [
@@ -53346,7 +53346,7 @@ async function handleTradeTool(name, args) {
 // src/tools/strategy.ts
 var strategyTools = [
   {
-    name: "recipe_strategy_create",
+    name: "claude_trade_strategy_create",
     description: "Create and save a trading strategy. Supports spot trades, new pair sniping, and conditional/indicator-based strategies. Use this when the user wants to save/deploy a strategy.",
     inputSchema: {
       type: "object",
@@ -53457,7 +53457,7 @@ var strategyTools = [
     }
   },
   {
-    name: "recipe_strategy_list",
+    name: "claude_trade_strategy_list",
     description: "Get example strategy configurations for common trading patterns.",
     inputSchema: {
       type: "object",
@@ -53471,7 +53471,7 @@ var strategyTools = [
     }
   },
   {
-    name: "recipe_strategy_validate",
+    name: "claude_trade_strategy_validate",
     description: "Validate a strategy configuration for completeness and safety.",
     inputSchema: {
       type: "object",
@@ -53538,7 +53538,7 @@ var STRATEGY_EXAMPLES = {
 };
 async function handleStrategyTool(name, args) {
   switch (name) {
-    case "recipe_strategy_create": {
+    case "claude_trade_strategy_create": {
       const strategyType = args?.type;
       if (!args?.name || !args?.description || !strategyType) {
         return {
@@ -53655,7 +53655,7 @@ async function handleStrategyTool(name, args) {
                 success: true,
                 strategy: strategyPayload,
                 message: `${typeEmoji} Strategy "${args.name}" created successfully!`,
-                note: "This strategy configuration is compatible with the Recipe.money web app API. Use the 'strategy' object directly with POST /api/strategies."
+                note: "This strategy configuration is compatible with the Claude Trade web app API. Use the 'strategy' object directly with POST /api/strategies."
               },
               null,
               2
@@ -53664,7 +53664,7 @@ async function handleStrategyTool(name, args) {
         ]
       };
     }
-    case "recipe_strategy_list": {
+    case "claude_trade_strategy_list": {
       const typeFilter = args?.type || "all";
       let examples;
       if (typeFilter === "all") {
@@ -53690,7 +53690,7 @@ async function handleStrategyTool(name, args) {
               {
                 count: examples.length,
                 examples,
-                usage: "Use recipe_strategy_create with these configurations as templates. Customize the parameters for your needs."
+                usage: "Use claude_trade_strategy_create with these configurations as templates. Customize the parameters for your needs."
               },
               null,
               2
@@ -53699,7 +53699,7 @@ async function handleStrategyTool(name, args) {
         ]
       };
     }
-    case "recipe_strategy_validate": {
+    case "claude_trade_strategy_validate": {
       const strategy = args?.strategy;
       if (!strategy) {
         return {
@@ -53770,7 +53770,7 @@ async function handleStrategyTool(name, args) {
 // src/index.ts
 var server = new Server(
   {
-    name: "recipe",
+    name: "claude-trade",
     version: "1.0.0"
   },
   {
@@ -53792,16 +53792,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
   try {
-    if (name.startsWith("recipe_wallet_")) {
+    if (name.startsWith("claude_trade_wallet_")) {
       return await handleWalletTool(name, args);
     }
-    if (name.startsWith("recipe_token_") || name.startsWith("recipe_get_") || name.startsWith("recipe_calculate_")) {
+    if (name.startsWith("claude_trade_token_") || name.startsWith("claude_trade_get_") || name.startsWith("claude_trade_calculate_")) {
       return await handleTokenTool(name, args);
     }
-    if (name.startsWith("recipe_swap_") || name.startsWith("recipe_quick_") || name === "recipe_tokens_list") {
+    if (name.startsWith("claude_trade_swap_") || name.startsWith("claude_trade_quick_") || name === "claude_trade_tokens_list") {
       return await handleTradeTool(name, args);
     }
-    if (name.startsWith("recipe_strategy_")) {
+    if (name.startsWith("claude_trade_strategy_")) {
       return await handleStrategyTool(name, args);
     }
     return {
@@ -53831,15 +53831,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   console.error("");
   console.error("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
-  console.error("  RECIPE.MONEY - CLAUDE CODE PLUGIN");
-  console.error("  https://recipe.money");
+  console.error("  CLAUDE TRADE - CLAUDE CODE PLUGIN");
+  console.error("  https://claudetrade.io");
   console.error("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
   console.error("");
   const { wallet, isNew } = getOrCreateWallet();
   console.error(formatWalletInfo(wallet, isNew));
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Recipe MCP server running on stdio");
+  console.error("Claude Trade MCP server running on stdio");
   console.error("");
 }
 main().catch((error2) => {

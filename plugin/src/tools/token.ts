@@ -4,7 +4,7 @@ import { getNewLaunches, getTokenByMint, formatTokenData, searchTokens as search
 
 export const tokenTools: Tool[] = [
   {
-    name: "recipe_token_search",
+    name: "claude_trade_token_search",
     description: "Search for tokens on Solana by name or symbol. Returns price, volume, and market data from DexScreener.",
     inputSchema: {
       type: "object",
@@ -18,7 +18,7 @@ export const tokenTools: Tool[] = [
     },
   },
   {
-    name: "recipe_token_info",
+    name: "claude_trade_token_info",
     description: "Get detailed information about a specific token by its mint address.",
     inputSchema: {
       type: "object",
@@ -32,7 +32,7 @@ export const tokenTools: Tool[] = [
     },
   },
   {
-    name: "recipe_token_new_launches",
+    name: "claude_trade_token_new_launches",
     description: "Get the latest token launches on Pump.fun. Returns new meme coins and their market data.",
     inputSchema: {
       type: "object",
@@ -45,7 +45,7 @@ export const tokenTools: Tool[] = [
     },
   },
   {
-    name: "recipe_token_pumpfun",
+    name: "claude_trade_token_pumpfun",
     description: "Get information about a Pump.fun token by its mint address.",
     inputSchema: {
       type: "object",
@@ -65,7 +65,7 @@ export async function handleTokenTool(
   args: Record<string, unknown> | undefined
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
   switch (name) {
-    case "recipe_token_search": {
+    case "claude_trade_token_search": {
       const query = args?.query as string;
       if (!query) {
         return {
@@ -100,7 +100,7 @@ export async function handleTokenTool(
       };
     }
 
-    case "recipe_token_info": {
+    case "claude_trade_token_info": {
       const address = args?.address as string;
       if (!address) {
         return {
@@ -140,7 +140,7 @@ export async function handleTokenTool(
       };
     }
 
-    case "recipe_token_new_launches": {
+    case "claude_trade_token_new_launches": {
       const limit = Math.min((args?.limit as number) || 10, 50);
       const tokens = await getNewLaunches(limit);
 
@@ -156,7 +156,7 @@ export async function handleTokenTool(
       };
     }
 
-    case "recipe_token_pumpfun": {
+    case "claude_trade_token_pumpfun": {
       const mint = args?.mint as string;
       if (!mint) {
         return {
