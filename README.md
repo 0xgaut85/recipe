@@ -1,225 +1,65 @@
-# Claude Trade Plugin
+# claude-trade
 
-Solana trading plugin for Claude Code. Search tokens, analyze wallets, execute swaps, and create trading strategies - all from your terminal.
+an experiment in giving llms financial agency.
 
-## Installation
+## background
 
-### Via Claude Code Marketplace (Recommended)
+i've been thinking about what happens when you give an ai model actual tools to interact with markets - not just analysis, but execution. most trading bots are glorified if-statements. what if you could describe a strategy in plain english and have something that actually reasons about it?
+
+this is an mcp plugin that connects claude to solana's defi infrastructure. it can check prices, analyze tokens, execute swaps, and run strategies autonomously. i wanted to see how far you could push the "ai agent" concept when there's real money on the line.
+
+## what it actually does
+
+gives claude a set of tools:
+- wallet management (generates keypairs locally, checks balances)
+- market data (prices, volume, liquidity, new launches via dexscreener/birdeye/pump.fun)
+- trading (swaps through jupiter aggregator)
+- strategy primitives (entry/exit conditions, position sizing, stop losses)
+
+you describe what you want, claude figures out how to do it. the interesting part is watching it reason through edge cases you didn't think about.
+
+## some things i've tried
+
+telling it to "buy tokens that are trending but haven't pumped yet" - it built filters around volume/price divergence that were surprisingly sensible
+
+asking it to "watch this wallet and do what they do" - copy trading with natural language config
+
+"find new launches that look legit, not like rugs" - it developed heuristics around holder distribution, liquidity patterns, social links
+
+none of this is magic. it's just an llm with tools. but the emergent behavior when you let it iterate on strategies is genuinely interesting.
+
+## setup
 
 ```
 /plugin marketplace install claude-trade
 ```
 
-### Manual Installation
-
-1. Clone this repository:
-
-```bash
-git clone https://github.com/0xgaut85/claude-trade.git
-cd claude-trade/plugin
-```
-
-2. Install dependencies and build:
-
-```bash
-npm install
-npm run build
-```
-
-3. Add to your Claude Code configuration:
-
-**For Claude Code Desktop** (`~/.claude/claude_desktop_config.json`):
-
+or manual:
 ```json
 {
   "mcpServers": {
     "claude-trade": {
-      "command": "node",
-      "args": ["/path/to/claude-trade/plugin/dist/index.js"]
+      "command": "node", 
+      "args": ["path/to/dist/index.js"]
     }
   }
 }
 ```
 
-## Features
+## architecture
 
-### Zero Configuration
+- mcp server exposing tools to claude
+- local wallet storage (keys never leave your machine)
+- api layer talking to jupiter, dexscreener, birdeye, pump.fun
+- no backend dependency for core functionality
 
-- **No API keys needed** - All data APIs go through claudetrade.io's backend
-- **Auto wallet generation** - A Solana wallet is created automatically on first use
-- **Local key storage** - Private keys are stored at `~/.claude-trade/wallet.json` and never leave your machine
+## notes
 
-### Available Tools
+this started as a weekend project to learn mcp. turned into something i actually use. sharing because i think more people should experiment with giving llms real-world agency - financial markets are a good testbed because feedback is immediate and unambiguous.
 
-#### Wallet Management
+not financial advice. you will probably lose money. but you might learn something interesting about how these models reason under uncertainty.
 
-| Tool | Description |
-|------|-------------|
-| `claude_trade_wallet_create` | Generate a new Solana wallet or load existing |
-| `claude_trade_wallet_info` | Get your wallet's public key, private key, and balance |
-| `claude_trade_wallet_balance` | Get all token balances for any wallet |
-| `claude_trade_wallet_export` | Export wallet for backup |
+## links
 
-#### Token Discovery & Analysis
-
-| Tool | Description |
-|------|-------------|
-| `claude_trade_token_search` | Search tokens with advanced filters (symbol, name, mcap, liquidity, holders) |
-| `claude_trade_token_info` | Get detailed info for a token address or symbol |
-| `claude_trade_token_trending` | Get trending tokens on Solana by volume |
-| `claude_trade_token_price` | Get current USD price |
-| `claude_trade_token_new_launches` | Get latest Pump.fun launches |
-| `claude_trade_get_ohlcv` | Get OHLCV candle data for technical analysis |
-| `claude_trade_calculate_ema` | Calculate EMA and check if price is above/below |
-| `claude_trade_get_new_pairs` | Get new pairs with filters (age, liquidity, volume, mcap) |
-| `claude_trade_get_pair_details` | Get detailed metrics (30m/1h volume, trades, price changes) |
-
-#### Trading
-
-| Tool | Description |
-|------|-------------|
-| `claude_trade_swap_quote` | Get a swap quote from Jupiter (supports token names, symbols, or addresses) |
-| `claude_trade_swap_execute` | Execute a swap with your wallet |
-| `claude_trade_tokens_list` | List common token symbols |
-
-#### Strategy
-
-| Tool | Description |
-|------|-------------|
-| `claude_trade_strategy_list` | Get example strategy configurations |
-| `claude_trade_strategy_create` | Create a SNIPER, SPOT, or CONDITIONAL strategy |
-| `claude_trade_strategy_validate` | Validate a strategy config |
-
-## Usage Examples
-
-### Generate a Wallet
-
-Ask Claude:
-> "Create a new wallet for me"
-
-Claude will use `claude_trade_wallet_create` to generate a keypair and save it locally.
-
-### Search for Tokens
-
-> "Search for BONK token and show me the price"
-
-> "What are the trending tokens right now?"
-
-> "Show me the latest Pump.fun launches"
-
-> "Find tokens with symbol starting with 'AI' and market cap over $1M"
-
-### Technical Analysis
-
-> "Get the 4H OHLCV data for BONK"
-
-> "Calculate the 50-period EMA for WIF on the 1H timeframe"
-
-> "Show me new pairs launched in the last 15 minutes with at least $10k liquidity"
-
-### Execute a Swap
-
-> "Get a quote for swapping 1 SOL to USDC"
-
-> "Swap 0.5 SOL to BONK"
-
-**Note:** Make sure your wallet has SOL before swapping! Send SOL to your public key address.
-
-### Create a Strategy
-
-> "Show me example trading strategies"
-
-> "Create a sniper strategy for AI-themed tokens with min $50k market cap"
-
-> "Create a conditional strategy to buy BONK when price crosses above 50 EMA"
-
-## Strategy Types
-
-### SNIPER
-Automatically snipe new token launches matching your criteria:
-- `maxAgeMinutes` - How fresh the token must be
-- `minLiquidity` / `maxLiquidity` - Liquidity range
-- `minMarketCap` / `maxMarketCap` - Market cap range
-- `nameFilter` - Filter by name (e.g., "ai", "meme")
-- `takeProfit` / `stopLoss` - Exit conditions
-
-### SPOT
-Simple token swap with optional risk management:
-- `inputToken` / `outputToken` - Tokens to trade
-- `amount` - Trade size
-- `direction` - buy or sell
-- `stopLoss` / `takeProfit` - Optional exit conditions
-
-### CONDITIONAL
-Trade when technical conditions are met:
-- `indicator` - EMA, RSI, SMA, or PRICE
-- `period` - Indicator period (e.g., 20, 50, 200)
-- `timeframe` - 1m, 5m, 15m, 1H, 4H, 1D
-- `trigger` - price_above, price_below, crosses_above, crosses_below, price_touches
-
-## Wallet Security
-
-- **Private keys are stored locally** at `~/.claude-trade/wallet.json`
-- **Keys never leave your machine** - they're used only for signing transactions locally
-- **Back up your wallet file** - losing it means losing access to your funds
-- **Never share your private key** - anyone with it can steal your funds
-
-## Supported Tokens
-
-Common tokens can be referenced by symbol:
-
-| Symbol | Description |
-|--------|-------------|
-| SOL | Solana |
-| USDC | USD Coin |
-| USDT | Tether |
-| BONK | Bonk |
-| WIF | dogwifhat |
-| JUP | Jupiter |
-| POPCAT | Popcat |
-| PYTH | Pyth Network |
-| RAY | Raydium |
-| ORCA | Orca |
-| JITO | Jito |
-| RENDER | Render |
-
-You can also use any valid Solana mint address, or search by token name!
-
-## Data Sources
-
-- **Token Data**: DexScreener, Pump.fun, claudetrade.io API (Birdeye)
-- **OHLCV & Indicators**: claudetrade.io API (Birdeye)
-- **Prices & Swaps**: Jupiter Aggregator
-- **Wallet Balances**: Solana RPC, claudetrade.io API (Helius)
-- **Trending & New Pairs**: claudetrade.io API (Birdeye)
-
-## Troubleshooting
-
-### "No wallet found"
-
-Run any wallet command to generate one:
-> "Show my wallet"
-
-### "Insufficient balance"
-
-Your wallet needs SOL to trade. Send SOL to your public key address shown in wallet info.
-
-### "Swap failed"
-
-- Check you have enough balance (including fees)
-- Try increasing slippage for volatile tokens
-- Make sure the token has liquidity
-
-### "Could not find token"
-
-- Try using the contract address (CA) instead of the symbol
-- Make sure the token exists and has liquidity
-
-## Support
-
-- Website: [claudetrade.io](https://claudetrade.io)
-- Twitter: [@claudetrade](https://x.com/claudetrade)
-
-## License
-
-MIT
+site: [claudetrade.io](https://claudetrade.io)  
+twitter: [@claudetrade](https://x.com/claudetrade)
