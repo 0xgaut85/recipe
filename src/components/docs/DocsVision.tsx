@@ -16,7 +16,7 @@ export const DocsVision: FC = () => {
       <div className="text-center space-y-8 bg-white/[0.02] border border-white/10 rounded-xl p-10 md:p-12">
         <ul className="text-left space-y-2 text-white/60 mb-8 mx-auto max-w-lg">
           {visionPoints.map((point, i) => (
-            <li key={i}>— {point}</li>
+            <li key={i}>• {point}</li>
           ))}
         </ul>
         <p className="text-2xl font-display font-semibold text-white">

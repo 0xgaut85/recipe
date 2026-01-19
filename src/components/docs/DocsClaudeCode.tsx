@@ -14,7 +14,7 @@ export const DocsClaudeCode: FC = () => {
         </p>
         <p className="text-white/60 mb-8">
           Pre-built connectors (Jupiter, DexScreener, Pump.fun), standardized data
-          models, strategy templates, and one-click primitives.
+          models, strategy templates and one-click primitives.
         </p>
         <div className="space-y-4 font-mono text-sm">
           <div className="p-5 bg-white/5 rounded-lg border border-white/10">

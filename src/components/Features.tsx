@@ -14,7 +14,7 @@ const features = [
   {
     icon: Layers,
     title: "[Connectors]",
-    desc: "Pre-wired to Jupiter, DexScreener, Pump.fun, Birdeye, and more.",
+    desc: "Pre-wired to Jupiter, DexScreener, Pump.fun, Birdeye and more.",
     size: "col-span-1",
   },
   {
@@ -26,7 +26,7 @@ const features = [
   {
     icon: Shield,
     title: "[Safety]",
-    desc: "Built-in risk limits, slippage protection, and simulation mode before going live.",
+    desc: "Built-in risk limits, slippage protection and simulation mode before going live.",
     size: "col-span-1 md:col-span-2",
   },
 ];

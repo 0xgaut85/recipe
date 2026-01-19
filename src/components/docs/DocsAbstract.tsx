@@ -19,7 +19,7 @@ export const DocsAbstract: FC = () => {
               CLAUDE TRADE
             </strong>{" "}
             is the first AI-powered trading platform that turns intent into execution
-            instantly by combining Claude AI, auto-integrated data connectors, and 
+            instantly by combining Claude AI, auto-integrated data connectors and 
             a real-time execution layer on Solana.
           </p>
         </div>

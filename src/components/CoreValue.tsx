@@ -64,11 +64,11 @@ export const CoreValue: FC = () => {
             }}
           >
             <strong style={{ fontWeight: 600 }}>
-              The future isn&apos;t traders with terminals—it&apos;s AI with
+              The future isn&apos;t traders with terminals. It&apos;s AI with
               wallets.
             </strong>{" "}
             Describe your strategy in plain English. Claude understands context,
-            sets parameters, and executes on Solana&apos;s fastest DEXs.
+            sets parameters and executes on Solana&apos;s fastest DEXs.
           </p>
           <p
             className="leading-relaxed text-base sm:text-lg"

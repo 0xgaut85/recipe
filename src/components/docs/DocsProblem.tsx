@@ -23,7 +23,7 @@ export const DocsProblem: FC = () => {
         <p className="text-white/80 mb-4">
           But converting those signals into a working strategy usually means
           manually integrating data sources, building pipelines, handling edge
-          cases, and maintaining infrastructure.
+          cases and maintaining infrastructure.
         </p>
         <p className="font-display text-xl font-semibold text-white border-l-4 border-[#E57B3A] pl-4">
           Good ideas die before they ship. Manual trading happens too late.

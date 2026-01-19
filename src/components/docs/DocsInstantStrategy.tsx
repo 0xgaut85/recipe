@@ -30,7 +30,7 @@ export const DocsInstantStrategy: FC = () => {
       </div>
       <div className="bg-[#E57B3A]/10 border border-[#E57B3A]/20 p-5 rounded-lg">
         <p className="text-white">
-          Claude turns this into a runnable strategy, simulation config, and
+          Claude turns this into a runnable strategy, simulation config and
           deployment settings.
           <br />
           <span className="font-semibold">

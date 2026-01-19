@@ -14,8 +14,8 @@ export const DocsWhatIsClaudeTrade: FC = () => {
         What is Claude Trade?
       </h2>
       <p className="text-lg text-white font-medium leading-relaxed mb-8">
-        Claude Trade is a Solana-native platform where users create, test, deploy, and
-        monetize trading strategies using natural language—powered by Claude AI.
+        Claude Trade is a Solana-native platform where users create, test, deploy and
+        monetize trading strategies using natural language. Powered by Claude AI.
       </p>
       <p className="text-white/60 mb-6">
         A strategy is an executable object that defines:

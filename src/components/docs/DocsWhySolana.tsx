@@ -8,7 +8,7 @@ export const DocsWhySolana: FC = () => {
         Why Solana
       </h2>
       <p className="text-white/70 mb-6">
-        AI-powered trading needs low latency, cheap execution, and a rich on-chain
+        AI-powered trading needs low latency, cheap execution and a rich on-chain
         ecosystem. Solana is where markets move fast enough for
         this to matter.
       </p>

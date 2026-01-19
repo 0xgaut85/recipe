@@ -17,7 +17,7 @@ const steps = [
   {
     num: "03",
     title: "Review",
-    desc: "Replay against recent market windows, simulate, and tune via iterative prompts.",
+    desc: "Replay against recent market windows, simulate and tune via iterative prompts.",
     color: "bg-white/[0.02]",
   },
   {

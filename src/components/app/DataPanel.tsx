@@ -498,15 +498,15 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
       <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10 text-xs">
         <div className="flex items-center gap-2">
           <span className="text-white/40">
-            MC: <span className="text-white/60 font-medium">{token.marketCap ? formatNumber(token.marketCap) : "—"}</span>
+            MC: <span className="text-white/60 font-medium">{token.marketCap ? formatNumber(token.marketCap) : "-"}</span>
           </span>
           <span className="text-white/20">•</span>
           <span className="text-white/40">
-            Vol: <span className="text-white/60">{token.volume24h ? formatNumber(token.volume24h) : "—"}</span>
+            Vol: <span className="text-white/60">{token.volume24h ? formatNumber(token.volume24h) : "-"}</span>
           </span>
         </div>
         <span className="text-white/40">
-          Liq: <span className="text-white/60">{token.liquidity ? formatNumber(token.liquidity) : "—"}</span>
+          Liq: <span className="text-white/60">{token.liquidity ? formatNumber(token.liquidity) : "-"}</span>
         </span>
       </div>
     </motion.a>
@@ -923,7 +923,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                     <p className="text-white/50 text-xs line-clamp-1 mb-2">{strategy.description}</p>
                     
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-white/30">{strategy.config?.type || "—"} • {strategy.config?.amount || 0} SOL</span>
+                      <span className="text-white/30">{strategy.config?.type || "-"} • {strategy.config?.amount || 0} SOL</span>
                       <span className="text-white/30 group-hover:text-[#E57B3A] transition-colors">Monitor →</span>
                     </div>
                   </motion.button>
@@ -1004,7 +1004,7 @@ export const DataPanel: FC<DataPanelProps> = ({ currentStep, walletData }) => {
                   <div className="bg-white/5 rounded-lg p-3 space-y-2">
                     <h4 className="text-white/60 text-xs uppercase tracking-wider mb-2">Config</h4>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div><span className="text-white/40">Type</span><p className="text-white font-medium">{selectedStrategy.config?.type || "—"}</p></div>
+                      <div><span className="text-white/40">Type</span><p className="text-white font-medium">{selectedStrategy.config?.type || "-"}</p></div>
                       {selectedStrategy.config?.amount && <div><span className="text-white/40">Amount</span><p className="text-white font-medium">{selectedStrategy.config.amount} SOL</p></div>}
                       {selectedStrategy.config?.maxAgeMinutes && <div><span className="text-white/40">Max Age</span><p className="text-white font-medium">{selectedStrategy.config.maxAgeMinutes} min</p></div>}
                       {selectedStrategy.config?.minLiquidity && <div><span className="text-white/40">Min Liq</span><p className="text-white font-medium">${(selectedStrategy.config.minLiquidity / 1000).toFixed(0)}k</p></div>}
