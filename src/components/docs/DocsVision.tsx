@@ -1,10 +1,10 @@
 import { FC } from "react";
 
 const visionPoints = [
-  "The default place to create trading logic",
-  "A shared library of on-chain market behavior",
-  "An execution layer Claude can plug into",
-  "A marketplace where good strategies become monetizable assets",
+  "AI agents participating in markets as first-class actors",
+  "Consistent execution without emotional interference",
+  "Compound learning from every trade",
+  "Infrastructure that scales from one agent to many",
 ];
 
 export const DocsVision: FC = () => {
@@ -20,13 +20,13 @@ export const DocsVision: FC = () => {
           ))}
         </ul>
         <p className="text-2xl font-display font-semibold text-white">
-          Not just trading tools.
+          We think AI agents will eventually outperform human traders.
           <br />
-          <span className="bg-[#E57B3A]/15 text-[#E57B3A] px-2 rounded">Built for execution.</span>
+          <span className="bg-[#E57B3A]/15 text-[#E57B3A] px-2 rounded">Not because they&apos;re smarter. Because they&apos;re consistent.</span>
         </p>
         <div className="inline-block p-6 bg-[#E57B3A] rounded-xl">
           <span className="text-3xl text-white font-display font-semibold">
-            Trade with Intelligence.
+            This is us figuring out what that looks like.
           </span>
         </div>
       </div>

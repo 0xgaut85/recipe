@@ -10,17 +10,16 @@ export const DocsAbstract: FC = () => {
       <GlassCard variant="default" className="p-8 md:p-10">
         <div className="relative z-10">
           <p className="text-lg leading-relaxed text-white/90 mb-6">
-            Most trading tools are either pure intuition with no execution or
-            heavy quant stacks that take forever to set up. Real traders
-            don&apos;t have time for either.
+            We wanted to see what happens when you give an AI model actual tools
+            to interact with markets - not just analysis, but execution.
           </p>
           <p className="text-lg leading-relaxed text-white/90">
             <strong className="text-white border-b-2 border-[#E57B3A]">
-              CLAUDE TRADE
+              Claude Trade
             </strong>{" "}
-            is the first AI-powered trading platform that turns intent into execution
-            instantly by combining Claude AI, auto-integrated data connectors and 
-            a real-time execution layer on Solana.
+            connects Claude to Solana&apos;s DeFi infrastructure: price feeds,
+            liquidity data, and swap execution through Jupiter. You describe what
+            you want, Claude figures out how to do it.
           </p>
         </div>
       </GlassCard>

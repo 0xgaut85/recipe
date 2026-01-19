@@ -11,10 +11,10 @@ export const Hero: FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
 
   const scrambleTexts = [
-    "Solana trading.",
-    "AI strategies.",
-    "Instant execution.",
+    "Market cognition.",
     "Natural language.",
+    "Real-time execution.",
+    "Emergent behavior.",
   ];
 
   return (
@@ -74,7 +74,7 @@ export const Hero: FC = () => {
               color: "rgb(255, 255, 255)",
             }}
           >
-            Claude Trade enables
+            An Experiment in AI Trading
           </motion.p>
 
           {/* Scramble Text */}
@@ -109,9 +109,9 @@ export const Hero: FC = () => {
               overflowWrap: "break-word",
             }}
           >
-            Describe your trading strategy in natural language.
+            Give Claude tools to interact with markets.
             <br />
-            Claude executes it on Solana in seconds.
+            Watch what happens.
           </motion.h1>
 
           {/* CTA Buttons */}

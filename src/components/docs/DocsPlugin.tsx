@@ -15,9 +15,15 @@ export const DocsPlugin: FC = () => {
       </h2>
       <GlassCard variant="default" className="p-8">
         <p className="text-white/80 mb-6">
-          Claude Trade also ships a Claude Code plugin so users can trade from anywhere
-          Claude is. This makes Claude a front-end for research and drafting,
-          while Claude Trade remains the execution layer.
+          The MCP plugin lets you use Claude Trade from Claude Code. Claude becomes
+          the interface for research and strategy drafting. The execution layer
+          stays on Solana.
+        </p>
+        <p className="text-white/80 mb-6">
+          Beyond single strategies, you can build a coordinated team of agents. A
+          researcher that monitors wallets 24/7. A DeFi intern that tracks new pools.
+          A trencher catching pump.fun launches. An executor that never sleeps. Each
+          agent develops its own working patterns while sharing context with the team.
         </p>
         <ul className="space-y-3 text-white">
           {pluginExamples.map((example, i) => (

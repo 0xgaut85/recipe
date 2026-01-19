@@ -39,8 +39,8 @@ export const CoreValue: FC = () => {
               overflowWrap: "break-word",
             }}
           >
-            Alpha isn&apos;t scarce. Execution speed is. Claude Trade turns
-            natural language into live trades in seconds.
+            Most trading bots are glorified if-statements. We wanted to see what
+            happens when you give an LLM actual market tools.
           </h2>
         </motion.div>
 
@@ -64,11 +64,11 @@ export const CoreValue: FC = () => {
             }}
           >
             <strong style={{ fontWeight: 600 }}>
-              The future isn&apos;t traders with terminals. It&apos;s AI with
-              wallets.
+              Describe what you want in plain English.
             </strong>{" "}
-            Describe your strategy in plain English. Claude understands context,
-            sets parameters and executes on Solana&apos;s fastest DEXs.
+            Claude reasons about parameters, handles edge cases, and executes on
+            Solana. The interesting part is watching it develop heuristics you
+            didn&apos;t explicitly program.
           </p>
           <p
             className="leading-relaxed text-base sm:text-lg"
@@ -81,8 +81,8 @@ export const CoreValue: FC = () => {
               overflowWrap: "break-word",
             }}
           >
-            No code. No API wiring. No waiting. Go from idea to live strategy
-            before the opportunity closes.
+            No code. No API wiring. Just tell it what you want and see how it
+            figures out the rest.
           </p>
         </motion.div>
 

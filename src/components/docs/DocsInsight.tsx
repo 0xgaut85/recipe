@@ -9,16 +9,16 @@ export const DocsInsight: FC = () => {
       </h2>
       <GlassCard variant="default" className="p-10 text-center">
         <p className="text-2xl font-display font-semibold text-white mb-6">
-          Alpha isn&apos;t scarce. <br />
-          <span className="bg-[#E57B3A]/15 text-[#E57B3A] px-2 rounded">Execution speed is.</span>
+          The interesting part isn&apos;t the execution. <br />
+          <span className="bg-[#E57B3A]/15 text-[#E57B3A] px-2 rounded">It&apos;s the reasoning.</span>
         </p>
         <p className="text-white/70 mb-4">
-          The difference between profit and loss is often
-          how fast you can go from &quot;I think this will happen&quot; to
-          &quot;this is running live&quot;.
+          Tell Claude to &quot;buy tokens that look legit&quot; and it develops
+          heuristics around holder distribution, liquidity patterns, social signals.
+          None of this is magic - it&apos;s just an LLM with tools.
         </p>
         <p className="text-white font-semibold">
-          Time-to-strategy must be seconds, not days.
+          But the emergent behavior when you let it iterate is genuinely interesting.
         </p>
       </GlassCard>
     </section>

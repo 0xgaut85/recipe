@@ -2,32 +2,38 @@
 
 import { FC } from "react";
 import { motion } from "framer-motion";
-import { Zap, Shield, TrendingUp, Layers } from "lucide-react";
+import { Zap, Shield, TrendingUp, Layers, Users } from "lucide-react";
 
 const features = [
   {
     icon: Zap,
     title: "[Instant]",
-    desc: "Deploy in seconds, not days. No API wiring required. Just describe what you want.",
+    desc: "Deploy strategies in seconds. No API wiring. Describe what you want.",
     size: "col-span-1 md:col-span-2",
   },
   {
     icon: Layers,
     title: "[Connectors]",
-    desc: "Pre-wired to Jupiter, DexScreener, Pump.fun, Birdeye and more.",
+    desc: "Pre-integrated with Jupiter, DexScreener, Pump.fun, Birdeye.",
     size: "col-span-1",
   },
   {
     icon: TrendingUp,
     title: "[Marketplace]",
-    desc: "Share strategies. Earn from forks and subscriptions.",
+    desc: "Share strategies. Fork what works. Earn from subscriptions.",
     size: "col-span-1",
+  },
+  {
+    icon: Users,
+    title: "[AI Team]",
+    desc: "Build your financial team from scratch. A researcher scanning markets, an analyst processing signals, a trencher catching launches, an executor handling trades. All autonomous.",
+    size: "col-span-1 md:col-span-3",
   },
   {
     icon: Shield,
     title: "[Safety]",
-    desc: "Built-in risk limits, slippage protection and simulation mode before going live.",
-    size: "col-span-1 md:col-span-2",
+    desc: "Built-in risk limits, slippage protection, simulation mode.",
+    size: "col-span-1 md:col-span-3",
   },
 ];
 
@@ -56,7 +62,7 @@ export const Features: FC = () => {
               color: "rgb(0, 0, 0)",
             }}
           >
-            Everything You Need
+            What&apos;s Under the Hood
           </h2>
           <p
             className="text-lg"
@@ -66,7 +72,7 @@ export const Features: FC = () => {
               color: "rgb(0, 0, 0)",
             }}
           >
-            Batteries included. Ready to trade.
+            Infrastructure for AI-driven trading.
           </p>
         </motion.div>
 

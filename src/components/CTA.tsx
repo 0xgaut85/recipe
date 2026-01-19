@@ -38,7 +38,7 @@ export const CTA: FC = () => {
               color: "rgb(0, 0, 0)",
             }}
           >
-            Ready to Trade Smarter?
+            Try It Yourself
           </h2>
 
           <p
@@ -50,9 +50,8 @@ export const CTA: FC = () => {
               color: "rgb(0, 0, 0)",
             }}
           >
-            Join traders using AI to execute strategies
-            <br />
-            faster than ever before.
+            This is early software. If you&apos;re curious about giving LLMs
+            financial agency, this is a good place to start.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
