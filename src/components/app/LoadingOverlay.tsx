@@ -52,28 +52,13 @@ export const LoadingOverlay: FC<LoadingOverlayProps> = ({
 
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center">
-            {/* Logo with spinner */}
+            {/* Logo with progress bar */}
             <div className="relative mb-8">
-              {/* Outer Ring */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="absolute -inset-6 border border-white/10 rounded-full"
-              />
-              
-              {/* Inner Ring with dot */}
-              <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="absolute -inset-3 border border-white/5 rounded-full"
-              >
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-[#E57B3A] rounded-full" />
-              </motion.div>
-
               {/* Logo */}
               <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
               >
                 <Image
                   src="/transparentlogo.png"
@@ -83,6 +68,20 @@ export const LoadingOverlay: FC<LoadingOverlayProps> = ({
                   className="rounded-xl"
                 />
               </motion.div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-48 h-[2px] bg-white/10 rounded-full overflow-hidden mb-6">
+              <motion.div
+                initial={{ x: "-100%" }}
+                animate={{ x: "100%" }}
+                transition={{
+                  duration: 1.2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="h-full w-1/2 bg-gradient-to-r from-transparent via-[#E57B3A] to-transparent"
+              />
             </div>
 
             {/* Step Number */}
@@ -105,29 +104,19 @@ export const LoadingOverlay: FC<LoadingOverlayProps> = ({
               {stepLabels[step]}
             </motion.h2>
 
-            {/* Loading Dots */}
+            {/* Subtle pulse indicator */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="flex gap-2 mt-6"
+              className="mt-6 text-white/30 text-xs font-mono tracking-wider"
             >
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.3, 1, 0.3],
-                  }}
-                  transition={{
-                    duration: 1,
-                    repeat: Infinity,
-                    delay: i * 0.2,
-                    ease: "easeInOut",
-                  }}
-                  className="w-2 h-2 bg-[#E57B3A] rounded-full"
-                />
-              ))}
+              <motion.span
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              >
+                PROCESSING
+              </motion.span>
             </motion.div>
           </div>
         </motion.div>
