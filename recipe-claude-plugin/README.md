@@ -15,8 +15,8 @@ Solana trading plugin for Claude Code. Search tokens, analyze wallets, execute s
 1. Clone this repository:
 
 ```bash
-git clone https://github.com/0xgaut85/recipe.git
-cd recipe/recipe-claude-plugin
+git clone https://github.com/0xgaut85/claude-trade.git
+cd claude-trade/plugin
 ```
 
 2. Install dependencies and build:
@@ -35,7 +35,7 @@ npm run build
   "mcpServers": {
     "claude-trade": {
       "command": "node",
-      "args": ["/path/to/recipe/recipe-claude-plugin/dist/index.js"]
+      "args": ["/path/to/claude-trade/plugin/dist/index.js"]
     }
   }
 }

@@ -1,15 +1,15 @@
 {
-  "name": "recipe",
+  "name": "claude-trade",
   "owner": {
-    "name": "Recipe.money"
+    "name": "Claude Trade"
   },
   "metadata": {
     "description": "Solana trading plugin for Claude Code",
-    "homepage": "https://recipe.money"
+    "homepage": "https://claudetrade.io"
   },
   "plugins": [
     {
-      "name": "recipe",
+      "name": "claude-trade",
       "version": "1.0.0",
       "source": "./plugin",
       "description": "Search tokens, execute swaps, create trading strategies"

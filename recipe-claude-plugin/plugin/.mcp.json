@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "recipe": {
+    "claude-trade": {
       "type": "stdio",
       "command": "${CLAUDE_PLUGIN_ROOT}/scripts/mcp-server.cjs"
     }

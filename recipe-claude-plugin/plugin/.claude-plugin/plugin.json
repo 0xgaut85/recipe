@@ -1,11 +1,11 @@
 {
-  "name": "recipe",
+  "name": "claude-trade",
   "version": "1.0.0",
   "description": "Solana trading plugin for Claude Code - search tokens, execute swaps, create strategies",
   "author": {
-    "name": "Recipe.money"
+    "name": "Claude Trade"
   },
-  "repository": "https://github.com/0xLaylo/recipe-plugin",
+  "repository": "https://github.com/0xgaut85/claude-trade",
   "license": "MIT",
   "keywords": [
     "solana",
