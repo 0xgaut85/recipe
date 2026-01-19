@@ -66,7 +66,7 @@ export const WalletGate: FC<WalletGateProps> = ({ children }) => {
             >
               <div className="relative">
                 <Image
-                  src="/claude.png"
+                  src="/transparentlogo.png"
                   alt="Claude Trade"
                   width={72}
                   height={72}

@@ -26,8 +26,8 @@ export const metadata: Metadata = {
   description:
     "Turn intent into execution. The first AI-powered trading platform on Solana powered by Claude.",
   icons: {
-    icon: "/claude.png",
-    apple: "/claude.png",
+    icon: "/transparentlogo.png",
+    apple: "/transparentlogo.png",
   },
 };
 

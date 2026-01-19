@@ -178,7 +178,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 sm:gap-3 group">
           <Image
-            src="/claude.png"
+            src="/transparentlogo.png"
             alt="Claude Trade"
             width={28}
             height={28}

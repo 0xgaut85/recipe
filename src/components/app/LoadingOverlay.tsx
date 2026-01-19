@@ -76,7 +76,7 @@ export const LoadingOverlay: FC<LoadingOverlayProps> = ({
                 transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
               >
                 <Image
-                  src="/claude.png"
+                  src="/transparentlogo.png"
                   alt="Claude Trade"
                   width={56}
                   height={56}

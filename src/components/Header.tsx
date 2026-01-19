@@ -37,7 +37,7 @@ export const Header: FC = () => {
             className="flex items-center transform transition-transform duration-300 hover:scale-105"
           >
             <Image
-              src="/claude.png"
+              src="/transparentlogo.png"
               alt="Claude Trade"
               width={48}
               height={48}

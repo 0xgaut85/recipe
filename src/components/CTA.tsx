@@ -207,7 +207,7 @@ export const CTA: FC = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
               <Image
-                src="/claude.png"
+                src="/transparentlogo.png"
                 alt="Claude Trade"
                 width={28}
                 height={28}
