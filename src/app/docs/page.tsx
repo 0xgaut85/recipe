@@ -142,7 +142,7 @@ export default function DocsPage() {
                 className="text-5xl md:text-6xl text-white mb-6"
                 style={{ fontFamily: "TWKEverett-Regular, sans-serif" }}
               >
-                CLAUDE TRADE
+                claudetrade
               </h1>
               <p
                 className="text-lg text-gray-400 max-w-lg mx-auto"

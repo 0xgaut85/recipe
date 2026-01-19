@@ -51,7 +51,7 @@ export const Header: FC = () => {
                 letterSpacing: "-0.5px",
               }}
             >
-              CLAUDE TRADE
+              claudetrade
             </span>
           </Link>
 

@@ -111,7 +111,7 @@ once installed, you can ask claude code things like:
 
 ## support
 
-- website: [claudetrade.io](https://claudetrade.io)
+- website: [claudetrade.com](https://claudetrade.com)
 - twitter: [@claudetrade](https://x.com/claudetrade)
 
 ## license

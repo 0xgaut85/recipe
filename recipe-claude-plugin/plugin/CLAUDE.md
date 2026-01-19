@@ -61,4 +61,4 @@ The wallet is stored at `~/.claude-trade/wallet.json`. If a user wants to trade 
 - **Slippage**: Default is 1% (100 bps) - adjust for volatile tokens
 - **Fees**: Solana transactions cost ~0.000005 SOL
 - **Private Keys**: Never share your wallet.json file
-- **Data Sources**: Token data from Birdeye, DexScreener, and Pump.fun via claudetrade.io
+- **Data Sources**: Token data from Birdeye, DexScreener, and Pump.fun via claudetrade.com

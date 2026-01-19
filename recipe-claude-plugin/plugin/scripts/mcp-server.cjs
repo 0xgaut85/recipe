@@ -37429,7 +37429,7 @@ async function getNewLaunches(limit = 10) {
 }
 async function getOHLCV(tokenAddress, timeframe = "1H", limit = 100) {
   throw new Error(
-    "OHLCV data requires Birdeye API access. This feature is available in the Claude Trade web app. For technical analysis, please use the web app at https://claudetrade.io"
+    "OHLCV data requires Birdeye API access. This feature is available in the Claude Trade web app. For technical analysis, please use the web app at https://claudetrade.com"
   );
 }
 async function getNewPairs(options = {}) {
@@ -37546,7 +37546,7 @@ var API_BASE;
 var init_api = __esm({
   "src/lib/api.ts"() {
     "use strict";
-    API_BASE = "https://claudetrade.io/api";
+    API_BASE = "https://claudetrade.com/api";
   }
 });
 
@@ -53831,8 +53831,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   console.error("");
   console.error("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
-  console.error("  CLAUDE TRADE - CLAUDE CODE PLUGIN");
-  console.error("  https://claudetrade.io");
+  console.error("  claudetrade - CLAUDE CODE PLUGIN");
+  console.error("  https://claudetrade.com");
   console.error("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
   console.error("");
   const { wallet, isNew } = getOrCreateWallet();

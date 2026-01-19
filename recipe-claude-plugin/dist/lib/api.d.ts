@@ -95,12 +95,12 @@ export interface PairOverview {
 }
 /**
  * Get trending tokens, volume leaders, and new launches
- * Uses Birdeye data via claudetrade.io backend
+ * Uses Birdeye data via claudetrade.com backend
  */
 export declare function getTrending(): Promise<TrendingData>;
 /**
  * Get wallet balances for any address
- * Uses Helius data via claudetrade.io backend
+ * Uses Helius data via claudetrade.com backend
  */
 export declare function getWalletBalances(address: string): Promise<WalletData>;
 /**
@@ -155,13 +155,13 @@ export declare function getNewLaunches(limit?: number): Promise<Array<{
 /**
  * Get OHLCV candle data for technical analysis
  * NOTE: This feature requires Birdeye API key which is not available in the plugin.
- * The OHLCV endpoint is not implemented on claudetrade.io backend for public access.
+ * The OHLCV endpoint is not implemented on claudetrade.com backend for public access.
  * Returns an error message directing users to use the web app for this feature.
  */
 export declare function getOHLCV(tokenAddress: string, timeframe?: TimeFrame, limit?: number): Promise<OHLCVCandle[]>;
 /**
  * Get new pairs with filters for sniping strategies
- * Uses trending data from claudetrade.io backend (which has Birdeye API key)
+ * Uses trending data from claudetrade.com backend (which has Birdeye API key)
  * Applies local filtering for the options
  */
 export declare function getNewPairs(options?: {

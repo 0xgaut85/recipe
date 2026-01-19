@@ -132,7 +132,7 @@ export const WalletGate: FC<WalletGateProps> = ({ children }) => {
             className="absolute top-8 left-8 text-white/40 text-xs"
             style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
           >
-            CLAUDE TRADE
+            claudetrade
           </div>
           <div
             className="absolute bottom-8 right-8 text-white/40 text-xs"

@@ -90,7 +90,7 @@ export const CTA: FC = () => {
               className="text-xs sm:text-sm font-medium text-black mb-3 sm:mb-4"
               style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
             >
-              STAY UP TO DATE WITH CLAUDE TRADE
+              STAY UP TO DATE WITH CLAUDETRADE
             </p>
             <div className="flex flex-col gap-2 mb-4 sm:mb-6">
               <input
@@ -216,7 +216,7 @@ export const CTA: FC = () => {
                 className="text-gray-600 text-xs sm:text-sm"
                 style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
               >
-                ©2026 CLAUDE TRADE. ALL RIGHTS RESERVED.
+                ©2026 claudetrade. ALL RIGHTS RESERVED.
               </p>
             </div>
             <ul className="flex flex-wrap gap-4 sm:gap-6">

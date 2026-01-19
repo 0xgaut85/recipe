@@ -45,7 +45,7 @@ npm run build
 
 ### Zero Configuration
 
-- **No API keys needed** - All data APIs go through claudetrade.io's backend
+- **No API keys needed** - All data APIs go through claudetrade.com's backend
 - **Auto wallet generation** - A Solana wallet is created automatically on first use
 - **Local key storage** - Private keys are stored at `~/.claude-trade/wallet.json` and never leave your machine
 
@@ -187,11 +187,11 @@ You can also use any valid Solana mint address, or search by token name!
 
 ## Data Sources
 
-- **Token Data**: DexScreener, Pump.fun, claudetrade.io API (Birdeye)
-- **OHLCV & Indicators**: claudetrade.io API (Birdeye)
+- **Token Data**: DexScreener, Pump.fun, claudetrade.com API (Birdeye)
+- **OHLCV & Indicators**: claudetrade.com API (Birdeye)
 - **Prices & Swaps**: Jupiter Aggregator
-- **Wallet Balances**: Solana RPC, claudetrade.io API (Helius)
-- **Trending & New Pairs**: claudetrade.io API (Birdeye)
+- **Wallet Balances**: Solana RPC, claudetrade.com API (Helius)
+- **Trending & New Pairs**: claudetrade.com API (Birdeye)
 
 ## Troubleshooting
 
@@ -217,7 +217,7 @@ Your wallet needs SOL to trade. Send SOL to your public key address shown in wal
 
 ## Support
 
-- Website: [claudetrade.io](https://claudetrade.io)
+- Website: [claudetrade.com](https://claudetrade.com)
 - Twitter: [@claudetrade](https://x.com/claudetrade)
 
 ## License

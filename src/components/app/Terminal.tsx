@@ -188,7 +188,7 @@ export const Terminal: FC<TerminalProps> = ({ currentStep, onStepChange }) => {
             className="text-white text-base sm:text-lg group-hover:text-white/70 transition-colors"
             style={{ fontFamily: "TWKEverettMono-Regular, monospace" }}
           >
-            CLAUDE TRADE
+            claudetrade
           </span>
         </Link>
 

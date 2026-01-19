@@ -19,7 +19,7 @@
     "trading",
     "defi"
   ],
-  "author": "claudetrade.io",
+  "author": "claudetrade.com",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.4"

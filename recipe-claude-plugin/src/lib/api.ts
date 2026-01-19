@@ -3,7 +3,7 @@
  * All data requiring API keys goes through our backend - users need no configuration
  */
 
-const API_BASE = "https://claudetrade.io/api";
+const API_BASE = "https://claudetrade.com/api";
 
 export interface TrendingToken {
   symbol: string;
@@ -108,7 +108,7 @@ export interface PairOverview {
 
 /**
  * Get trending tokens, volume leaders, and new launches
- * Uses Birdeye data via claudetrade.io backend
+ * Uses Birdeye data via claudetrade.com backend
  */
 export async function getTrending(): Promise<TrendingData> {
   const controller = new AbortController();
@@ -137,7 +137,7 @@ export async function getTrending(): Promise<TrendingData> {
 
 /**
  * Get wallet balances for any address
- * Uses Helius data via claudetrade.io backend
+ * Uses Helius data via claudetrade.com backend
  */
 export async function getWalletBalances(address: string): Promise<WalletData> {
   const controller = new AbortController();
@@ -378,7 +378,7 @@ export async function getNewLaunches(limit: number = 10): Promise<Array<{
 /**
  * Get OHLCV candle data for technical analysis
  * NOTE: This feature requires Birdeye API key which is not available in the plugin.
- * The OHLCV endpoint is not implemented on claudetrade.io backend for public access.
+ * The OHLCV endpoint is not implemented on claudetrade.com backend for public access.
  * Returns an error message directing users to use the web app for this feature.
  */
 export async function getOHLCV(
@@ -387,16 +387,16 @@ export async function getOHLCV(
   limit: number = 100
 ): Promise<OHLCVCandle[]> {
   // OHLCV requires Birdeye API key - not available in plugin
-  // The /api/data/ohlcv endpoint doesn't exist on claudetrade.io
+  // The /api/data/ohlcv endpoint doesn't exist on claudetrade.com
   throw new Error(
     "OHLCV data requires Birdeye API access. This feature is available in the Claude Trade web app. " +
-    "For technical analysis, please use the web app at https://claudetrade.io"
+    "For technical analysis, please use the web app at https://claudetrade.com"
   );
 }
 
 /**
  * Get new pairs with filters for sniping strategies
- * Uses trending data from claudetrade.io backend (which has Birdeye API key)
+ * Uses trending data from claudetrade.com backend (which has Birdeye API key)
  * Applies local filtering for the options
  */
 export async function getNewPairs(options: {

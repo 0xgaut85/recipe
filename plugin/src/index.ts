@@ -125,7 +125,7 @@ async function main() {
   // Initialize wallet on startup
   console.error("\n");
   console.error("═══════════════════════════════════════════════════════════════");
-  console.error("  CLAUDE TRADE - CLAUDE CODE PLUGIN");
+  console.error("  claudetrade - CLAUDE CODE PLUGIN");
   console.error("═══════════════════════════════════════════════════════════════");
   console.error("\n");
 
