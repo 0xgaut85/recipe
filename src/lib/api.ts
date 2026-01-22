@@ -396,8 +396,9 @@ export async function getOHLCV(
 
 /**
  * Get new pairs with filters for sniping strategies
- * Uses trending data from claudetrade.io backend (which has Birdeye API key)
- * Applies local filtering for the options
+ * Uses Birdeye's official /defi/v2/tokens/new_listing endpoint via backend
+ * Covers all launchpads: Pump.fun, Raydium, Meteora, etc.
+ * Server-side filtering for better performance and more comprehensive results
  */
 export async function getNewPairs(options: {
   maxAgeMinutes?: number;
@@ -409,44 +410,46 @@ export async function getNewPairs(options: {
   limit?: number;
 } = {}): Promise<NewPairData[]> {
   try {
-    // Use the working /api/data/trending endpoint and filter locally
-    const trending = await getTrending();
-    
-    let pairs = trending.newLaunches.map(nl => ({
-      address: nl.address,
-      symbol: nl.symbol,
-      name: nl.name,
-      logoURI: nl.logoURI,
-      price: nl.price,
-      liquidity: nl.liquidity,
-      volume24h: nl.volume24h,
-      marketCap: nl.marketCap,
-      listedAt: nl.listedAt,
-      ageMinutes: nl.ageMinutes || 0,
-      dex: nl.dex,
-    }));
-
-    // Apply local filtering
-    if (options.maxAgeMinutes) {
-      pairs = pairs.filter(p => p.ageMinutes <= options.maxAgeMinutes!);
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (options.maxAgeMinutes !== undefined) {
+      params.set("maxAgeMinutes", options.maxAgeMinutes.toString());
     }
-    if (options.minLiquidity) {
-      pairs = pairs.filter(p => p.liquidity >= options.minLiquidity!);
+    if (options.minLiquidity !== undefined) {
+      params.set("minLiquidity", options.minLiquidity.toString());
     }
-    if (options.maxLiquidity) {
-      pairs = pairs.filter(p => p.liquidity <= options.maxLiquidity!);
+    if (options.maxLiquidity !== undefined) {
+      params.set("maxLiquidity", options.maxLiquidity.toString());
     }
-    if (options.minVolume) {
-      pairs = pairs.filter(p => p.volume24h >= options.minVolume!);
+    if (options.minVolume !== undefined) {
+      params.set("minVolume", options.minVolume.toString());
     }
-    if (options.minMarketCap) {
-      pairs = pairs.filter(p => p.marketCap >= options.minMarketCap!);
+    if (options.minMarketCap !== undefined) {
+      params.set("minMarketCap", options.minMarketCap.toString());
     }
-    if (options.maxMarketCap) {
-      pairs = pairs.filter(p => p.marketCap <= options.maxMarketCap!);
+    if (options.maxMarketCap !== undefined) {
+      params.set("maxMarketCap", options.maxMarketCap.toString());
+    }
+    if (options.limit !== undefined) {
+      params.set("limit", options.limit.toString());
     }
 
-    return pairs.slice(0, options.limit || 20);
+    // Call the new endpoint that uses Birdeye's official new_listing endpoint
+    const response = await fetch(`${API_BASE}/data/new-pairs?${params.toString()}`);
+
+    if (!response.ok) {
+      throw new Error(`New pairs API failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      console.error("New pairs API error:", data.error);
+      return [];
+    }
+
+    // Return the pairs from the response
+    return data.pairs || [];
   } catch (error) {
     console.error("Failed to get new pairs:", error);
     return [];
