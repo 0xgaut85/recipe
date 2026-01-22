@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Twitter, Github, Mail } from "lucide-react";
 
 const socialLinks = [
-  { icon: <Twitter className="w-4 h-4 sm:w-5 sm:h-5" />, href: "https://x.com/claudetrade", label: "X" },
+  { icon: <Twitter className="w-4 h-4 sm:w-5 sm:h-5" />, href: "https://x.com/thinkbigcd", label: "X" },
   { icon: <Github className="w-4 h-4 sm:w-5 sm:h-5" />, href: "https://github.com/thinkbigcd/claude-trade", label: "GitHub" },
   { icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5" />, href: "#", label: "Email" },
 ];
@@ -188,7 +188,7 @@ export const CTA: FC = () => {
               </li>
               <li>
                 <a
-                  href="https://x.com/claudetrade"
+                  href="https://x.com/thinkbigcd"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-600 hover:text-[#E57B3A] transition-colors duration-200 text-xs sm:text-sm"
