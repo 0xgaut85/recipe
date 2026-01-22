@@ -15,7 +15,7 @@ Solana trading plugin for Claude Code. Search tokens, analyze wallets, execute s
 1. Clone this repository:
 
 ```bash
-git clone https://github.com/0xgaut85/claude-trade.git
+git clone https://github.com/thinkbigcd/claude-trade.git
 cd claude-trade/plugin
 ```
 
