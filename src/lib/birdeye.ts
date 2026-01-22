@@ -664,27 +664,71 @@ export async function getNewListings(
     // Use v2 endpoint for new listings
     const url = new URL(`${BIRDEYE_API_BASE}/defi/v2/tokens/new_listing`);
     url.searchParams.set("limit", Math.min(limit, 20).toString()); // Max 20
+    url.searchParams.set("offset", "0"); // Start from beginning (required for pagination)
+
+    // Enhanced logging: Log full request URL
+    console.log(`[getNewListings] Request URL: ${url.toString()}`);
+    console.log(`[getNewListings] Headers:`, JSON.stringify(headers, null, 2));
 
     const response = await fetch(url.toString(), { headers });
 
+    // Enhanced logging: Log response status
+    console.log(`[getNewListings] Response status: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Birdeye new listings error:", response.status, errorText);
+      console.error(`[getNewListings] API error ${response.status}:`, errorText);
       return [];
     }
 
     const data = await response.json();
 
-    if (!data.success || !data.data?.items) {
+    // Enhanced logging: Log full response structure
+    console.log(`[getNewListings] Response structure:`, {
+      hasSuccess: 'success' in data,
+      success: data.success,
+      hasData: 'data' in data,
+      dataType: data.data ? typeof data.data : 'none',
+      hasItems: data.data?.items ? 'items' in data.data : false,
+      hasTokens: data.data?.tokens ? 'tokens' in data.data : false,
+      itemsLength: data.data?.items?.length || 0,
+      tokensLength: data.data?.tokens?.length || 0,
+      fullResponseKeys: Object.keys(data),
+      dataKeys: data.data ? Object.keys(data.data) : [],
+    });
+
+    // Enhanced logging: Log full response body (truncated for readability)
+    console.log(`[getNewListings] Full response (first 2000 chars):`, JSON.stringify(data, null, 2).slice(0, 2000));
+
+    // Check for different possible response structures
+    if (!data.success) {
+      console.warn(`[getNewListings] API returned success=false. Response:`, JSON.stringify(data, null, 2));
       return [];
     }
 
-    console.log(`[getNewListings] Raw API response items: ${data.data.items.length}`);
-    if (data.data.items.length > 0) {
-      console.log(`[getNewListings] First raw item:`, JSON.stringify(data.data.items[0]).slice(0, 500));
+    // Try different possible response structures
+    let items: any[] = [];
+    if (data.data?.items && Array.isArray(data.data.items)) {
+      items = data.data.items;
+    } else if (data.data?.tokens && Array.isArray(data.data.tokens)) {
+      items = data.data.tokens;
+    } else if (Array.isArray(data.data)) {
+      items = data.data;
+    } else if (Array.isArray(data.items)) {
+      items = data.items;
     }
 
-    const listings = data.data.items.map((token: any) => ({
+    if (items.length === 0) {
+      console.warn(`[getNewListings] No items found in response. Full response:`, JSON.stringify(data, null, 2));
+      return [];
+    }
+
+    console.log(`[getNewListings] Found ${items.length} items in response`);
+    if (items.length > 0) {
+      console.log(`[getNewListings] First raw item (full):`, JSON.stringify(items[0], null, 2));
+    }
+
+    const listings = items.map((token: any) => ({
       address: token.address,
       symbol: token.symbol || "???",
       name: token.name || "Unknown",
