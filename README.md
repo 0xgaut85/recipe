@@ -61,5 +61,4 @@ not financial advice. you will probably lose money. but you might learn somethin
 
 ## links
 
-site: [claudetrade.io](https://claudetrade.io)  
-twitter: [@claudetrade](https://x.com/claudetrade)
+site: [claudetrade.io](https://claudetrade.com)
