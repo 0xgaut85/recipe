@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate deploy",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "cleanup:chef": "npx tsx prisma/cleanup-chef.ts"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",

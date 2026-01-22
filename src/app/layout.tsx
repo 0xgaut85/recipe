@@ -22,7 +22,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "claudetrade | AI-Powered Trading on Solana",
+  title: "Claude Trade | AI-Powered Trading on Solana",
   description:
     "Turn intent into execution. The first AI-powered trading platform on Solana powered by Claude.",
   icons: {

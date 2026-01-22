@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Trade | claudetrade",
+  title: "Trade | Claude Trade",
   description: "AI-powered trading terminal on Solana",
 };
 

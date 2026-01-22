@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Documentation | claudetrade",
+  title: "Documentation | Claude Trade",
   description:
     "Learn how to use Claude Trade - the AI-powered trading platform on Solana.",
 };
