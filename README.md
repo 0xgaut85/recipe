@@ -31,7 +31,7 @@ none of this is magic. it's just an llm with tools. but the emergent behavior wh
 ## setup
 
 ```
-/plugin marketplace install claude-trade
+/plugin marketplace add thinkbigcd/claude-trade
 ```
 
 or manual:
